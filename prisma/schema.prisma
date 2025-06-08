@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  country   String
+  users     User[]
+  campaigns Campaign[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  createdBy String     @unique
+}
+
+model User {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  email             String             @unique
+  clerkId           String             @unique
+  firstname         String
+  lastname          String
+  role              Role               @default(Agent)
+  imageUrl          String
+  orgId             String             @db.ObjectId
+  organization      Organization       @relation(fields: [orgId], references: [id])
+  campaigns         CampaignUser[]
+  assignedLeads     Lead[]
+  activities        LeadActivity[]
+  userSettings      UserSettings?
+  uploadedDocuments CampaignDocument[] @relation("UploadedDocuments")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  callSessions      CallSession[]
+}
+
+model UserSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  language  String   @default("en-US")
+  timezone  String   @default("America/New_York")
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Campaign {
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  orgId        String             @db.ObjectId
+  type         String
+  status       Status             @default(Draft)
+  organization Organization       @relation(fields: [orgId], references: [id])
+  leads        Lead[]
+  users        CampaignUser[]
+  documents    CampaignDocument[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  callSessions CallSession[]
+}
+
+model CampaignDocument {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId         String   @db.ObjectId
+  name               String // Original filename
+  type               String // pdf, docx, txt, etc.
+  category           String // script, training, reference, etc.
+  description        String? // Optional description
+  fileUrl            String // URL to stored file (Cloudinary/S3)
+  fileSize           Int // Size in bytes
+  mimeType           String // application/pdf, text/plain, etc.
+  cloudinaryPublicId String?
+  campaign           Campaign @relation(fields: [campaignId], references: [id])
+  uploadedBy         String   @db.ObjectId
+  uploader           User     @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
+  createdAt          DateTime @default(now())
+}
+
+model CampaignUser {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String   @db.ObjectId
+  userId     String   @db.ObjectId
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  role       Role     @default(Agent)
+  assignedAt DateTime @default(now())
+}
+
+model Lead {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId     String         @db.ObjectId
+  campaign       Campaign       @relation(fields: [campaignId], references: [id])
+  assignedUserId String?        @db.ObjectId
+  assignedUser   User?          @relation(fields: [assignedUserId], references: [id])
+  name           String?
+  phoneNumber    String
+  email          String?
+  company        String?
+  status         LeadStatus     @default(New)
+  source         String?
+  metadata       Json?
+  industry       String?
+  activities     LeadActivity[]
+  followUps      FollowUp[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model LeadActivity {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  leadId      String       @db.ObjectId
+  lead        Lead         @relation(fields: [leadId], references: [id])
+  type        ActivityType
+  content     String // message or description
+  duration    Int? // call duration in seconds (for calls)
+  outcome     CallOutcome? // only for call activities
+  timestamp   DateTime     @default(now())
+  // Change this part:
+  createdBy   String       @db.ObjectId
+  createdUser User         @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime     @default(now())
+ 
+
+  callSession   CallSession? @relation(fields: [callSessionId], references: [id])
+  callSessionId String?      @db.ObjectId
+}
+
+model CallSession {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id])
+  campaignId String?   @db.ObjectId // Optional: session might span campaigns
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+
+  // Quick stats (could be computed, but storing for performance)
+  totalCalls      Int @default(0)
+  successfulCalls Int @default(0)
+  totalDuration   Int @default(0) // in seconds
+
+  // Relations
+  activities LeadActivity[] // Link activities to sessions
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FollowUp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId    String   @db.ObjectId
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  dueDate   DateTime
+  type      String // "call" or "email"
+  reason    String // "busy", "scheduled_callback", etc.
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ActivityType {
+  CALL
+  VOICEMAIL
+  SMS
+  EMAIL
+  NOTE
+  MEETING
+  FOLLOW_UP
+  ASSIGNMENT
+}
+
+enum CallOutcome {
+  ANSWERED
+  VOICEMAIL
+  BUSY
+  NO_ANSWER
+  DISCONNECTED
+  INVALID_NUMBER
+  DO_NOT_CALL
+  NOT_INTERESTED
+  INTERESTED
+  MEETING_SCHEDULED
+  CALLBACK
+}
+
+enum LeadStatus {
+  New
+  Contacted
+  Qualified
+  Proposal
+  Lost
+  Won
+}
+
+enum Role {
+  Admin
+  Manager
+  Agent
+}
+
+enum Status {
+  Draft
+  Active
+  Paused
+  Completed
+  Cancelled
+}
