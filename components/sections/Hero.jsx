@@ -49,7 +49,7 @@ export const Hero = () => {
           </span>
         </p>
 
-        <div className="flex justify-center items-center mb-12">
+        <div className="flex justify-center items-center mb-8">
           <Button size="huge" asChild>
             <Link href="/onboarding">Get Started Today!</Link>
           </Button>
