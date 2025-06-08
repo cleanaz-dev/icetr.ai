@@ -19,8 +19,8 @@ import { navItems } from "@/lib/constants/frontend";
 export const Header = () => {
   const [open, setOpen] = useState(false);
   return (
-    <header className="md:sticky top-0 z-50 w-full ">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <header className="md:sticky top-0 z-50 w-full pt-4 ">
+      <div className="container mx-auto px-4  flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -31,15 +31,6 @@ export const Header = () => {
           </span>
           <ThemeChanger />
         </div>
-
-        {/* Desktop Navigation
-        <nav className="hidden xl:flex items-center space-x-12 border px-6 py-8 rounded-full">
-          {navItems.map((i, index) => (
-            <Link key={index} href={i.href} className="capitalize">
-              {i.label}
-            </Link>
-          ))}
-        </nav> */}
 
         {/* Desktop Buttons */}
         <div className="hidden xl:flex items-center space-x-4">

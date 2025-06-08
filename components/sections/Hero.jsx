@@ -8,9 +8,9 @@ import { Header } from "./Header";
 
 export const Hero = () => {
   return (
-    <div className="h-screen">
+    <>
       <Header />
-      <div className="container mx-auto max-w-3xl px-4  md:pb-20 text-center">
+      <div className="container mx-auto max-w-3xl px-4 text-center mt-12 md:mt-0">
         <Badge
           variant="secondary"
           className="mb-4 bg-sky-100 text-primary border-primary rounded-full bg-transparent"
@@ -68,6 +68,6 @@ export const Hero = () => {
           <div className="absolute  hidden md:block bottom-0 top-0 h-[300px] w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" />
         </div>
       </div>
-    </div>
+    </>
   );
 };
