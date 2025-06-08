@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LEAD_STATUSES, FROM_NUMBERS } from "@/lib/constants/frontend";
-import Dialpad from "@/components/pages/dialer/Dialpad";
+import Dialpad from "@/components/pages/dialer/DialPad";
 
 export default function DialerTab({
   selectedLead,
