@@ -45,16 +45,23 @@ export async function POST(request) {
           assignedUserId: data.assignedUserId,
           updatedAt: new Date()
         }
-      });
+     })
+
+
+     const assingerUser = await prisma.user.findUnique({
+      where: {clerkId: clerkUserId}
+     })
+
+     
 
       // Create activity records for each lead
       const activityPromises = data.leadIds.map(leadId => 
         prisma.leadActivity.create({
           data: {
             leadId: leadId,
-            type: "assignment",
+            type: "ASSIGNMENT",
             content: `Lead assigned to ${assignedUser.firstName || assignedUser.email}`,
-            createdBy: clerkUserId
+            createdBy: assingerUser.id
           }
         })
       );

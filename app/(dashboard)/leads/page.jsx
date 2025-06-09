@@ -1,8 +1,10 @@
 import LeadsPage from "@/components/pages/leads/LeadsPage";
 import React from "react";
-import { getAllLeads } from "@/lib/service/prismaQueries";
+import { getAllLeads, getOrgUsers } from "@/lib/service/prismaQueries";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function page() {
+  const { userId } = await auth()
   const leads = await getAllLeads();
   
   // Extract unique users from all campaigns
@@ -17,6 +19,8 @@ export default async function page() {
     }
     return acc;
   }, []);
+
+  // console.log("campaignusers", campaignUsers)
 
   return (
     <div>
