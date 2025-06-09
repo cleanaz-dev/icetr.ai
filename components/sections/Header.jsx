@@ -34,8 +34,10 @@ export const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden xl:flex items-center space-x-4">
-          <Button variant="ghost">Sign In</Button>
-          <Button size="huge">Try for free</Button>
+          <Button size="huge" asChild>
+            <Link href="/sign-in">Sign In</Link>
+          </Button>
+          {/* <Button size="huge">Try for free</Button> */}
         </div>
 
         {/* Mobile Menu Trigger */}
@@ -83,11 +85,9 @@ export const Header = () => {
 
               <div className="flex flex-col space-y-2 py-12 w-full max-w-xs gap-4">
                 <Button size="huge" asChild>
-                  <Link href="/sign-in">
-                  Sign In
-                  </Link>
-                  </Button>
-                <Button size="hugeTransparent">Try for free</Button>
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+                {/* <Button size="hugeTransparent">Try for free</Button> */}
               </div>
             </div>
           </SheetContent>

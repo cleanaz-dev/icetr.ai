@@ -51,7 +51,7 @@ export const Hero = () => {
 
         <div className="flex justify-center items-center mb-8">
           <Button size="huge" asChild>
-            <Link href="/onboarding">Get Started Today!</Link>
+            <Link href="/waitlist">Join Waitlist Today!</Link>
           </Button>
         </div>
 

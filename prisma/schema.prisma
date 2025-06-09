@@ -130,7 +130,6 @@ model LeadActivity {
   createdBy   String       @db.ObjectId
   createdUser User         @relation(fields: [createdBy], references: [id])
   createdAt   DateTime     @default(now())
- 
 
   callSession   CallSession? @relation(fields: [callSessionId], references: [id])
   callSessionId String?      @db.ObjectId
@@ -165,6 +164,13 @@ model FollowUp {
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WaitList {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  email String @unique
+  notes String
 }
 
 enum ActivityType {
