@@ -55,7 +55,7 @@ export const Hero = () => {
           </Button>
         </div>
 
-        <div className="relative flex justify-center">
+        <div className="relative flex justify-center hidden md:block">
           <Image
             src={heroImg}
             alt="hero-image-phone"

@@ -431,7 +431,7 @@ export default function DocumentsPage({ campaigns }) {
             <div className="text-center">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Select a Campaign</h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Choose a campaign from the dropdown above to view and manage its documents.
               </p>
             </div>
