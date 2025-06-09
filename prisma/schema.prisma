@@ -155,15 +155,20 @@ model CallSession {
 }
 
 model FollowUp {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  leadId    String   @db.ObjectId
-  lead      Lead     @relation(fields: [leadId], references: [id])
-  dueDate   DateTime
-  type      String // "call" or "email"
-  reason    String // "busy", "scheduled_callback", etc.
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId            String   @db.ObjectId
+  lead              Lead     @relation(fields: [leadId], references: [id])
+  dueDate           DateTime
+  type              String // "call" or "email"
+  reason            String // "busy", "scheduled_callback", etc.
+  completed         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  callSid           String?  @unique
+  to                String?
+  from              String?
+  recordingUrl      String?
+  transcriptionText String?
 }
 
 model WaitList {
@@ -182,6 +187,7 @@ enum ActivityType {
   MEETING
   FOLLOW_UP
   ASSIGNMENT
+  MISSED_CALL
 }
 
 enum CallOutcome {

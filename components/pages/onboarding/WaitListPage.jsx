@@ -17,6 +17,7 @@ export default function WaitListPage() {
     expectations: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -26,12 +27,35 @@ export default function WaitListPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    setIsSubmitted(true);
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true)
+  try {
+    const response = await fetch("/api/public/waitlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Server error:", errorData);
+      return; // optionally show UI feedback
+    }
+
+    console.log("Form submitted:", formData);
+ 
+  } catch (error) {
+    console.error("Submission failed:", error);
+    
+  } finally {
+   setIsSubmitted(true);
+   setLoading(false)
+  }
+};
+
 
   if (isSubmitted) {
     return (
@@ -147,7 +171,7 @@ export default function WaitListPage() {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
-                  Join Waitlist
+                  {loading ? "Submitting..." : "Join Waitlist"}
                 </Button>
               </form>
 

@@ -20,7 +20,8 @@ const buttonVariants = cva(
         ghost:
           "bg-transparent hover:bg-primary/50 transition-all duration-300 text-primary hover:text-white hover:scale-105",
         link: "text-primary underline-offset-4 hover:underline",
-        transparent: "bg-transparent transition-all duration-300 text-primary hover:scale-110 transition-all duration-300 "
+        transparent: "bg-transparent transition-all duration-300 text-primary hover:scale-110 transition-all duration-300",
+        muted: "bg-muted animated-pulse hover:bg-muted-foreground transition-all duration-200"
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

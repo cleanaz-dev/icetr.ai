@@ -14,6 +14,10 @@ import { Clock, Phone, User, Calendar } from "lucide-react";
 import { format, isToday, isPast, isThisWeek } from "date-fns";
 import { MdConnectWithoutContact } from "react-icons/md";
 import { Loader2 } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Check } from "lucide-react";
+import Link from "next/link";
+import { Voicemail } from "lucide-react";
 
 export default function FollowUpTab({ onLeadSelect }) {
   const [followUps, setFollowUps] = useState([]);
@@ -57,11 +61,8 @@ export default function FollowUpTab({ onLeadSelect }) {
   };
 
   const handleCallLead = (lead) => {
-   
     onLeadSelect(lead);
   };
-
-
 
   const getFilteredFollowUps = () => {
     return followUps.filter((followUp) => {
@@ -109,7 +110,7 @@ export default function FollowUpTab({ onLeadSelect }) {
     <div className="w-full">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-4">Follow-ups</h2>
+        <h2 className="font-medium mb-1">Follow-ups</h2>
 
         {/* Filter select */}
         <Select value={filter} onValueChange={setFilter}>
@@ -167,51 +168,70 @@ export default function FollowUpTab({ onLeadSelect }) {
           </Card>
         ) : (
           filteredFollowUps.map((followUp) => (
-            <Card
-              key={followUp.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardHeader className="pb-2">
+            <Card key={followUp.id}>
+              <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <CardTitle className="text-sm font-medium">
-                      {followUp.lead.name}
-                    </CardTitle>
-                  </div>
+                  <CardTitle className="text-sm font-semibold text-foreground">
+                    {followUp.lead.name}
+                  </CardTitle>
                   {getFollowUpBadge(followUp.dueDate)}
                 </div>
               </CardHeader>
-
-              <CardContent className="pt-0">
-                <div className="space-y-2">
+              <CardContent>
+                <div className="space-y-3">
                   {/* Lead info */}
-                  <div className="text-sm text-gray-600">
-                    <p>{followUp.lead.email}</p>
-                    <p>{followUp.lead.phoneNumber}</p>
+                  <div className="text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5 text-gray-400" />
+                      <p>{followUp.lead.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                      <Phone className="h-3.5 w-3.5 text-gray-400" />
+                      <p>{followUp.lead.phoneNumber}</p>
+                    </div>
                   </div>
 
+                  {/* Divider */}
+                  <div className="border-t border-muted my-2"></div>
+
                   {/* Follow-up details */}
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    <span>
-                      Due:{" "}
-                      {format(new Date(followUp.dueDate), "MMM dd, h:mm a")}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5 text-gray-400" />
+                      <span>
+                        Due:{" "}
+                        {format(new Date(followUp.dueDate), "MMM dd, h:mm a")}
+                      </span>
+                    </div>
+
+                    {followUp.recordingUrl && (
+                      <Button asChild size="sm" variant="muted">
+                        <Link
+                          href={followUp.recordingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Voicemail className="mr-1" /> Play
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-gray-500 bg-muted px-2.5 py-1.5 rounded-md inline-block">
+                    Reason:{" "}
+                    <span className="font-medium text-muted-foreground capitalize">
+                      {followUp.reason.replace("_", " ")}
                     </span>
                   </div>
 
-                  <div className="text-xs text-gray-500 capitalize">
-                    Reason: {followUp.reason.replace("_", " ")}
-                  </div>
-
                   {/* Action buttons */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-3">
                     <Button
                       size="sm"
                       onClick={() => handleCallLead(followUp.lead)}
-                      className="flex-1"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
-                      <Phone className="h-3 w-3 mr-1" />
+                      <Phone className="h-3.5 w-3.5 mr-1.5" />
                       Call Now
                     </Button>
                     <Button
@@ -219,6 +239,7 @@ export default function FollowUpTab({ onLeadSelect }) {
                       variant="outline"
                       onClick={() => markAsCompleted(followUp.id)}
                     >
+                      <Check className="h-3.5 w-3.5 mr-1.5" />
                       Done
                     </Button>
                   </div>
