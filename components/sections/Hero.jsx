@@ -55,17 +55,20 @@ export const Hero = () => {
           </Button>
         </div>
 
-        <div className="relative flex justify-center hidden md:block">
-          <Image
-            src={heroImg}
-            alt="hero-image-phone"
-            className="object-cover z-40"
-            height={400}
-            width={400}
-          />
+        <div className="relative flex justify-center">
+          {/* Image hidden on sm and below, visible on md and up */}
+          <div className="hidden md:block z-40">
+            <Image
+              src={heroImg}
+              alt="hero-image-phone"
+              className="object-cover "
+              height={400}
+              width={400}
+            />
+          </div>
 
-          {/* Overlay with better rotation and sizing */}
-          <div className="absolute  hidden md:block bottom-0 top-0 h-[300px] w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" />
+          {/* Overlay (already hidden on sm via your existing code) */}
+          <div className="absolute hidden md:block bottom-0 top-0 h-[300px] w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" />
         </div>
       </div>
     </>
