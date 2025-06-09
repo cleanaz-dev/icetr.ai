@@ -15,7 +15,7 @@ export default async function page() {
 
   // console.log("leads", leads)
   // console.log("organization", callScriptData)
-  console.log("campaignID", campaignId);
+  // console.log("campaignID", campaignId);
   return (
     <div>
       <EnhancedDialer data={leads} callScriptData={callScriptData} campaignId={campaignId}/>

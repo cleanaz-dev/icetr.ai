@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/lib/hooks/useLogo";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSignIn } from '@clerk/nextjs';
 
 export default function InvitePage({ userData = {} }) {
   const router = useRouter();
@@ -14,10 +15,13 @@ export default function InvitePage({ userData = {} }) {
     lastname: "",
     email: userData.email || "",
     orgId: userData.orgId || "",
-    id: userData.id
+    id: userData.id,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState("");
+
+  const { setActive, signIn } = useSignIn()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,18 +47,50 @@ export default function InvitePage({ userData = {} }) {
         throw new Error(errorData.message || "Failed to accept invitation");
       }
 
-      // Redirect on success
-      router.push("/dashboard");
+      // Parse the response data
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (data.success && data.signInToken) {
+        try {
+          // Use Clerk's signIn to create session from token
+          console.log("Creating session from token:", data.signInToken);
+          
+          const signInAttempt = await signIn.create({
+            strategy: "ticket",
+            ticket: data.signInToken
+          });
+
+          if (signInAttempt.status === "complete") {
+            await setActive({ session: signInAttempt.createdSessionId });
+            console.log("Session set successfully");
+            
+            // Set redirecting state before navigation
+            setIsSubmitting(false);
+            setIsRedirecting(true);
+            
+            router.push("/home");
+          } else {
+            throw new Error("Sign-in not complete");
+          }
+          
+        } catch (sessionError) {
+          console.error("Error creating session from token:", sessionError);
+          throw new Error("Failed to authenticate user session");
+        }
+      }
+
     } catch (err) {
       setError(err.message);
       console.error("Invite acceptance error:", err);
-    } finally {
       setIsSubmitting(false);
+      setIsRedirecting(false);
     }
   };
 
+
   return (
-    <div className="flex flex-col  justify-center items-center px-4 mt-10">
+    <div className="flex flex-col justify-center items-center px-4 mt-10">
       <header className="mb-10 text-center">
         <h1 className="text-2xl font-semibold">
           You've been invited to icetr.ai!
@@ -129,8 +165,8 @@ export default function InvitePage({ userData = {} }) {
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Processing..." : "Accept Invitation"}
+        <Button type="submit" className="w-full" disabled={isSubmitting || isRedirecting}>
+          {isSubmitting ? "Processing..." : isRedirecting ? "Redirecting..." : "Accept Invitation"}
         </Button>
       </form>
     </div>

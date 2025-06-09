@@ -64,31 +64,31 @@ const recentSales = [
     name: "Olivia Martin",
     email: "olivia.martin@email.com",
     amount: "+$1,999.00",
-    avatar: "/avatars/01.png",
+    avatar: "",
   },
   {
     name: "Jackson Lee",
     email: "jackson.lee@email.com",
     amount: "+$39.00",
-    avatar: "/avatars/02.png",
+    avatar: "",
   },
   {
     name: "Isabella Nguyen",
     email: "isabella.nguyen@email.com",
     amount: "+$299.00",
-    avatar: "/avatars/03.png",
+    avatar: "",
   },
   {
     name: "William Kim",
     email: "will@email.com",
     amount: "+$99.00",
-    avatar: "/avatars/04.png",
+    avatar: "",
   },
   {
     name: "Sofia Davis",
     email: "sofia.davis@email.com",
     amount: "+$39.00",
-    avatar: "/avatars/05.png",
+    avatar: "",
   },
 ];
 

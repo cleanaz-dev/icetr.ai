@@ -14,7 +14,7 @@ export async function POST(request) {
 
     // Check for existing invites
     for (const key of existiningKeys) {
-      console.log("Checking key:", key);
+      // console.log("Checking key:", key);
       const invitee = await redis.json.get(key, "$");
 
 
@@ -40,6 +40,7 @@ export async function POST(request) {
       email: email,
       orgId: orgId,
       createdAt: new Date().toISOString(),
+      status: "pending"
     });
 
     // Set expiration (24 hours)

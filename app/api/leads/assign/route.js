@@ -12,7 +12,7 @@ export async function POST(request) {
 
   try {
     const data = await request.json();
-    console.log("Assignment data:", data);
+    // console.log("Assignment data:", data);
 
     // Validate required fields
     if (!data.leadIds || !Array.isArray(data.leadIds) || data.leadIds.length === 0) {

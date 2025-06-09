@@ -165,7 +165,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    console.log("request data", data);
+    // console.log("request data", data);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error creating lead activity:", error);

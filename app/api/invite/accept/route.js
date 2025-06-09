@@ -3,7 +3,14 @@ import redis from "@/lib/service/redis";
 import { NextResponse } from "next/server";
 import { createClerkClient } from "@clerk/backend";
 
-const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
+
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_BASE_URL
+    : "http://localhost:3000";
 
 export async function POST(request) {
   try {
@@ -18,23 +25,22 @@ export async function POST(request) {
       );
     }
 
-   
-    const existingClerkUsers = await clerkClient.users.getUserList({ emailAddress: [email] });
-  
+    const existingClerkUsers = await clerkClient.users.getUserList({
+      emailAddress: [email],
+    });
 
     if (existingClerkUsers.length > 0) {
-      return NextResponse.json({ message: "User exists in database"}, { status: 400 })
-    } 
-    
+      return NextResponse.json(
+        { message: "User exists in database" },
+        { status: 400 }
+      );
+    }
+
     const clerkUser = await clerkClient.users.createUser({
       emailAddress: [email],
       firstName: firstname,
-      lastName: lastname
-
+      lastName: lastname,
     });
-    
-
-    console.log("Clerk user ID:", clerkUser.id);
 
     const user = await prisma.user.create({
       data: {
@@ -44,7 +50,7 @@ export async function POST(request) {
         clerkId: clerkUser.id,
         imageUrl: clerkUser.imageUrl,
         organization: { connect: { id: orgId } },
-        role: "Agent"
+        role: "Agent",
       },
     });
 
@@ -54,9 +60,17 @@ export async function POST(request) {
       },
     });
 
-    await redis.del(`invitee:${id}`);
+    const signInToken = await clerkClient.signInTokens.createSignInToken({
+      userId: clerkUser.id,
+      expiresInSeconds: 300, // 5 minutes
+    });
+    // console.log("Sign-in token created:", signInToken);
+    await redis.json.set(`invitee:${id}`, '.status', 'complete');
 
-    return NextResponse.json({ success: true, clerkUser }); // 🧠 Return if needed
+    return NextResponse.json({
+      success: true,
+      signInToken: signInToken.token
+    });
   } catch (error) {
     console.error("Invite Accept Error:", error);
     return NextResponse.json(

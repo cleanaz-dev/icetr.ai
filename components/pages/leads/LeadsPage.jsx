@@ -67,7 +67,7 @@ import {
 import { mockLeads } from "@/lib/constants/backend";
 import { Users2 } from "lucide-react";
 import AssignLeadsDialog from "./AssignLeadsDialog";
-import { useUser } from "@clerk/nextjs";
+
 
 const statusOptions = [
   { value: "New", label: "New", color: "bg-blue-500" },
@@ -95,8 +95,7 @@ export default function LeadsPage({ data, users = [] }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
- const { user } = useUser()
-  const userImageUrl = user.imageUrl
+
   // Filter leads based on search and filters
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch =
@@ -230,7 +229,7 @@ export default function LeadsPage({ data, users = [] }) {
       <div className="flex items-center gap-2">
         <Avatar className="w-6 h-6">
           <AvatarImage
-            src={userImageUrl}
+            src={user.imageUrl}
             alt={`${user.firstname} ${user.lastname}`}
           />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>

@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log("data", data);
+    // console.log("data", data);
     return NextResponse.json({ message: "Request recieved" });
   } catch (error) {
     console.error(error);
