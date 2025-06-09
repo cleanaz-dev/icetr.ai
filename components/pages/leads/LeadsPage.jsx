@@ -381,8 +381,9 @@ export default function LeadsPage({ data, users = [] }) {
                   <TableHead>Lead</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Source</TableHead>
+                  <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
-
+                  
                   <TableHead>Assigned To</TableHead>
                   <TableHead>Last Contact</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -415,6 +416,7 @@ export default function LeadsPage({ data, users = [] }) {
                     <TableCell>
                       <Badge variant="outline">{lead.source}</Badge>
                     </TableCell>
+                    <TableCell><span className="capitalize">{lead.industry}</span></TableCell>
                     <TableCell>
                      {getStatusBadge(lead.status)}
                     </TableCell>

@@ -111,6 +111,7 @@ model Lead {
   source         String?
   metadata       Json?
   industry       String?
+  website        String?
   activities     LeadActivity[]
   followUps      FollowUp[]
   createdAt      DateTime       @default(now())

@@ -1,6 +1,6 @@
 //api/import/leads
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/service/prisma";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -16,6 +16,8 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const campaignId = formData.get("campaignId");
+    const source = formData.get("source")
+    const industry = formData.get("industry")
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -61,6 +63,9 @@ export async function POST(request) {
                 campaignId,
                 phoneNumber: row.phoneNumber.trim(),
                 company: row.company?.trim() || null,
+                website: row.website?.trim() || null,
+                industry: industry || null,
+                source: source || null,
                 status: "New",
               };
 

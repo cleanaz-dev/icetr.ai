@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Target,
@@ -65,14 +65,24 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImportLeadsDialog from "../leads/ImportLeadsDialog";
-import { MdOutlineAssignmentInd, MdEmail, MdMeetingRoom, MdLocalPhone, MdOutlineNoteAlt, MdOutlineSms, MdOutlineVoicemail } from "react-icons/md";
+import {
+  MdOutlineAssignmentInd,
+  MdEmail,
+  MdMeetingRoom,
+  MdLocalPhone,
+  MdOutlineNoteAlt,
+  MdOutlineSms,
+  MdOutlineVoicemail,
+  MdCallMissed
+} from "react-icons/md";
+import AddMemberDialog from "./AddMemberDialog";
 
-export default function SingleCampaignPage({ campaign }) {
-  const { id } = useParams();
+export default function SingleCampaignPage({ campaign, orgUsers }) {
+
   const router = useRouter();
 
   const [leads, setLeads] = useState(campaign.leads);
-  const [users, setUsers] = useState(campaign.users);
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -109,16 +119,6 @@ export default function SingleCampaignPage({ campaign }) {
     );
   };
 
-  const getTypeIcon = (type) => {
-    const icons = {
-      email: Mail,
-      phone: Phone,
-      social: MessageSquare,
-      mixed: Target,
-    };
-    const Icon = icons[type] || Target;
-    return <Icon className="h-4 w-4" />;
-  };
 
   const getLastActivityDisplay = (activities) => {
     if (!activities || activities.length === 0) {
@@ -142,18 +142,22 @@ export default function SingleCampaignPage({ campaign }) {
       },
       CALL: {
         icon: MdLocalPhone,
-        color: "text-primary"
+        color: "text-primary",
       },
       NOTE: {
         icon: MdOutlineNoteAlt,
-        color: "text-primary"
+        color: "text-primary",
       },
       SMS: {
         icon: MdOutlineSms,
-        color: "text-primary"
+        color: "text-primary",
       },
       VOICEMAIL: {
         icon: MdOutlineVoicemail,
+        color: "text-primary",
+      },
+      MISSED_CALL: {
+        icon: MdCallMissed,
         color: "text-primary"
       }
     };
@@ -512,10 +516,13 @@ export default function SingleCampaignPage({ campaign }) {
                     Team members assigned to this campaign
                   </CardDescription>
                 </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Member
-                </Button>
+                <AddMemberDialog
+                  users={orgUsers}
+                  campaignId={campaign.id}
+                  onMembersAdded={() => {
+                    router.refresh(); 
+                  }}
+                />
               </div>
             </CardHeader>
             <CardContent>
