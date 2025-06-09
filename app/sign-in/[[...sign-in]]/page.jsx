@@ -11,7 +11,7 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center ">
         <SignIn />
       </div>
     );
