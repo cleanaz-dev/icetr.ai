@@ -71,8 +71,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: callScriptData.id, // Make sure you have this in your data prop
-            campaignId: data[0].campaignId, // Make sure you have this in your data prop
+            userId: callScriptData?.id, // Make sure you have this in your data prop
+            campaignId: data[0]?.campaignId, // Make sure you have this in your data prop
           }),
         });
         const sessionData = await response.json();

@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import { Cog } from "lucide-react";
 import { CircleUser } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 // Mock data based on the schema
 const mockOrganization = {
@@ -157,6 +158,8 @@ export default function SettingsPage({ settings, invitees }) {
   const [timezone, setTimezone] = useState(
     settings?.timezone || "America/New_York"
   );
+  const { user } = useUser()
+  const userImageUrl = user.imageUrl
 
   // Save organization settings
   const handleSaveOrgSettings = () => {
@@ -364,8 +367,8 @@ export default function SettingsPage({ settings, invitees }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={settings.imageUrl} />
+                  <Avatar className="size-16">
+                    <AvatarImage src={userImageUrl} />
                     <AvatarFallback className="text-lg">U</AvatarFallback>
                   </Avatar>
                   <div>
@@ -523,8 +526,8 @@ export default function SettingsPage({ settings, invitees }) {
                         className="flex items-center justify-between p-4 rounded-lg border"
                       >
                         <div className="flex items-center gap-4">
-                          <Avatar>
-                            <AvatarImage src={settings.imageUrl} />
+                          <Avatar className="size-16">
+                            <AvatarImage src={userImageUrl} />
                             <AvatarFallback>U</AvatarFallback>
                           </Avatar>
                           <div>

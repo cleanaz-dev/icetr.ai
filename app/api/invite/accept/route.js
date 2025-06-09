@@ -28,8 +28,9 @@ export async function POST(request) {
     
     const clerkUser = await clerkClient.users.createUser({
       emailAddress: [email],
-      skipPasswordChecks: true,
-      skipPasswordRequirement: true,
+      firstName: firstname,
+      lastName: lastname
+
     });
     
 
@@ -43,6 +44,7 @@ export async function POST(request) {
         clerkId: clerkUser.id,
         imageUrl: clerkUser.imageUrl,
         organization: { connect: { id: orgId } },
+        role: "Agent"
       },
     });
 
