@@ -2,7 +2,7 @@ import React from 'react';
 import { InlineWidget } from 'react-calendly';
 import { Calendar, User } from 'lucide-react';
 
-export default function CalendarTab({ lead }) {
+export default function CalendarTab({lead}) {
 
 
 if(!lead) {
@@ -25,8 +25,8 @@ if(!lead) {
           width: '100%',
         }}
         prefill={{
-          name: lead?.name || "name",  
-          email: lead?.email || "email", 
+          name: lead.name || "name",  
+          email: lead.email || "email", 
           
         }}
       />
