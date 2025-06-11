@@ -139,7 +139,7 @@ export function useCallManagement(device) {
           params: {
             To: phoneNumber,
             fromNumber: fromNumber,
-            leadId: leadData.id,
+            leadId: leadData?.id,
             callSessionId: currentSession,
             userId: userId
           },

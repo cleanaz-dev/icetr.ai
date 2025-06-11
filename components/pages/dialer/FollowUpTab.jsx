@@ -18,6 +18,7 @@ import { Mail } from "lucide-react";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { Voicemail } from "lucide-react";
+import { Building } from "lucide-react";
 
 export default function FollowUpTab({ onLeadSelect }) {
   const [followUps, setFollowUps] = useState([]);
@@ -172,7 +173,7 @@ export default function FollowUpTab({ onLeadSelect }) {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-sm font-semibold text-foreground">
-                    {followUp.lead.name}
+                    {followUp.lead.name || "N/A"}
                   </CardTitle>
                   {getFollowUpBadge(followUp.dueDate)}
                 </div>
@@ -182,8 +183,12 @@ export default function FollowUpTab({ onLeadSelect }) {
                   {/* Lead info */}
                   <div className="text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building className="h-3.5 w-3.5 text-gray-400" />
+                      <p>{followUp.lead.company || "N/A"}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-3.5 w-3.5 text-gray-400" />
-                      <p>{followUp.lead.email}</p>
+                      <p>{followUp.lead.email || "N/A"}</p>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground mt-2">
                       <Phone className="h-3.5 w-3.5 text-gray-400" />
