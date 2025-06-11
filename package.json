@@ -32,6 +32,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@react-email/components": "0.0.41",
     "@twilio/voice-sdk": "^2.13.0",
+    "assemblyai": "^4.13.2",
     "bottleneck": "^2.19.5",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.1",

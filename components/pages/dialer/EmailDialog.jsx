@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -119,8 +119,28 @@ export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, use
     );
   };
 
+   useEffect(() => {
+    if (!open) {
+      setEmailAddress(lead?.email || "");
+      setSelectedTemplate(null);
+      setShowPreview(false);
+    } else {
+      // When opening, set to lead's email (even if empty)
+      setEmailAddress(lead?.email || "");
+    }
+  }, [open, lead]); // Reset when open state or lead changes
+
+const handleOpenChange = (isOpen) => {
+    if (!isOpen) {
+      // Reset state when closing
+      setEmailAddress("");
+      setSelectedTemplate(null);
+      setShowPreview(false);
+    }
+    onOpenChange(isOpen);
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl md:min-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -139,7 +159,7 @@ export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, use
               value={emailAddress}
               onChange={(e) => setEmailAddress(e.target.value)}
               placeholder="Enter email address"
-              className={!lead?.email ? "border-orange-200 bg-orange-50" : ""}
+              className={!lead?.email ? "border-orange-600" : ""}
             />
             {!lead?.email && (
               <p className="text-sm text-orange-600">

@@ -3,6 +3,35 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
 import prisma from "@/lib/service/prisma";
+import { AssemblyAI } from "assemblyai";
+
+const client = new AssemblyAI({
+  apiKey: process.env.ASSEMBLYAI_API_KEY,
+});
+
+// Transcription function
+async function transcribeRecording(recordingUrl) {
+  try {
+    console.log("Starting transcription for:", recordingUrl);
+    
+    const config = {
+      audio_url: recordingUrl,
+    };
+
+    const transcript = await client.transcripts.transcribe(config);
+    
+    if (transcript.status === 'error') {
+      console.error('Transcription failed:', transcript.error);
+      return null;
+    }
+
+    console.log("Transcription completed successfully");
+    return transcript.text;
+  } catch (error) {
+    console.error("Error transcribing recording:", error);
+    return null;
+  }
+}
 
 // Database functions
 async function checkIfLead(phoneNumber) {
@@ -104,7 +133,8 @@ async function updateCallWithRecording(
         updatedAt: new Date(),
       },
     });
-    console.log("Call updated with recording:", updatedCall);
+    
+    console.log("Call updated with recording and transcription:", updatedCall);
     return updatedCall;
   } catch (error) {
     console.error("Error updating call with recording:", error);
@@ -139,6 +169,7 @@ async function createProspect(phoneNumber, callSid, source = "inbound_call") {
     const prospect = await prisma.prospect.create({
       data: {
         phoneNumber,
+        callSid,
         source,
         status: "New",
         notes: `Inbound call received - CallSid: ${callSid}`,
@@ -153,16 +184,13 @@ async function createProspect(phoneNumber, callSid, source = "inbound_call") {
 }
 
 async function updateProspectWithRecording(
-  phoneNumber,
+  callSid,
   recordingUrl,
   transcription = null
 ) {
   try {
-    const updatedProspect = await prisma.prospect.updateMany({
-      where: {
-        phoneNumber,
-        status: "New", // Only update new prospects to avoid overwriting
-      },
+    const updatedProspect = await prisma.prospect.update({
+      where: { callSid },
       data: {
         recordingUrl,
         transcription,
@@ -182,14 +210,14 @@ async function updateProspectWithRecording(
 async function updateFollowUpWithRecording(
   callSid,
   recordingUrl,
-  transcriptionText = null
+  transcription = null
 ) {
   try {
     const updatedFollowUp = await prisma.followUp.update({
       where: { callSid },
       data: {
         recordingUrl,
-        transcriptionText,
+        transcription: transcription,
       },
     });
     console.log("Follow-up updated with recording:", updatedFollowUp);
@@ -242,6 +270,9 @@ export async function POST(request) {
         if (from && from.startsWith("+")) {
           console.log("Inbound voicemail recording received");
 
+          // Always transcribe inbound voicemails regardless of duration
+          const transcription = await transcribeRecording(recordingUrl);
+
           // Check if this is from a known lead
           const lead = await checkIfLead(from);
 
@@ -250,14 +281,14 @@ export async function POST(request) {
             await updateFollowUpWithRecording(
               callSid,
               recordingUrl,
-              transcriptionText
+              transcription
             );
           } else {
             console.log("Updating prospect with recording for unknown caller");
             await updateProspectWithRecording(
-              from,
+              callSid,
               recordingUrl,
-              transcriptionText
+              transcription
             );
           }
         } else {
@@ -267,12 +298,16 @@ export async function POST(request) {
           // Only save recordings for calls >= 2 minutes
           if (duration >= 120) {
             console.log(
-              `Outbound call >= 2 minutes (${duration}s) - saving recording`
+              `Outbound call >= 2 minutes (${duration}s) - saving recording and transcribing`
             );
+            
+            // Transcribe the recording
+            const transcription = await transcribeRecording(recordingUrl);
+            
             await updateCallWithRecording(
               callSid,
               recordingUrl,
-              transcriptionText,
+              transcription,
               duration
             );
           } else {
