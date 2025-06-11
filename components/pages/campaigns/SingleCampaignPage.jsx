@@ -73,12 +73,13 @@ import {
   MdOutlineNoteAlt,
   MdOutlineSms,
   MdOutlineVoicemail,
-  MdCallMissed
+  MdCallMissed,
 } from "react-icons/md";
 import AddMemberDialog from "./AddMemberDialog";
+import SingleCampaignCard from "./SingleCampaignCard";
+import AssignLeadsDialog from "../leads/AssignLeadsDialog";
 
-export default function SingleCampaignPage({ campaign, orgUsers }) {
-
+export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }) {
   const router = useRouter();
 
   const [leads, setLeads] = useState(campaign.leads);
@@ -119,7 +120,6 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
     );
   };
 
-
   const getLastActivityDisplay = (activities) => {
     if (!activities || activities.length === 0) {
       return "No activity";
@@ -158,8 +158,8 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
       },
       MISSED_CALL: {
         icon: MdCallMissed,
-        color: "text-primary"
-      }
+        color: "text-primary",
+      },
     };
 
     const config = statusConfig[latest.type];
@@ -210,13 +210,6 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
       month: "short",
       day: "numeric",
     }).format(new Date(date));
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
   };
 
   const updateCampaignStatus = (newStatus) => {
@@ -308,67 +301,7 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
       </div>
 
       {/* Campaign Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="flex flex-col h-full">
-          {" "}
-          {/* Add flex-col and h-full */}
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="mt-auto">
-            {" "}
-            {/* Add mt-auto to push content down */}
-            <div className="text-2xl font-bold">{campaign.leads.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Conversion</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="mt-auto">
-            {/* <div className="text-2xl font-bold">{campaign.metrics.conversionRate}%</div> */}
-            <p className="text-xs text-muted-foreground">
-              +2.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Budget Spent</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <div className="text-2xl font-bold">
-              {formatCurrency(campaign.spent)}
-            </div>
-            <Progress
-              value={(campaign.spent / campaign.budget) * 100}
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatCurrency(campaign.budget - campaign.spent)} remaining
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Pick Up Rate</CardTitle>
-            <Phone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="mt-auto">
-            {/* <div className="text-2xl font-bold">{campaign.metrics.openRate}%</div> */}
-            <p className="text-xs text-muted-foreground">Industry avg: 21.3%</p>
-          </CardContent>
-        </Card>
-      </div>
+      <SingleCampaignCard campaign={campaign} />
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="leads" className="space-y-4">
@@ -390,13 +323,16 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
                     Manage and track leads for this campaign
                   </CardDescription>
                 </div>
-                <ImportLeadsDialog
-                  campaignId={campaign.id}
-                  onImportComplete={(data) => {
-                    // Refresh your leads list or update state
-                    console.log(`Imported ${data.count} leads`);
-                  }}
-                />
+                <div className="flex gap-2">
+                  <ImportLeadsDialog
+                    campaignId={campaign.id}
+                    onImportComplete={(data) => {
+                      // Refresh your leads list or update state
+                      console.log(`Imported ${data.count} leads`);
+                    }}
+                  />
+                  <AssignLeadsDialog leads={filteredLeads} users={campaignUsers} />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -520,7 +456,7 @@ export default function SingleCampaignPage({ campaign, orgUsers }) {
                   users={orgUsers}
                   campaignId={campaign.id}
                   onMembersAdded={() => {
-                    router.refresh(); 
+                    router.refresh();
                   }}
                 />
               </div>

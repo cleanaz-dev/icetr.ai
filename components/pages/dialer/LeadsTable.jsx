@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { LEAD_STATUSES } from "@/lib/constants/frontend";
 import LeadActivities from "./LeadActivities";
 import EditLeadDialog from "./EditLeadDialog";
+import EmailDialog from "./EmailDialog";
 
 export default function LeadsTable({
   leads,
@@ -57,30 +58,37 @@ export default function LeadsTable({
 }) {
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   const onEditLead = () => {
-     setEditDialogOpen(true);
+    setEditDialogOpen(true);
+  };
+  const onEmailLead = () => {
+    setShowEmailDialog(true);
   };
 
- const handleSaveLead = async (leadId, updatedData) => {
-  try {
-    const response = await fetch(`/api/leads/${leadId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedData),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to update lead");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error updating lead:", error);
-    throw error;
+  const handleEmailLead = async (leadId) => {
+    console.log("email sent to lead")
   }
-};
+
+  const handleSaveLead = async (leadId, updatedData) => {
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update lead");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      throw error;
+    }
+  };
 
   const toggleActivityExpansion = (leadId) => {
     setExpandedLeadId(expandedLeadId === leadId ? null : leadId);
@@ -132,6 +140,7 @@ export default function LeadsTable({
               </TableHead>
               <TableHead>Phone</TableHead>
               <TableHead className="hidden md:table-cell">Company</TableHead>
+              <TableHead className="hidden md:table-cell">Website</TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
                 onClick={() => onSort("status")}
@@ -157,7 +166,7 @@ export default function LeadsTable({
                 <TableRow
                   className={cn(
                     "cursor-pointer hover:bg-muted/50",
-                    selectedLead?.id === lead.id && "bg-muted",
+                    selectedLead?.id === lead.id && "bg-muted"
                   )}
                 >
                   <TableCell
@@ -182,6 +191,12 @@ export default function LeadsTable({
                     onClick={() => onSelectLead(lead)}
                   >
                     {lead.company || "-"}
+                  </TableCell>
+                  <TableCell
+                    className="hidden md:table-cell"
+                    onClick={() => onSelectLead(lead)}
+                  >
+                    {lead.website || "N/A"}
                   </TableCell>
                   <TableCell onClick={() => onSelectLead(lead)}>
                     <Badge
@@ -218,7 +233,7 @@ export default function LeadsTable({
                           <Button
                             size="sm"
                             variant="ghost"
-                             disabled={selectedLead?.id !== lead.id}
+                            disabled={selectedLead?.id !== lead.id}
                             onClick={(e) => {
                               e.stopPropagation();
                             }}
@@ -293,13 +308,24 @@ export default function LeadsTable({
           </TableBody>
         </Table>
 
-         {/* Edit Lead Dialog */}
-      <EditLeadDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        lead={selectedLead}
-        onSave={handleSaveLead}
-      />
+        {/* Edit Lead Dialog */}
+        <EditLeadDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          lead={selectedLead}
+          onSave={handleSaveLead}
+        />
+
+          {/*  Email Dialog */}
+        <EmailDialog
+          lead={selectedLead}
+          open={showEmailDialog}
+          onOpenChange={setShowEmailDialog}
+          onEmailSent={(template, email) => {
+            // Handle success - maybe refresh activities
+            console.log(`Sent ${template.name} to ${email}`);
+          }}
+        />
       </div>
     </>
   );

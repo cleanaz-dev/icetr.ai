@@ -56,6 +56,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   const [currentSession, setCurrentSession] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [followUpTime,setFollowUpTime] = useState("")
+  const [callData,setCallData] = useState(null)
+
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -93,9 +95,17 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     ];
 
     if (callEndedStates.includes(callStatus)) {
+      console.log("Call ended, local data:", callData);
       setPostCallDialogOpen(true);
     }
   }, [callStatus]);
+
+ useEffect(() => {
+    if (currentCallData) {
+      console.log("Storing call data locally:", currentCallData);
+      setCallData(currentCallData);
+    }
+  }, [currentCallData]);
 
   const saveCallActivity = async (leadId, callData, outcome, notes) => {
     try {
@@ -113,7 +123,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           callStartTime: callData?.startTime || new Date(),
           callEndTime: new Date(),
           sessionId: currentSession.id,
-          followUpTime: followUpTime
+          followUpTime: followUpTime,
+          leadActivityId: callData.leadActivityId
         }),
       });
 
@@ -134,7 +145,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     try {
       await saveCallActivity(
         selectedLead.id,
-        currentCallData,
+        callData,
         callOutcome,
         callNotes
       );
@@ -228,6 +239,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           setLead={selectLead}
           calledLeadIds={calledLeadIds}
           sessionCalls={sessionCalls}
+          currentSession={currentSession}
           status={status}
           call={call}
           callStatus={callStatus}
@@ -243,7 +255,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
       <PostCallDialog
         open={postCallDialogOpen}
         onOpenChange={setPostCallDialogOpen}
-        currentCallData={currentCallData}
+        currentCallData={callData}
         callOutcome={callOutcome}
         onCallOutcomeChange={setCallOutcome}
         callNotes={callNotes}

@@ -43,6 +43,7 @@ model User {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   callSessions      CallSession[]
+  Call              Call[]
 }
 
 model UserSettings {
@@ -97,6 +98,34 @@ model CampaignUser {
   assignedAt DateTime @default(now())
 }
 
+model Prospect {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String? // extracted from voicemail or provided
+  phoneNumber   String?
+  email         String?
+  company       String? // if they mention it
+  source        String? // "inbound_call", "contact_form", "email", etc.
+  recordingUrl  String? // for voicemail recordings
+  transcription String? // transcribed voicemail content
+  notes         String? // any additional context
+  status        ProspectStatus @default(New) // New, Contacted, Qualified, Converted, etc.
+
+  // Conversion tracking  
+  convertedToLeadId String? @db.ObjectId
+  convertedToLead   Lead?   @relation(fields: [convertedToLeadId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProspectStatus {
+  New
+  Contacted
+  Qualified
+  Converted
+  Unqualified
+}
+
 model Lead {
   id             String         @id @default(auto()) @map("_id") @db.ObjectId
   campaignId     String         @db.ObjectId
@@ -112,28 +141,71 @@ model Lead {
   metadata       Json?
   industry       String?
   website        String?
+  region         String?
   activities     LeadActivity[]
   followUps      FollowUp[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  Call           Call[]
+  Prospect       Prospect[]
 }
 
 model LeadActivity {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  leadId      String       @db.ObjectId
-  lead        Lead         @relation(fields: [leadId], references: [id])
-  type        ActivityType
-  content     String // message or description
-  duration    Int? // call duration in seconds (for calls)
-  outcome     CallOutcome? // only for call activities
-  timestamp   DateTime     @default(now())
-  // Change this part:
-  createdBy   String       @db.ObjectId
-  createdUser User         @relation(fields: [createdBy], references: [id])
-  createdAt   DateTime     @default(now())
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  leadId           String       @db.ObjectId
+  lead             Lead         @relation(fields: [leadId], references: [id])
+  type             ActivityType
+  content          String? // message or description
+  duration         Int? // call duration in seconds (for calls)
+  outcome          CallOutcome? // only for call activities
+  timestamp        DateTime     @default(now())
+  callSid          String?
+  callAttemptCount Int?
+  createdBy        String       @db.ObjectId
+  createdUser      User         @relation(fields: [createdBy], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   callSession   CallSession? @relation(fields: [callSessionId], references: [id])
   callSessionId String?      @db.ObjectId
+  call          Call?        @relation(fields: [callId], references: [id])
+  callId        String?      @db.ObjectId
+}
+
+model Call {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  callSid       String      @unique // Twilio SID
+  leadId        String      @db.ObjectId
+  lead          Lead        @relation(fields: [leadId], references: [id])
+  callSessionId String      @db.ObjectId
+  callSession   CallSession @relation(fields: [callSessionId], references: [id])
+
+  // Call details
+  direction String? // "inbound" | "outbound"
+  from      String? // phone number
+  to        String? // phone number
+  status    String? // "initiated" | "ringing" | "answered" | "completed"
+  outcome   CallOutcome?
+
+  // Timing
+  startTime DateTime?
+  endTime   DateTime?
+  duration  Int? // seconds
+
+  // Media
+  recordingUrl  String?
+  transcription String?
+
+  // Metadata
+  notes       String?
+  createdBy   String   @db.ObjectId
+  createdUser User     @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  activities LeadActivity[] // All activities related to this call
+  followUps  FollowUp[] // Follow-ups created from this call
 }
 
 model CallSession {
@@ -153,23 +225,26 @@ model CallSession {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Call      Call[]
 }
 
 model FollowUp {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  leadId            String   @db.ObjectId
-  lead              Lead     @relation(fields: [leadId], references: [id])
-  dueDate           DateTime
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  leadId            String    @db.ObjectId
+  lead              Lead      @relation(fields: [leadId], references: [id])
+  dueDate           DateTime?
   type              String // "call" or "email"
   reason            String // "busy", "scheduled_callback", etc.
-  completed         Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  callSid           String?  @unique
+  completed         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  callSid           String?   @unique
   to                String?
   from              String?
   recordingUrl      String?
   transcriptionText String?
+  call              Call?     @relation(fields: [callId], references: [id])
+  callId            String?   @db.ObjectId
 }
 
 model WaitList {
@@ -189,6 +264,9 @@ enum ActivityType {
   FOLLOW_UP
   ASSIGNMENT
   MISSED_CALL
+  OUTBOUND_CALL
+  CONTACT_ATTEMPTS
+  CONTACTED
 }
 
 enum CallOutcome {

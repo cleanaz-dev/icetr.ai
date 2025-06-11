@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { CALL_OUTCOMES } from "@/lib/constants/frontend";
+import LeadActivities from "./LeadActivities";
 
 export default function PostCallDialog({
   open,
@@ -32,6 +33,7 @@ export default function PostCallDialog({
   onSave,
   isSaving = false,
 }) {
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -41,9 +43,9 @@ export default function PostCallDialog({
         <div className="space-y-4">
           <div className="bg-muted p-3 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Call Duration</span>
+              <span className="text-sm font-medium">ID:</span>
               <span className="text-sm">
-                {currentCallData && formatDuration(currentCallData.duration)}
+                  {currentCallData?.leadActivityId}
               </span>
             </div>
           </div>
@@ -75,18 +77,18 @@ export default function PostCallDialog({
           {(callOutcome === "busy" || callOutcome === "scheduled_callback") && (
             <div className="space-y-2">
               <Label>Follow Up</Label>
-            <Select onValueChange={followUpTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="When to follow up?" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1_hour">In 1 hour</SelectItem>
-                <SelectItem value="2_hours">In 2 hours</SelectItem>
-                <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                <SelectItem value="3_days">In 3 days</SelectItem>
-                <SelectItem value="1_week">In 1 week</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select onValueChange={followUpTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="When to follow up?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1_hour">In 1 hour</SelectItem>
+                  <SelectItem value="2_hours">In 2 hours</SelectItem>
+                  <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                  <SelectItem value="3_days">In 3 days</SelectItem>
+                  <SelectItem value="1_week">In 1 week</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 

@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
   const [file, setFile] = useState(null);
   const [source, setSource] = useState("");
-  const [industry, setIndustry] = useState("")
+  const [industry, setIndustry] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -58,7 +58,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
     formData.append("file", file);
     formData.append("campaignId", campaignId);
     formData.append("source", source);
-    formData.append("industry", industry)
+    formData.append("industry", industry);
 
     try {
       const response = await fetch("/api/import/leads", {
@@ -100,7 +100,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm" variant="outline">
           <Upload className="w-4 h-4 mr-2" />
           Import Leads
         </Button>
@@ -171,9 +171,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="trades">
-                      Trades
-                    </SelectItem>
+                    <SelectItem value="trades">Trades</SelectItem>
                     <SelectItem value="real-estate">Real Estate</SelectItem>
                     <SelectItem value="education">Education</SelectItem>
                   </SelectGroup>

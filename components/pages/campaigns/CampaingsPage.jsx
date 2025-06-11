@@ -56,6 +56,7 @@ import {
 import CreateCampaignDialog from "./CreateCampaignDialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import CampaignStatsCard from "./CampaignStatsCard";
 
 
 export default function CampaignsPage({ campaigns = [] }) {
@@ -152,7 +153,7 @@ export default function CampaignsPage({ campaigns = [] }) {
   };
 
   return (
-    <div className="max-w-7xl px-4 py-6">
+    <div className=" px-4 py-6">
       {/* Header Section */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="flex items-center space-x-3">
@@ -167,54 +168,7 @@ export default function CampaignsPage({ campaigns = [] }) {
       </header>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{campaigns.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Engagement</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">N/A</div>
-            <p className="text-xs text-muted-foreground">+5% from last week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bookings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">N/A</div>
-            <p className="text-xs text-muted-foreground">+8% from last week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Agent</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-            N/A
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +15% from last month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+     <CampaignStatsCard campaigns={campaigns} />
 
       <Card>
         <CardHeader>
@@ -286,9 +240,7 @@ export default function CampaignsPage({ campaigns = [] }) {
                   <TableRow key={campaign.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <div className="flex size-4 items-center justify-center rounded-full bg-primary/10">
-                          <Target className="size-2 text-primary" />
-                        </div>
+                      
                         <div>
                           <p className="font-medium">{campaign.name}</p>
                           <p className="text-sm text-muted-foreground">

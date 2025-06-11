@@ -1,6 +1,6 @@
 import SingleCampaignPage from "@/components/pages/campaigns/SingleCampaignPage";
 import React from "react";
-import { getCampaign, getOrgUsers } from "@/lib/service/prismaQueries";
+import { getCampaign, getCampaignUsers, getOrgUsers } from "@/lib/service/prismaQueries";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function page({ params }) {
@@ -8,10 +8,11 @@ export default async function page({ params }) {
   const { id } = await params;
   const campaign = await getCampaign(id);
   const orgUsers = await getOrgUsers(userId, campaign.id)
-  // console.log("users", orgUsers)
+  const campaignUsers = await getCampaignUsers(id)
+  console.log("campaign users", campaignUsers)
   return (
     <div>
-      <SingleCampaignPage campaign={campaign} orgUsers={orgUsers} />
+      <SingleCampaignPage campaign={campaign} campaignUsers={campaignUsers} orgUsers={orgUsers}/>
     </div>
   );
 }

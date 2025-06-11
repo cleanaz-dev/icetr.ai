@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { LEAD_STATUSES, FROM_NUMBERS } from "@/lib/constants/frontend";
 import Dialpad from "@/components/pages/dialer/DialPad";
+import { useUser } from "@clerk/nextjs";
 
 export default function DialerTab({
   selectedLead,
@@ -30,10 +31,12 @@ export default function DialerTab({
   call,
   onCall,
   onHangup,
+  currentSession
 }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fromNumber, setFromNumber] = useState(FROM_NUMBERS[0].value);
   const [showDialpad, setShowDialpad] = useState(true);
+  const { user } = useUser()
 
   const clearNumber = () => {
     setPhoneNumber("");
@@ -106,7 +109,7 @@ export default function DialerTab({
             {FROM_NUMBERS.map((number) => (
               <SelectItem key={number.value} value={number.value}>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold bg-muted px-1 rounded">
+                  <span className="">
                     {number.country}
                   </span>
                   {number.label}
@@ -120,7 +123,7 @@ export default function DialerTab({
       {/* Call Controls */}
       <div className="grid grid-cols-2 gap-3">
         <Button
-          onClick={() => onCall(phoneNumber,selectedLead, fromNumber)}
+          onClick={() => onCall(phoneNumber,selectedLead, fromNumber, currentSession.id, user.id)}
           disabled={!phoneNumber || call}
           className="w-full"
           size="lg"

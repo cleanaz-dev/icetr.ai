@@ -26,6 +26,7 @@ export default function DialerPanel({
   selectedLead,
   calledLeadIds,
   sessionCalls,
+  currentSession,
   status,
   call,
   onCall,
@@ -37,6 +38,7 @@ export default function DialerPanel({
   setLead,
 }) {
   const [activeTab, setActiveTab] = useState("dialer");
+
   return (
     <div
       className={cn(
@@ -89,6 +91,7 @@ export default function DialerPanel({
             calledLeadIds={calledLeadIds}
             status={status}
             call={call}
+            currentSession={currentSession}
             onCall={onCall}
             onHangup={onHangup}
           />
