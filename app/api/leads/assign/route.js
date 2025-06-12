@@ -60,7 +60,7 @@ export async function POST(request) {
           data: {
             leadId: leadId,
             type: "ASSIGNMENT",
-            content: `Lead assigned to ${assignedUser.firstName || assignedUser.email}`,
+            content: `Lead assigned to ${assignedUser.firstname || assignedUser.email}`,
             createdBy: assingerUser.id
           }
         })
@@ -73,7 +73,7 @@ export async function POST(request) {
         assignedCount: updatedLeads.count,
         assignedTo: {
           id: assignedUser.id,
-          name: assignedUser.firstName || assignedUser.email
+          name: assignedUser.firstname || assignedUser.email
         }
       });
     }

@@ -140,7 +140,7 @@ export default function LeadsTable({
                 </div>
               </TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead className="hidden md:table-cell">Company</TableHead>
+              <TableHead className="hidden md:table-cell ">Company</TableHead>
               <TableHead className="hidden md:table-cell">Website</TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
@@ -188,13 +188,13 @@ export default function LeadsTable({
                     {lead.phoneNumber}
                   </TableCell>
                   <TableCell
-                    className="hidden md:table-cell"
+                    className="hidden md:table-cell max-w-[200px] truncate"
                     onClick={() => onSelectLead(lead)}
                   >
                     {lead.company || "-"}
                   </TableCell>
                   <TableCell
-                    className="hidden md:table-cell"
+                    className="hidden md:table-cell max-w-[150px] truncate"
                     onClick={() => onSelectLead(lead)}
                   >
                     {lead.website || "N/A"}
