@@ -18,6 +18,8 @@ export async function POST(request) {
     const campaignId = formData.get("campaignId");
     const source = formData.get("source")
     const industry = formData.get("industry")
+    const region = formData.get("region")
+    const country = formData.get("country")
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -67,6 +69,8 @@ export async function POST(request) {
                 industry: industry || null,
                 source: source || null,
                 status: "New",
+                country: country || null,
+                region: region || null
               };
 
               // Parse metadata if provided

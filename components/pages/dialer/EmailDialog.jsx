@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Eye, Send, User, Building } from "lucide-react";
+import { Mail, Eye, Send, User, Building, Video } from "lucide-react";
 
 const EMAIL_TEMPLATES = [
   {
@@ -22,15 +22,15 @@ const EMAIL_TEMPLATES = [
     description: "Introduce your product/service",
     subject: "Solution for {company}",
     preview: "Introduce your product benefits and features...",
-    icon: <Mail className="w-4 h-4" />
+    icon: <Mail className="w-4 h-4" />,
   },
   {
     id: "followup",
-    name: "Follow-up Email", 
+    name: "Follow-up Email",
     description: "Follow up after a call or meeting",
     subject: "Great talking with you, {name}",
     preview: "Thanks for our conversation. Here's what we discussed...",
-    icon: <User className="w-4 h-4" />
+    icon: <User className="w-4 h-4" />,
   },
   {
     id: "introduction",
@@ -38,11 +38,25 @@ const EMAIL_TEMPLATES = [
     description: "Introduce yourself and your company",
     subject: "Introduction from {user.firstname}",
     preview: "Hi {name}, I wanted to introduce myself and our company...",
-    icon: <Building className="w-4 h-4" />
-  }
+    icon: <Building className="w-4 h-4" />,
+  },
+  {
+    id: "loom",
+    name: "Loom VSL",
+    description: "Video introduction",
+    subject: "Check out this 2min video",
+    preview: "This video will show you exactly....",
+    icon: <Video className="w-4 h-4" />,
+  },
 ];
 
-export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, user }) {
+export default function EmailDialog({
+  lead,
+  open,
+  onOpenChange,
+  onEmailSent,
+  user,
+}) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [emailAddress, setEmailAddress] = useState(lead?.email || "");
   const [showPreview, setShowPreview] = useState(false);
@@ -58,7 +72,7 @@ export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, use
 
     setSending(true);
     try {
-      const response = await fetch(`/api/leads/${lead.id}/email`, {
+      const response = await fetch(`/api/leads/${lead.id}/emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -67,15 +81,13 @@ export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, use
           leadData: {
             name: lead.name,
             company: lead.company,
-            // Add other lead data as needed
-          }
+          },
         }),
       });
 
       if (response.ok) {
         onEmailSent?.(selectedTemplate, emailAddress);
         onOpenChange(false);
-        // Reset state
         setSelectedTemplate(null);
         setShowPreview(false);
       } else {
@@ -94,54 +106,69 @@ export default function EmailDialog({ lead, open, onOpenChange, onEmailSent, use
     const personalizedSubject = selectedTemplate.subject
       .replace("{company}", lead.company || "your company")
       .replace("{name}", lead.name || "there")
-      .replace("{user.firstname}", "John"); // Replace with actual user data
+      .replace("{user.firstname}", user?.firstName || "John");
 
     const personalizedPreview = selectedTemplate.preview
       .replace("{company}", lead.company || "your company")
       .replace("{name}", lead.name || "there")
-      .replace("{user.firstname}", "John"); // Replace with actual user data
+      .replace("{user.firstname}", user?.firstName || "John");
 
     return (
-      <Card >
-        <CardContent>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground">Subject</Label>
-              <div className="text-sm font-medium">{personalizedSubject}</div>
-            </div>
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground">Preview</Label>
-              <div className="text-sm text-muted-foreground">{personalizedPreview}</div>
-            </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+        className="bg-muted/30 rounded-lg p-4 space-y-3"
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.2 }}
+        >
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Subject
+          </span>
+          <div className="text-sm font-medium mt-1">{personalizedSubject}</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.2 }}
+        >
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Preview
+          </span>
+          <div className="text-sm text-muted-foreground mt-1">
+            {personalizedPreview}
           </div>
-        </CardContent>
-      </Card>
+        </motion.div>
+      </motion.div>
     );
   };
 
-   useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setEmailAddress(lead?.email || "");
       setSelectedTemplate(null);
       setShowPreview(false);
     } else {
-      // When opening, set to lead's email (even if empty)
       setEmailAddress(lead?.email || "");
     }
-  }, [open, lead]); // Reset when open state or lead changes
+  }, [open, lead]);
 
-const handleOpenChange = (isOpen) => {
+  const handleOpenChange = (isOpen) => {
     if (!isOpen) {
-      // Reset state when closing
       setEmailAddress("");
       setSelectedTemplate(null);
       setShowPreview(false);
     }
     onOpenChange(isOpen);
   };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl md:min-w-3xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5" />
@@ -159,7 +186,7 @@ const handleOpenChange = (isOpen) => {
               value={emailAddress}
               onChange={(e) => setEmailAddress(e.target.value)}
               placeholder="Enter email address"
-              className={!lead?.email ? "border-orange-600" : ""}
+              className={!lead?.email ? "border-orange-500" : ""}
             />
             {!lead?.email && (
               <p className="text-sm text-orange-600">
@@ -171,36 +198,36 @@ const handleOpenChange = (isOpen) => {
           {/* Template Selection */}
           <div className="space-y-3">
             <Label>Choose Email Template</Label>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2">
               {EMAIL_TEMPLATES.map((template) => (
-                <Card
+                <div
                   key={template.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-all hover:bg-muted/50 ${
                     selectedTemplate?.id === template.id
-                      ? "ring-2 ring-primary bg-primary/5"
-                      : "hover:bg-muted/50"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-muted-foreground/30"
                   }`}
                   onClick={() => handleTemplateSelect(template)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                          {template.icon}
-                        </div>
-                        <div>
-                          <div className="font-medium">{template.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {template.description}
-                          </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10">
+                        {template.icon}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{template.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {template.description}
                         </div>
                       </div>
-                      {selectedTemplate?.id === template.id && (
-                        <Badge variant="default">Selected</Badge>
-                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                    {selectedTemplate?.id === template.id && (
+                      <Badge variant="default" className="text-xs">
+                        Selected
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -219,7 +246,9 @@ const handleOpenChange = (isOpen) => {
                   {showPreview ? "Hide" : "Show"} Preview
                 </Button>
               </div>
-              {showPreview && renderTemplatePreview()}
+              <AnimatePresence>
+                {showPreview && renderTemplatePreview()}
+              </AnimatePresence>
             </div>
           )}
         </div>

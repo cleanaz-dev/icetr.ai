@@ -41,6 +41,7 @@ import { LEAD_STATUSES } from "@/lib/constants/frontend";
 import LeadActivities from "./LeadActivities";
 import EditLeadDialog from "./EditLeadDialog";
 import EmailDialog from "./EmailDialog";
+import { toast } from "sonner";
 
 export default function LeadsTable({
   leads,
@@ -322,7 +323,7 @@ export default function LeadsTable({
           open={showEmailDialog}
           onOpenChange={setShowEmailDialog}
           onEmailSent={(template, email) => {
-            // Handle success - maybe refresh activities
+           toast.success(`Sent ${template.name} to ${email}`)
             console.log(`Sent ${template.name} to ${email}`);
           }}
         />

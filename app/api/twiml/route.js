@@ -3,35 +3,7 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
 import prisma from "@/lib/service/prisma";
-import { AssemblyAI } from "assemblyai";
-
-const client = new AssemblyAI({
-  apiKey: process.env.ASSEMBLYAI_API_KEY,
-});
-
-// Transcription function
-async function transcribeRecording(recordingUrl) {
-  try {
-    console.log("Starting transcription for:", recordingUrl);
-    
-    const config = {
-      audio_url: recordingUrl,
-    };
-
-    const transcript = await client.transcripts.transcribe(config);
-    
-    if (transcript.status === 'error') {
-      console.error('Transcription failed:', transcript.error);
-      return null;
-    }
-
-    console.log("Transcription completed successfully");
-    return transcript.text;
-  } catch (error) {
-    console.error("Error transcribing recording:", error);
-    return null;
-  }
-}
+import { transcribeRecording } from "@/lib/service/assembly-ai"; // Import your transcription function
 
 // Database functions
 async function checkIfLead(phoneNumber) {
@@ -248,6 +220,7 @@ export async function POST(request) {
 
     // Recording callback parameters
     const recordingUrl = formData.get("RecordingUrl");
+    const recordingStatus = formData.get("RecordingStatus");
     const transcriptionText = formData.get("TranscriptionText");
     const recordingDuration = formData.get("RecordingDuration");
 
@@ -255,81 +228,122 @@ export async function POST(request) {
     const customFromNumber = formData.get("fromNumber");
 
     console.log(
-      `Processing: CallSid: ${callSid}, From: ${from}, Direction: ${direction}`
+      `Processing: CallSid: ${callSid}, From: ${from}, Direction: ${direction}, RecordingStatus: ${recordingStatus}`
     );
 
     // Handle recording callback - this happens after a call is recorded
-    if (recordingUrl && callSid) {
-      console.log("Recording callback received");
+    // ONLY process recordings when RecordingStatus is 'completed'
+    if (recordingUrl && callSid && recordingStatus === 'completed') {
+      console.log("Recording callback received with status 'completed'");
 
       const duration = parseInt(recordingDuration) || 0;
       console.log(`Recording duration: ${duration} seconds`);
 
       try {
-        // Check if this is an inbound voicemail
-        if (from && from.startsWith("+")) {
+        // For recording callbacks, we need to determine if this was inbound or outbound
+        // Check if there's a followUp or prospect record (indicates inbound)
+        // or a call record (indicates outbound)
+        
+        const followUp = await prisma.followUp.findFirst({
+          where: { callSid },
+          include: { lead: true }
+        });
+        
+        const prospect = await prisma.prospect.findFirst({
+          where: { callSid }
+        });
+        
+        const call = await prisma.call.findFirst({
+          where: { callSid }
+        });
+
+        if (followUp || prospect) {
+          // This was an inbound call (voicemail)
           console.log("Inbound voicemail recording received");
 
-          // Always transcribe inbound voicemails regardless of duration
-          const transcription = await transcribeRecording(recordingUrl);
+          // Always transcribe inbound voicemails regardless of duration using Assembly AI
+          let transcription = null;
+          try {
+            console.log("Transcribing inbound voicemail with Assembly AI...");
+            transcription = await transcribeRecording(recordingUrl);
+            console.log("Assembly AI transcription completed:", transcription ? "Success" : "Failed");
+          } catch (transcriptionError) {
+            console.error("Assembly AI transcription failed:", transcriptionError);
+            // Fallback to Twilio transcription if available
+            transcription = transcriptionText || null;
+          }
 
-          // Check if this is from a known lead
-          const lead = await checkIfLead(from);
-
-          if (lead) {
+          if (followUp) {
             console.log("Updating follow-up with recording for known lead");
             await updateFollowUpWithRecording(
               callSid,
               recordingUrl,
-              transcription
+              transcription.text
             );
-          } else {
+          } else if (prospect) {
             console.log("Updating prospect with recording for unknown caller");
             await updateProspectWithRecording(
               callSid,
               recordingUrl,
-              transcription
+              transcription.text
             );
           }
-        } else {
+        } else if (call) {
           // This is an outbound call recording
           console.log("Outbound call recording received");
 
-          // Only save recordings for calls >= 2 minutes
+          // Only save recordings and transcribe for calls >= 2 minutes
           if (duration >= 120) {
             console.log(
               `Outbound call >= 2 minutes (${duration}s) - saving recording and transcribing`
             );
             
-            // Transcribe the recording
-            const transcription = await transcribeRecording(recordingUrl);
+            // Transcribe the recording using Assembly AI
+            let transcription = null;
+            try {
+              console.log("Transcribing outbound call with Assembly AI...");
+              transcription = await transcribeRecording(recordingUrl)
+              console.log("Assembly AI transcription completed:", transcription ? "Success" : "Failed");
+            } catch (transcriptionError) {
+              console.error("Assembly AI transcription failed:", transcriptionError);
+              // Fallback to Twilio transcription if available
+              transcription = transcriptionText || null;
+            }
             
             await updateCallWithRecording(
               callSid,
               recordingUrl,
-              transcription,
+              transcription.text,
               duration
             );
           } else {
             console.log(
-              `Outbound call too short (${duration}s) - updating status only`
+              `Outbound call too short (${duration}s) - marking completed without saving recording`
             );
-            // Still update call status to completed without recording
+            // Update call status to completed without saving recording or transcription
+            // This is needed to properly close the call record in the database
             await prisma.call.update({
               where: { callSid },
               data: {
                 status: "completed",
                 endTime: new Date(),
                 duration: duration,
+                updatedAt: new Date(),
               },
             });
           }
+        } else {
+          console.log("No matching record found for CallSid:", callSid);
         }
       } catch (error) {
         console.error("Error processing recording callback:", error);
       }
 
       // For recording callbacks, return success response (not TwiML)
+      return new NextResponse("OK", { status: 200 });
+    } else if (recordingUrl && recordingStatus !== 'completed') {
+      // Log non-completed recording statuses for debugging
+      console.log(`Recording callback received with status '${recordingStatus}' - skipping transcription`);
       return new NextResponse("OK", { status: 200 });
     }
 

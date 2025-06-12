@@ -187,6 +187,8 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
     );
   };
 
+  const unAssignedLeads = leads.filter(lead => lead.assignedUserId === null);
+
   const getLeadStatusBadge = (status) => {
     const statusConfig = {
       new: { variant: "secondary", color: "bg-blue-100 text-blue-800" },
@@ -239,6 +241,8 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
       </div>
     );
   }
+
+
 
   return (
     <div className="flex-1 space-y-6 p-6">
@@ -331,7 +335,7 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
                       console.log(`Imported ${data.count} leads`);
                     }}
                   />
-                  <AssignLeadsDialog leads={filteredLeads} users={campaignUsers} />
+                  <AssignLeadsDialog leads={unAssignedLeads} users={campaignUsers} />
                 </div>
               </div>
             </CardHeader>

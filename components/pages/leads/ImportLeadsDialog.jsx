@@ -24,13 +24,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Region } from "@/lib/constants/frontend";
 
 export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
   const [file, setFile] = useState(null);
   const [source, setSource] = useState("");
   const [industry, setIndustry] = useState("");
+  const [country, setCountry] = useState("canada");
+  const [region, setRegion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const regionOptions =
+    Region[0][country === "canada" ? "provinces" : "states"] || [];
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -59,6 +64,8 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
     formData.append("campaignId", campaignId);
     formData.append("source", source);
     formData.append("industry", industry);
+    formData.append("country", country);
+    formData.append("region", region);
 
     try {
       const response = await fetch("/api/import/leads", {
@@ -146,7 +153,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
             </div>
           )}
 
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
               <Label>Source</Label>
               <Select value={source} onValueChange={setSource}>
@@ -178,6 +185,43 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="canada">Canada</SelectItem>
+                    <SelectItem value="us">US</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            {country && (
+              <div className="space-y-2">
+                <Label>{country === "canada" ? "Province" : "State"}</Label>
+                <Select value={region} onValueChange={setRegion}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={`Select ${
+                        country === "canada" ? "Province" : "State"
+                      }`}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {regionOptions.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="text-xs text-muted-foreground space-y-1">

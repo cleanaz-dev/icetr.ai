@@ -19,10 +19,16 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { Voicemail } from "lucide-react";
 import { Building } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import FollowUpCompleteDialog from "./FollowUpCompleteDialog";
+import AnimatedTranscript from "./AnimatedTranscript";
 
 export default function FollowUpTab({ onLeadSelect }) {
   const [followUps, setFollowUps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedFollowUp, setSelectedFollowUp] = useState(null);
+  const [updating, setUpdating] = useState(false);
   const [filter, setFilter] = useState("all"); // 'all', 'today', 'overdue', 'week'
   console.log("followups", followUps);
 
@@ -46,6 +52,7 @@ export default function FollowUpTab({ onLeadSelect }) {
   };
 
   const markAsCompleted = async (followUpId) => {
+    setUpdating(true);
     try {
       const response = await fetch(`/api/followups/${followUpId}`, {
         method: "PATCH",
@@ -58,6 +65,8 @@ export default function FollowUpTab({ onLeadSelect }) {
       }
     } catch (error) {
       console.error("Error marking follow-up as completed:", error);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -94,6 +103,28 @@ export default function FollowUpTab({ onLeadSelect }) {
     return <Badge variant="secondary">Upcoming</Badge>;
   };
 
+  const handleFollowUpComplete = async (followUpId, completionData) => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/followups/${followUpId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          completed: true,
+          ...completionData, // This includes outcome, notes, createNewFollowUp, etc.
+        }),
+      });
+
+      if (response.ok) {
+        setFollowUps((prev) => prev.filter((f) => f.id !== followUpId));
+      }
+    } catch (error) {
+      console.error("Error marking follow-up as completed:", error);
+      throw error; // Re-throw so dialog can handle it
+    } finally {
+      setUpdating(false);
+    }
+  };
   const filteredFollowUps = getFilteredFollowUps();
 
   if (loading) {
@@ -200,53 +231,58 @@ export default function FollowUpTab({ onLeadSelect }) {
                   <div className="border-t border-muted my-2"></div>
 
                   {/* Follow-up details */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5 text-gray-400" />
-                      <span>
-                        Due:{" "}
-                        {format(new Date(followUp.dueDate), "MMM dd, h:mm a")}
-                      </span>
+                  <div className="flex  justify-between text-sm ">
+                    <div className="text-left space-y-2">
+                      <div className="uppercase">
+                        <Badge variant="outline">{followUp.reason}</Badge>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 text-gray-400" />
+                        <span>
+                          Due:{" "}
+                          {format(new Date(followUp.dueDate), "MMM dd, h:mm a")}
+                        </span>
+                      </div>
                     </div>
 
-                    {followUp.recordingUrl && (
-                      <Button asChild size="sm" variant="muted">
-                        <Link
-                          href={followUp.recordingUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Voicemail className="mr-1" /> Play
-                        </Link>
-                      </Button>
-                    )}
+                    <div className="flex items-end justify-end star-end">
+                      {followUp.recordingUrl && (
+                        <Button asChild size="sm" variant="muted">
+                          <Link
+                            href={followUp.recordingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Voicemail className="mr-1" /> Play
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 bg-muted px-2.5 py-1.5 rounded-md inline-block">
-                    Reason:{" "}
-                    <span className="font-medium text-muted-foreground capitalize">
-                      {followUp.reason.replace("_", " ")}
-                    </span>
-                  </div>
+                  {/* Transcription section - separate from the flex container */}
+                  <AnimatedTranscript transcription={followUp.transcription} />
 
                   {/* Action buttons */}
-                  <div className="flex gap-2 pt-3">
+                  <div className="flex gap-2 pt-3 justify-between">
                     <Button
                       size="sm"
                       onClick={() => handleCallLead(followUp.lead)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      className="flex-1 bg-secondary"
                     >
                       <Phone className="h-3.5 w-3.5 mr-1.5" />
                       Call Now
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => markAsCompleted(followUp.id)}
-                    >
-                      <Check className="h-3.5 w-3.5 mr-1.5" />
-                      Done
-                    </Button>
+                    <FollowUpCompleteDialog
+                      open={dialogOpen}
+                      onClose={() => {
+                        setDialogOpen(false);
+                        setSelectedFollowUp(null);
+                      }}
+                      followUp={followUp.id}
+                      onComplete={handleFollowUpComplete}
+                    />
                   </div>
                 </div>
               </CardContent>
