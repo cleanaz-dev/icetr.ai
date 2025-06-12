@@ -58,9 +58,7 @@ export default function DialerTab({
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               {selectedLead.name || "Unknown"}
-              {calledLeadIds.has(selectedLead.id) && (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              )}
+           
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={LEAD_STATUSES[selectedLead.status]?.variant}>
