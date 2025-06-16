@@ -9,7 +9,7 @@ export default async function page({ params }) {
   const campaign = await getCampaign(id);
   const orgUsers = await getOrgUsers(userId, campaign.id)
   const campaignUsers = await getCampaignUsers(id)
-  console.log("campaign users", campaignUsers)
+
   return (
     <div>
       <SingleCampaignPage campaign={campaign} campaignUsers={campaignUsers} orgUsers={orgUsers}/>

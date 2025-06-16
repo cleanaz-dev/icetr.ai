@@ -218,15 +218,15 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
     setCampaign((prev) => ({ ...prev, status: newStatus }));
   };
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      // lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      // lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || lead.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+const filteredLeads = leads.filter((lead) => {
+  const matchesSearch =
+    lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.company?.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
+  return matchesSearch && matchesStatus;
+});
 
   if (!campaign) {
     return (
@@ -374,6 +374,7 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
                       <TableRow>
                         <TableHead>Lead</TableHead>
                         <TableHead>Company</TableHead>
+                        <TableHead>Phone</TableHead>
                         <TableHead>Status</TableHead>
                         {/* <TableHead>Score</TableHead> */}
                         <TableHead>Last Activity</TableHead>
@@ -394,6 +395,7 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
                           <TableCell className="max-w-[200px] truncate">
                             {lead.company}
                           </TableCell>
+                          <TableCell>{lead.phoneNumber}</TableCell>
                           <TableCell>
                             {getLeadStatusBadge(lead.status)}
                           </TableCell>
