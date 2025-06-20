@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import { Cog } from "lucide-react";
 import { CircleUser } from "lucide-react";
+import DeletePendingUserDialog from "./DeletePendingUserDialog";
 
 
 // Mock data based on the schema
@@ -609,12 +610,7 @@ export default function SettingsPage({ settings, invitees }) {
                               </p>
                             </div>
                           </div>
-                          <Button 
-                            variant="destructive"
-                            onClick={() => handleRemoveInvitee(invitee.id)}
-                          >
-                            <Trash2 />
-                          </Button>
+                      <DeletePendingUserDialog invitee={invitee}/>
                         </div>
                       ))}
                     </div>

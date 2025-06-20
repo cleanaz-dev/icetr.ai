@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         captcha: {
           theme: "auto",
           size: "flexible",
-          language: "es-ES",
+          language: "en-US",
         },
       }}
       signInForceRedirectUrl="/home"

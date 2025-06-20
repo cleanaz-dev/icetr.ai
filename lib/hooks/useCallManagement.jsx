@@ -25,6 +25,7 @@ export function useCallManagement(device) {
   const [sessionCalls, setSessionCalls] = useState([]);
   const [currentCallData, setCurrentCallData] = useState(null);
   const [isCallActive, setIsCallActive] = useState(false);
+  const [callSid, setCallSid] = useState(null)
   const [error, setError] = useState(null);
 
   // Timer for call duration
@@ -168,13 +169,46 @@ export function useCallManagement(device) {
     },
      [device, setError, setCallStatus, setCall, setCurrentCallData, setupCallEventListeners] 
   );
+const handlePracticeCall = useCallback(
+  async (phoneNumber, fromNumber = null, currentSession = null, userId = null) => {
+    if (!device || !phoneNumber) {
+      console.error("Device not ready or no phone number provided");
+      setError("Device not ready or no phone number provided");
+      setCallStatus(CALL_STATUS.FAILED);
+      return;
+    }
 
+    try {
+      setCallStatus(CALL_STATUS.CONNECTING);
+      setError(null);
 
+      // For practice calls, we're just waiting for the incoming call from Bland AI
+      // The actual call initiation happens via the training API route
+      
+      const newCallData = {
+        phoneNumber,
+        startTime: new Date(),
+        type: "practice",
+      };
+      setCurrentCallData(newCallData);
+
+      console.log("Practice call setup complete, waiting for Bland AI to call");
+     
+    } catch (error) {
+      console.error("Failed to setup practice call:", error);
+      setError(error.message || "Failed to setup practice call");
+      setCallStatus(CALL_STATUS.FAILED);
+    }
+  },
+  [device, setError, setCallStatus, setCurrentCallData]
+);
   const handleAcceptCall = useCallback(() => {
     if (call && callStatus === CALL_STATUS.RINGING) {
       call.accept();
     }
   }, [call, callStatus]);
+
+
 
   const handleRejectCall = useCallback(() => {
     if (call && callStatus === CALL_STATUS.RINGING) {
@@ -304,9 +338,13 @@ export function useCallManagement(device) {
     handleAcceptCall,
     handleRejectCall,
     redialNumber,
+    handlePracticeCall,
 
     // Manual status setters (for special cases)
     setCallStatus,
     setError,
+    setIsCallActive,
+    setCallDuration,
+    setCallStatus
   };
 }

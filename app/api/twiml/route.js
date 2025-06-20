@@ -1,204 +1,19 @@
-// api/twiml/route.js
-
 import { NextResponse } from "next/server";
 import twilio from "twilio";
 import prisma from "@/lib/service/prisma";
 import { transcribeRecording } from "@/lib/service/assembly-ai"; // Import your transcription function
+import {
+  checkIfLead,
+  isTrainingCall,
+  createOrUpdateCall,
+  createFollowUp,
+  updateFollowUpWithRecording,
+  createProspect,
+  updateProspectWithRecording,
+  updateCallWithRecording
+} from "@/lib/service/twilioCallService"; // Database functions
 
-// Database functions
-async function checkIfLead(phoneNumber) {
-  try {
-    const lead = await prisma.lead.findFirst({
-      where: { phoneNumber: phoneNumber },
-      include: {
-        assignedUser: true,
-      },
-    });
-    return lead;
-  } catch (error) {
-    console.error("Error checking lead:", error);
-    return null;
-  }
-}
 
-async function createOrUpdateCall(
-  callSid,
-  leadId,
-  callSessionId,
-  fromNumber,
-  to,
-  direction = null,
-  callStatus = null,
-  userId,
-  updates = {}
-) {
-  try {
-    // Check if call already exists
-    const existingCall = await prisma.call.findUnique({
-      where: { callSid },
-    });
-
-    if (existingCall) {
-      // Update existing call
-      const updatedCall = await prisma.call.update({
-        where: { callSid },
-        data: {
-          status: callStatus || existingCall.status,
-          ...updates,
-          updatedAt: new Date(),
-        },
-      });
-      console.log("Call updated:", updatedCall);
-      return updatedCall;
-    } else {
-      // Create new call - only when we have leadId and callSessionId
-      if (!leadId || !callSessionId) {
-        console.log(
-          `Missing required data for call creation: leadId=${leadId}, callSessionId=${callSessionId}`
-        );
-        return null;
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { clerkId: userId },
-      });
-
-      const newCall = await prisma.call.create({
-        data: {
-          callSid,
-          lead: { connect: { id: leadId } },
-          callSession: { connect: { id: callSessionId } },
-          direction: direction || "outbound",
-          from: fromNumber,
-          to,
-          status: callStatus || "initiated",
-          startTime: new Date(),
-          createdUser: {connect: { id: user.id }},
-          ...updates,
-        },
-      });
-
-      console.log("New call created:", newCall);
-      return newCall;
-    }
-  } catch (error) {
-    console.error("Error creating/updating call:", error);
-    throw error;
-  }
-}
-
-async function updateCallWithRecording(
-  callSid,
-  recordingUrl,
-  transcription = null,
-  duration = null
-) {
-  try {
-    const updatedCall = await prisma.call.update({
-      where: { callSid },
-      data: {
-        recordingUrl,
-        transcription,
-        duration,
-        status: "completed",
-        endTime: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-    
-    console.log("Call updated with recording and transcription:", updatedCall);
-    return updatedCall;
-  } catch (error) {
-    console.error("Error updating call with recording:", error);
-    throw error;
-  }
-}
-
-async function createFollowUp(leadId, callSid, from, to, reason = "voicemail") {
-  try {
-    const followUp = await prisma.followUp.create({
-      data: {
-        leadId,
-        callSid,
-        from,
-        to,
-        type: "call",
-        reason,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-        completed: false,
-      },
-    });
-    console.log("Follow-up created:", followUp);
-    return followUp;
-  } catch (error) {
-    console.error("Error creating follow-up:", error);
-    throw error;
-  }
-}
-
-async function createProspect(phoneNumber, callSid, source = "inbound_call") {
-  try {
-    const prospect = await prisma.prospect.create({
-      data: {
-        phoneNumber,
-        callSid,
-        source,
-        status: "New",
-        notes: `Inbound call received - CallSid: ${callSid}`,
-      },
-    });
-    console.log("Prospect created:", prospect);
-    return prospect;
-  } catch (error) {
-    console.error("Error creating prospect:", error);
-    throw error;
-  }
-}
-
-async function updateProspectWithRecording(
-  callSid,
-  recordingUrl,
-  transcription = null
-) {
-  try {
-    const updatedProspect = await prisma.prospect.update({
-      where: { callSid },
-      data: {
-        recordingUrl,
-        transcription,
-        notes: transcription
-          ? `Voicemail left: ${transcription}`
-          : "Voicemail recording available",
-      },
-    });
-    console.log("Prospect updated with recording:", updatedProspect);
-    return updatedProspect;
-  } catch (error) {
-    console.error("Error updating prospect with recording:", error);
-    throw error;
-  }
-}
-
-async function updateFollowUpWithRecording(
-  callSid,
-  recordingUrl,
-  transcription = null
-) {
-  try {
-    const updatedFollowUp = await prisma.followUp.update({
-      where: { callSid },
-      data: {
-        recordingUrl,
-        transcription: transcription,
-      },
-    });
-    console.log("Follow-up updated with recording:", updatedFollowUp);
-    return updatedFollowUp;
-  } catch (error) {
-    console.error("Error updating follow-up with recording:", error);
-    throw error;
-  }
-}
 
 export async function POST(request) {
   const twiml = new twilio.twiml.VoiceResponse();
@@ -233,28 +48,55 @@ export async function POST(request) {
 
     // Handle recording callback - this happens after a call is recorded
     // ONLY process recordings when RecordingStatus is 'completed'
-    if (recordingUrl && callSid && recordingStatus === 'completed') {
+    if (recordingUrl && callSid && recordingStatus === "completed") {
       console.log("Recording callback received with status 'completed'");
 
       const duration = parseInt(recordingDuration) || 0;
       console.log(`Recording duration: ${duration} seconds`);
 
       try {
+        // Check if this was a training call first
+        const wasTrainingCall = await isTrainingCall(from, callSid);
+
+        if (wasTrainingCall) {
+          console.log("Training call recording received");
+
+          // Always transcribe training calls for feedback
+          let transcription = null;
+          try {
+            console.log("Transcribing training call with Assembly AI...");
+            transcription = await transcribeRecording(recordingUrl);
+            console.log(
+              "Assembly AI transcription completed:",
+              transcription ? "Success" : "Failed"
+            );
+          } catch (transcriptionError) {
+            console.error(
+              "Assembly AI transcription failed:",
+              transcriptionError
+            );
+            transcription = transcriptionText || null;
+          }
+
+          console.log("Training call processed successfully");
+          return new NextResponse("OK", { status: 200 });
+        }
+
         // For recording callbacks, we need to determine if this was inbound or outbound
         // Check if there's a followUp or prospect record (indicates inbound)
         // or a call record (indicates outbound)
-        
+
         const followUp = await prisma.followUp.findFirst({
           where: { callSid },
-          include: { lead: true }
+          include: { lead: true },
         });
-        
+
         const prospect = await prisma.prospect.findFirst({
-          where: { callSid }
+          where: { callSid },
         });
-        
+
         const call = await prisma.call.findFirst({
-          where: { callSid }
+          where: { callSid },
         });
 
         if (followUp || prospect) {
@@ -266,9 +108,15 @@ export async function POST(request) {
           try {
             console.log("Transcribing inbound voicemail with Assembly AI...");
             transcription = await transcribeRecording(recordingUrl);
-            console.log("Assembly AI transcription completed:", transcription ? "Success" : "Failed");
+            console.log(
+              "Assembly AI transcription completed:",
+              transcription ? "Success" : "Failed"
+            );
           } catch (transcriptionError) {
-            console.error("Assembly AI transcription failed:", transcriptionError);
+            console.error(
+              "Assembly AI transcription failed:",
+              transcriptionError
+            );
             // Fallback to Twilio transcription if available
             transcription = transcriptionText || null;
           }
@@ -278,14 +126,14 @@ export async function POST(request) {
             await updateFollowUpWithRecording(
               callSid,
               recordingUrl,
-              transcription.text
+              transcription?.text || transcriptionText
             );
           } else if (prospect) {
             console.log("Updating prospect with recording for unknown caller");
             await updateProspectWithRecording(
               callSid,
               recordingUrl,
-              transcription.text
+              transcription?.text || transcriptionText
             );
           }
         } else if (call) {
@@ -297,23 +145,29 @@ export async function POST(request) {
             console.log(
               `Outbound call >= 2 minutes (${duration}s) - saving recording and transcribing`
             );
-            
+
             // Transcribe the recording using Assembly AI
             let transcription = null;
             try {
               console.log("Transcribing outbound call with Assembly AI...");
-              transcription = await transcribeRecording(recordingUrl)
-              console.log("Assembly AI transcription completed:", transcription ? "Success" : "Failed");
+              transcription = await transcribeRecording(recordingUrl);
+              console.log(
+                "Assembly AI transcription completed:",
+                transcription ? "Success" : "Failed"
+              );
             } catch (transcriptionError) {
-              console.error("Assembly AI transcription failed:", transcriptionError);
+              console.error(
+                "Assembly AI transcription failed:",
+                transcriptionError
+              );
               // Fallback to Twilio transcription if available
               transcription = transcriptionText || null;
             }
-            
+
             await updateCallWithRecording(
               callSid,
               recordingUrl,
-              transcription.text,
+              transcription?.text || transcriptionText,
               duration
             );
           } else {
@@ -341,9 +195,11 @@ export async function POST(request) {
 
       // For recording callbacks, return success response (not TwiML)
       return new NextResponse("OK", { status: 200 });
-    } else if (recordingUrl && recordingStatus !== 'completed') {
+    } else if (recordingUrl && recordingStatus !== "completed") {
       // Log non-completed recording statuses for debugging
-      console.log(`Recording callback received with status '${recordingStatus}' - skipping transcription`);
+      console.log(
+        `Recording callback received with status '${recordingStatus}' - skipping transcription`
+      );
       return new NextResponse("OK", { status: 200 });
     }
 
@@ -370,6 +226,37 @@ export async function POST(request) {
     }
 
     console.log(`Incoming call from ${from} to ${to}, Direction: ${direction}`);
+
+    // Check if this is a training call from Bland AI
+    const trainingCall = await isTrainingCall(from, callSid);
+
+    if (trainingCall && direction === "inbound") {
+      console.log(`Training call from Bland AI detected: ${from}`);
+
+      // Connect the call to the client (your browser)
+      const dial = twiml.dial({
+        timeout: 30,
+        record: "record-from-answer-dual-channel",
+        recordingStatusCallback: "/api/twiml",
+      });
+
+      // Dial the client - this connects to your browser
+      dial.client("user");
+
+      // Fallback message if client doesn't answer
+      twiml.say(
+        {
+          voice: "Polly.Amy-Neural",
+          language: "en-US",
+        },
+        "Training session could not connect to your device. Please refresh your browser and try again."
+      );
+
+      return new NextResponse(twiml.toString(), {
+        status: 200,
+        headers: { "Content-Type": "application/xml" },
+      });
+    }
 
     // Check if this is a client-initiated call (outbound through client)
     if (from && from.startsWith("client:")) {

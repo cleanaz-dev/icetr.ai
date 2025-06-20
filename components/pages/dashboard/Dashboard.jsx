@@ -29,16 +29,7 @@ import { useDashboard } from "@/lib/context/DashboardProvider";
 import LeadDistributionChart from "./LeadDistributionChart";
 import DashboardStatsCard from "./DashboardStatsCard";
 
-// Updated stats (Members instead of Hot Leads)
 
-// Pipeline stages
-const pipelineStages = [
-  { name: "New", count: 120, color: "bg-blue-500" },
-  { name: "Contacted", count: 90, color: "bg-purple-500" },
-  { name: "Qualified", count: 60, color: "bg-yellow-500" },
-  { name: "Proposal", count: 30, color: "bg-orange-500" },
-  { name: "Closed", count: 15, color: "bg-green-500" },
-];
 
 export default function Dashboard() {
   const { activities, leadCounts } = useDashboard();

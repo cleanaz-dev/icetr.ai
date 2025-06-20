@@ -44,6 +44,8 @@ model User {
   updatedAt         DateTime           @updatedAt
   callSessions      CallSession[]
   Call              Call[]
+  Training          Training[]
+  Notification      Notification[]
 }
 
 model UserSettings {
@@ -69,62 +71,6 @@ model Campaign {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   callSessions CallSession[]
-}
-
-model CampaignDocument {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  campaignId         String   @db.ObjectId
-  name               String // Original filename
-  type               String // pdf, docx, txt, etc.
-  category           String // script, training, reference, etc.
-  description        String? // Optional description
-  fileUrl            String // URL to stored file (Cloudinary/S3)
-  fileSize           Int // Size in bytes
-  mimeType           String // application/pdf, text/plain, etc.
-  cloudinaryPublicId String?
-  campaign           Campaign @relation(fields: [campaignId], references: [id])
-  uploadedBy         String   @db.ObjectId
-  uploader           User     @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
-  createdAt          DateTime @default(now())
-}
-
-model CampaignUser {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  campaignId String   @db.ObjectId
-  userId     String   @db.ObjectId
-  campaign   Campaign @relation(fields: [campaignId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-  role       Role     @default(Agent)
-  assignedAt DateTime @default(now())
-}
-
-model Prospect {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  callSid       String
-  name          String? // extracted from voicemail or provided
-  phoneNumber   String?
-  email         String?
-  company       String? // if they mention it
-  source        String? // "inbound_call", "contact_form", "email", etc.
-  recordingUrl  String? // for voicemail recordings
-  transcription String? // transcribed voicemail content
-  notes         String? // any additional context
-  status        ProspectStatus @default(New) // New, Contacted, Qualified, Converted, etc.
-
-  // Conversion tracking  
-  convertedToLeadId String? @db.ObjectId
-  convertedToLead   Lead?   @relation(fields: [convertedToLeadId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum ProspectStatus {
-  New
-  Contacted
-  Qualified
-  Converted
-  Unqualified
 }
 
 model Lead {
@@ -258,13 +204,109 @@ model WaitList {
 }
 
 model Notification {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id])
+  type       String // "follow_up_due", "follow_up_overdue", etc.
+  status     String // "pending", "read", "dismissed"
+  message    String? // Optional custom message
+  read       Boolean   @default(false)
+  followUpId String?   @db.ObjectId // Link to the follow-up
+  followUp   FollowUp? @relation(fields: [followUpId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Prospect {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  callSid       String
+  name          String? // extracted from voicemail or provided
+  phoneNumber   String?
+  email         String?
+  company       String? // if they mention it
+  source        String? // "inbound_call", "contact_form", "email", etc.
+  recordingUrl  String? // for voicemail recordings
+  transcription String? // transcribed voicemail content
+  notes         String? // any additional context
+  status        ProspectStatus @default(New) // New, Contacted, Qualified, Converted, etc.
+
+  // Conversion tracking  
+  convertedToLeadId String? @db.ObjectId
+  convertedToLead   Lead?   @relation(fields: [convertedToLeadId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProspectStatus {
+  New
+  Contacted
+  Qualified
+  Converted
+  Unqualified
+}
+
+model CampaignDocument {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId         String   @db.ObjectId
+  name               String // Original filename
+  type               String // pdf, docx, txt, etc.
+  category           String // script, training, reference, etc.
+  description        String? // Optional description
+  fileUrl            String // URL to stored file (Cloudinary/S3)
+  fileSize           Int // Size in bytes
+  mimeType           String // application/pdf, text/plain, etc.
+  cloudinaryPublicId String?
+  campaign           Campaign @relation(fields: [campaignId], references: [id])
+  uploadedBy         String   @db.ObjectId
+  uploader           User     @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
+  createdAt          DateTime @default(now())
+}
+
+model CampaignUser {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  followUpId String   @db.ObjectId
-  followUp   FollowUp @relation(fields: [followUpId], references: [id])
-  type       String
-  status     String // "pending" or "complete"
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  campaignId String   @db.ObjectId
+  userId     String   @db.ObjectId
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  role       Role     @default(Agent)
+  assignedAt DateTime @default(now())
+}
+
+model Training {
+  id                    String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String       @db.ObjectId
+  user                  User         @relation(fields: [userId], references: [id])
+  type                  TrainingType @default(CALLS)
+  rapportBuilt          Boolean
+  objectionHandled      Boolean
+  introQualityScore     Int
+  trainingFeedbackNotes String?
+  recordingUrl          String?
+  transcript            String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+// model ReviewTraining {
+//   id             String       @id @default(auto()) @map("_id") @db.ObjectId
+//   userId         String       @db.ObjectId
+//   user           User         @relation(fields: [userId], references: [id])
+
+//   reviewerId     String       @db.ObjectId
+//   reviewer       User         @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+
+//   type           TrainingType @default(REVIEW)
+
+//   recordingUrl   String
+//   score          Int          // e.g., 1–100
+//   reviewNotes    String?
+
+//   createdAt      DateTime     @default(now())
+// }
+enum TrainingType {
+  CALLS
+  REVIEW
 }
 
 enum ActivityType {
