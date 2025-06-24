@@ -55,9 +55,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   const [callNotes, setCallNotes] = useState("");
   const [currentSession, setCurrentSession] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [followUpTime,setFollowUpTime] = useState("")
-  const [callData,setCallData] = useState(null)
-
+  const [followUpTime, setFollowUpTime] = useState("");
+  const [callData, setCallData] = useState(null);
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -100,7 +99,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     }
   }, [callStatus]);
 
- useEffect(() => {
+  useEffect(() => {
     if (currentCallData) {
       console.log("Storing call data locally:", currentCallData);
       setCallData(currentCallData);
@@ -124,7 +123,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           callEndTime: new Date(),
           sessionId: currentSession.id,
           followUpTime: followUpTime,
-          leadActivityId: callData.leadActivityId
+          leadActivityId: callData.leadActivityId,
         }),
       });
 
@@ -141,14 +140,9 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   };
 
   const handleSaveCall = async () => {
-      setIsSaving(true);
+    setIsSaving(true);
     try {
-      await saveCallActivity(
-        selectedLead.id,
-        callData,
-        callOutcome,
-        callNotes
-      );
+      await saveCallActivity(selectedLead.id, callData, callOutcome, callNotes);
 
       setPostCallDialogOpen(false);
       setCallOutcome("");
@@ -164,9 +158,9 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     }
   };
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-3rem)] lg:h-screen overflow-y-auto md:overflow-hidden">
       {/* Main content area */}
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Left Side - Leads Table */}
         <div
           className={cn(
@@ -175,19 +169,16 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           )}
         >
           {/* Header */}
-          <div className="border-b p-4">
+          <div className="flex-shrink-0 border-b p-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="border border-2 p-2 border-primary rounded-full">
-                  <Phone className="w-6 h-6 text-primary" />
+                  <Phone className="w-6 h-6 text-transparent fill-primary" />
                 </div>
                 <h1 className="text-2xl font-bold">Dialer</h1>
               </div>
 
               <div className="flex items-center gap-4">
-                {/* Session Call Summary */}
-                {/* Session Call Summary - Updated to use currentSession */}
-
                 <Badge variant={status === "Ready" ? "default" : "secondary"}>
                   {status}
                   {status === "Connected" &&
@@ -207,28 +198,32 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
               </div>
             </div>
           </div>
-
-          <LeadsTable
-            leads={filteredLeads}
-            selectedLead={selectedLead}
-            calledLeadIds={calledLeadIds}
-            onSelectLead={selectLead}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={(field) => {
-              if (sortField === field) {
-                setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-              } else {
-                setSortField(field);
-                setSortDirection("asc");
-              }
-            }}
-            onShowDialer={() => setShowDialer(true)}
-          />
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <LeadsTable
+              leads={filteredLeads}
+              selectedLead={selectedLead}
+              calledLeadIds={calledLeadIds}
+              onSelectLead={selectLead}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={(field) => {
+                if (sortField === field) {
+                  setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                } else {
+                  setSortField(field);
+                  setSortDirection("asc");
+                }
+              }}
+              onShowDialer={() => setShowDialer(true)}
+            />
+          </div>
+          <div className="sticky bottom-0 left-0 right-0 z-50 bg-background ">
+            <CallSession session={currentSession} />
+          </div>
         </div>
 
         {/* Right Side - Dialer */}
@@ -276,7 +271,6 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           }
         }}
       />
-      <CallSession session={currentSession} />
     </div>
   );
 }

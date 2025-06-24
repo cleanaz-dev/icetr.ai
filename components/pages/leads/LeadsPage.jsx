@@ -67,7 +67,8 @@ import {
 import { mockLeads } from "@/lib/constants/backend";
 import { Users2 } from "lucide-react";
 import AssignLeadsDialog from "./AssignLeadsDialog";
-
+import UnassignLeadsDialog from "./UnassignLeadsDialog";
+import { useRouter } from "next/navigation";
 
 const statusOptions = [
   { value: "New", label: "New", color: "bg-blue-500" },
@@ -95,6 +96,8 @@ export default function LeadsPage({ data, users = [] }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const { refresh } = useRouter();
 
   // Filter leads based on search and filters
   const filteredLeads = leads.filter((lead) => {
@@ -241,6 +244,12 @@ export default function LeadsPage({ data, users = [] }) {
     );
   };
 
+  const refreshLeads = async () => {
+  const res = await fetch("/api/leads");
+  const updatedLeads = await res.json();
+  setLeads(updatedLeads);
+};
+
   return (
     <div className="space-y-6 px-4 py-6">
       {/* Header */}
@@ -329,9 +338,14 @@ export default function LeadsPage({ data, users = [] }) {
                 leads={leads}
                 users={users}
                 onAssignComplete={(result) => {
-                  // Refresh your leads data
+                  refresh();
                   console.log("Assignment complete:", result);
                 }}
+              />
+              <UnassignLeadsDialog
+                leads={leads}
+                users={users}
+                onComplete={refreshLeads}
               />
             </div>
 
@@ -383,7 +397,7 @@ export default function LeadsPage({ data, users = [] }) {
                   <TableHead>Source</TableHead>
                   <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
-                  
+
                   <TableHead>Assigned To</TableHead>
                   <TableHead>Last Contact</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -416,10 +430,10 @@ export default function LeadsPage({ data, users = [] }) {
                     <TableCell>
                       <Badge variant="outline">{lead.source}</Badge>
                     </TableCell>
-                    <TableCell><span className="capitalize">{lead.industry}</span></TableCell>
                     <TableCell>
-                     {getStatusBadge(lead.status)}
+                      <span className="capitalize">{lead.industry}</span>
                     </TableCell>
+                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
 
                     <TableCell>
                       <UserDisplay user={lead.assignedUser} />
@@ -435,10 +449,10 @@ export default function LeadsPage({ data, users = [] }) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
-                            // onClick={() => {
-                            //   setSelectedLead(lead);
-                            //   setIsDetailsOpen(true);
-                            // }}
+                          // onClick={() => {
+                          //   setSelectedLead(lead);
+                          //   setIsDetailsOpen(true);
+                          // }}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
@@ -462,8 +476,8 @@ export default function LeadsPage({ data, users = [] }) {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            // onClick={() => deleteLead(lead.id)}
-                            // className="text-destructive"
+                          // onClick={() => deleteLead(lead.id)}
+                          // className="text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Lead

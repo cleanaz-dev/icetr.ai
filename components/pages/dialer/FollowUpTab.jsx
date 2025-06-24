@@ -110,7 +110,7 @@ export default function FollowUpTab({ onLeadSelect }) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          completed: true,
+          
           ...completionData, // This includes outcome, notes, createNewFollowUp, etc.
         }),
       });
@@ -225,6 +225,9 @@ export default function FollowUpTab({ onLeadSelect }) {
                       <Phone className="h-3.5 w-3.5 text-gray-400" />
                       <p>{followUp.lead.phoneNumber}</p>
                     </div>
+                    <div className="flex items-center gap-2 text-primary">
+                      {followUp.lead.campaign.name}
+                    </div>
                   </div>
 
                   {/* Divider */}
@@ -280,7 +283,7 @@ export default function FollowUpTab({ onLeadSelect }) {
                         setDialogOpen(false);
                         setSelectedFollowUp(null);
                       }}
-                      followUp={followUp.id}
+                      followUpId={followUp.id}
                       onComplete={handleFollowUpComplete}
                     />
                   </div>

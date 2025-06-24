@@ -9,7 +9,9 @@ export async function PATCH(req, { params }) {
   }
   try {
     const { id } = await params;
-    console.log("id", id);
+    // console.log("id", id);
+    const { outcome, notes } = await req.json();
+    // console.log("data:", outcome, notes);
 
     const followUp = await prisma.followUp.update({
       where: { id: id },
@@ -18,15 +20,22 @@ export async function PATCH(req, { params }) {
       },
     });
 
-    const leadActivity = await prisma.leadActivity.create({
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    await prisma.leadActivity.create({
       data: {
         lead: { connect: { id: followUp.leadId } },
+        createdUser: { connect: { id: user.id } },
         type: "FOLLOW_UP",
+        content: outcome,
       },
     });
     console.log("followUp", followUp);
     return NextResponse.json({ message: "Updated Follow" });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

@@ -28,7 +28,7 @@ const getRoleBasedNavigation = (userRole) => {
   return []; // Default fallback
 };
 
-export default function RoleBasedDashboardLayout({ children, userRole }) {
+export default function RoleBasedDashboardLayout({ children, userRole, notifications }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -142,7 +142,7 @@ export default function RoleBasedDashboardLayout({ children, userRole }) {
         {/* Sidebar Footer with User Button and Notifications */}
         <div className="p-4 border-t">
           {/* Notifications */}
-          <NotificationsDialog sidebarCollapsed={sidebarCollapsed} />
+          <NotificationsDialog sidebarCollapsed={sidebarCollapsed} notifications={notifications}/>
 
           {/* User Button */}
           <div

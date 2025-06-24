@@ -65,11 +65,19 @@ export async function POST(request) {
       expiresInSeconds: 300, // 5 minutes
     });
     // console.log("Sign-in token created:", signInToken);
-    await redis.json.set(`invitee:${id}`, '.status', 'complete');
+    await redis.json.set(`invitee:${id}`, ".status", "complete");
+
+    await prisma.notification.create({
+      data: {
+        user: { connect: { id: user.id } },
+        type: "Training",
+        message: "Please complete 5-10 Training Calls",
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      signInToken: signInToken.token
+      signInToken: signInToken.token,
     });
   } catch (error) {
     console.error("Invite Accept Error:", error);

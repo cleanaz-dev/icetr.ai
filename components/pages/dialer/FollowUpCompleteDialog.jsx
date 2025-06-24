@@ -32,7 +32,7 @@ const COMPLETION_OUTCOMES = [
 ];
 
 export default function FollowUpCompleteDialog({ 
-  followUp, 
+  followUpId, 
   onComplete 
 }) {
   const [outcome, setOutcome] = useState("");
@@ -51,7 +51,7 @@ export default function FollowUpCompleteDialog({
     };
     
     try {
-      await onComplete(followUp.id, completionData);
+      await onComplete(followUpId, completionData);
       setOpen(false); // ✅ Close dialog on success
       // Reset form
       setOutcome("");
@@ -67,7 +67,7 @@ export default function FollowUpCompleteDialog({
     }
   };
 
-  if (!followUp) return null;
+  if (!followUpId) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

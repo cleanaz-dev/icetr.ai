@@ -73,7 +73,7 @@ export default function LeadDistributionChart({ leadCounts }) {
 
                   {/* Labels */}
                   <div className="mt-3 text-center">
-                    <div className="text-xs font-medium text-gray-600 mb-1">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
                       {status.name}
                     </div>
                     <div className="text-sm font-bold text-gray-900 mb-2">
@@ -94,13 +94,14 @@ export default function LeadDistributionChart({ leadCounts }) {
 
         {/* Summary stats */}
         <div className="mt-6 pt-4 border-t border-muted">
-          <div className="flex justify-between items-center text-sm text-gray-600">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
             <span>Distribution Summary</span>
             <div className="flex gap-4">
               {statusData.map((status) => {
                 const count = leadCounts[status.key] || 0;
                 const percentage =
-                  totalLeads > 0 ? Math.round((count / totalLeads) * 100) : 0;
+                  totalLeads > 0 ? ((count / totalLeads) * 100).toFixed(1) : 0;
+
                 if (count === 0) return null;
 
                 return (

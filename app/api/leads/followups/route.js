@@ -21,14 +21,8 @@ export async function GET() {
       where: {
         completed: false,
         lead: {
-          campaign: {
-            users: { 
-              some: { 
-                user: { id: user.id } 
-              } 
-            },
-          },
-        },
+          assignedUserId:  user.id,
+        }
       },
       include: {
         lead: {
@@ -39,8 +33,10 @@ export async function GET() {
             phoneNumber: true,
             company: true,
             status: true,
+            campaign: true
           }
-        }
+        },
+
       },
       orderBy: {
         dueDate: 'asc'

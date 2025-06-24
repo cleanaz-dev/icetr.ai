@@ -204,17 +204,17 @@ model WaitList {
 }
 
 model Notification {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String    @db.ObjectId
-  user       User      @relation(fields: [userId], references: [id])
+  id         String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String             @db.ObjectId
+  user       User               @relation(fields: [userId], references: [id])
+  title      String?
   type       String // "follow_up_due", "follow_up_overdue", etc.
-  status     String // "pending", "read", "dismissed"
+  status     NotificationStatus @default(pending) // "pending", "read", "dismissed"
   message    String? // Optional custom message
-  read       Boolean   @default(false)
-  followUpId String?   @db.ObjectId // Link to the follow-up
-  followUp   FollowUp? @relation(fields: [followUpId], references: [id])
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  followUpId String?            @db.ObjectId // Link to the follow-up
+  followUp   FollowUp?          @relation(fields: [followUpId], references: [id])
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 }
 
 model Prospect {
@@ -274,18 +274,24 @@ model CampaignUser {
 }
 
 model Training {
-  id                    String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId                String       @db.ObjectId
-  user                  User         @relation(fields: [userId], references: [id])
-  type                  TrainingType @default(CALLS)
-  rapportBuilt          Boolean
-  objectionHandled      Boolean
-  introQualityScore     Int
-  trainingFeedbackNotes String?
-  recordingUrl          String?
-  transcript            String?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  id                        String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId                    String       @db.ObjectId
+  user                      User         @relation(fields: [userId], references: [id])
+  type                      TrainingType @default(CALLS)
+  rapportBuilt              Boolean?
+  objectionHandled          Boolean?
+  bookedMeeting             Boolean?
+  valuePropositionDelivered Boolean?
+  introQualityScore         String?
+  discoveryScore            String?
+  overallScore              String?
+  scenario                  String?
+  recordingUrl              String?
+  transcript                String?
+  transcriptSummary         String?
+  improvements              String?
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
 }
 
 // model ReviewTraining {
@@ -304,6 +310,13 @@ model Training {
 
 //   createdAt      DateTime     @default(now())
 // }
+
+enum NotificationStatus {
+  pending
+  read
+  snooze
+}
+
 enum TrainingType {
   CALLS
   REVIEW
@@ -323,6 +336,7 @@ enum ActivityType {
   CONTACT_ATTEMPTS
   CONTACTED
   FOLLOW_UP_COMPLETED
+  EMAIL_SENT
 }
 
 enum CallOutcome {

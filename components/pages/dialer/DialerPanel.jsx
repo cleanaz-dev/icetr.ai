@@ -48,7 +48,7 @@ export default function DialerPanel({
       )}
     >
       <div className="p-4.5 border-b flex justify-between items-center">
-        <h3 className="font-semibold">Dialer Panel</h3>
+        <h3 className="font-semibold capitalize  underline decoration-primary">{activeTab}</h3>
         <Button
           variant="ghost"
           size="sm"

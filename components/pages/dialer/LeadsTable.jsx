@@ -129,7 +129,7 @@ export default function LeadsTable({
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <Table>
-          <TableHeader className="sticky top-0 bg-background ">
+          <TableHeader className="bg-background ">
             <TableRow>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
@@ -140,7 +140,7 @@ export default function LeadsTable({
                 </div>
               </TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead className="hidden md:table-cell ">Company</TableHead>
+              <TableHead className="hidden md:table-cell">Company</TableHead>
               <TableHead className="hidden md:table-cell">Website</TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
