@@ -20,7 +20,7 @@ export const Header = () => {
   const [open, setOpen] = useState(false);
   return (
     <header className="md:sticky top-0 z-50 w-full pt-4 ">
-      <div className="container mx-auto px-4  flex items-center justify-between">
+      <div className="container max-w-6xl mx-auto px-8 md:px-4  flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -34,6 +34,9 @@ export const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden xl:flex items-center space-x-4">
+          <Button variant="outlineHero" asChild>
+            <Link href="/waitlist">Join Waitlist Today!</Link>
+          </Button>
           <Button size="huge" asChild>
             <Link href="/sign-in">Sign In</Link>
           </Button>

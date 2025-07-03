@@ -39,7 +39,12 @@ import TrainingStatsCard from "./TrainingStatsCard";
 import TrainingInterfaceCard from "./TrainingInterfaceCard";
 import TrainingCallScripts from "./TrainingCallScripts";
 
-export default function TrainingPage({ role, data = [], trainingData = [], trainingUser }) {
+export default function TrainingPage({
+  role,
+  data = [],
+  trainingData = [],
+  trainingUser,
+}) {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState("introduction");
   const [score, setScore] = useState(0);
@@ -282,7 +287,7 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
           subtitle: `Selected: ${
             scenarios.find((s) => s.id === selectedScenario)?.name
           }`,
-          color: "text-primary",
+          color: "text-muted-foreground",
         };
       case "initiating":
         return {
@@ -349,7 +354,7 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
           </p>
         </div>
 
-        <Tabs defaultValue="practice" className="space-y-8">
+        <Tabs defaultValue="practice" className="space-y-4">
           {/* Tab Switcher */}
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger
@@ -367,7 +372,7 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
 
           {/* Practice Tab */}
           <TabsContent value="practice" className="space-y-0">
-            <div className="grid grid-cols-2 xl:grid-cols-[2fr_1fr] gap-8">
+            <div className="grid md:grid-cols-2 gap-8">
               {/* Left Column: Interface + Scenario */}
               <div className="space-y-6">
                 <TrainingInterfaceCard
@@ -388,14 +393,9 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
                   callDuration={callDuration}
                   statusDisplay={statusDisplay}
                   selectedScenarioData={selectedScenarioData}
-                />
-
-                <ScenarioSelectionCard
                   selectedScenario={selectedScenario}
                   setSelectedScenario={setSelectedScenario}
-                  trainingStatus={trainingStatus}
                 />
-
                 {/* Alerts */}
                 <div className="space-y-4">
                   {!audioPermissionGranted && trainingStatus !== "idle" && (
@@ -426,7 +426,7 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
                   )}
                 </div>
               </div>
-
+         
               {/* Right Column: Scripts */}
               <div className="space-y-6">
                 <TrainingCallScripts />
@@ -440,8 +440,8 @@ export default function TrainingPage({ role, data = [], trainingData = [], train
       </div>
       {/* Bottom Bar*/}
       <div className="sticky bottom-0 inset-x-0 z-50 border-t py-3 bg-card shadow-md">
-        <div className="md:max-w-3xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-4">
-          <TrainingStatsCard trainingStats={trainingStats} />
+        <div className="max-w-xl md:max-w-3xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+          <TrainingStatsCard trainingStats={trainingData} />
           <SystemStatus
             audioPermissionGranted={audioPermissionGranted}
             status={status}

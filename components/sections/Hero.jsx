@@ -13,9 +13,9 @@ export const Hero = () => {
       <div className="container mx-auto max-w-3xl px-4 text-center mt-12 md:mt-0">
         <Badge
           variant="secondary"
-          className="mb-4 bg-sky-100 text-primary border-primary rounded-full bg-transparent"
+          className="mb-4 text-primary border-primary rounded-full bg-transparent"
         >
-          <span className="md:text-lg px-4 tracking-wide">
+          <span className="text-sm md:text-lg px-4 tracking-wide">
             TRUSTED BY 10,000+ COMPANIES
           </span>
         </Badge>
@@ -35,7 +35,7 @@ export const Hero = () => {
           <p className="text-secondary font-medium">AI-powered outreach</p>
         </h1>
 
-        <p className="md:text-xl text-sky-400 mb-8 max-w-2xl mx-auto leading-relaxed">
+        <p className="md:text-lg text-sky-400 mb-6 md:mb-4 max-w-xl md:max-w-3xl mx-auto leading-relaxed">
           Transform your <span className="font-semibold ">cold outreach</span>{" "}
           with intelligent emails and{" "}
           <span className="font-semibold ">AI-driven cold calls</span> — all
@@ -49,26 +49,25 @@ export const Hero = () => {
           </span>
         </p>
 
-        <div className="flex justify-center items-center mb-8">
+        <div className="md:hidden flex justify-center items-center mb-6">
           <Button size="huge" asChild>
             <Link href="/waitlist">Join Waitlist Today!</Link>
           </Button>
         </div>
 
-        <div className="relative flex justify-center">
-          {/* Image hidden on sm and below, visible on md and up */}
-          <div className="hidden md:block z-40">
+        <div className="flex justify-center relative">
+          <div className="z-40">
             <Image
               src={heroImg}
               alt="hero-image-phone"
-              className="object-cover "
+              className="object-cover size-60 md:size-72" // 192px on mobile, 384px on md+
               height={400}
               width={400}
             />
           </div>
 
-          {/* Overlay (already hidden on sm via your existing code) */}
-          <div className="absolute hidden md:block bottom-0 top-0 h-[300px] w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" />
+          {/* Adjust overlay size accordingly */}
+          {/* <div className="absolute bottom-0 top-0 h-[150px] w-[150px] md:h-[300px] md:w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" /> */}
         </div>
       </div>
     </>

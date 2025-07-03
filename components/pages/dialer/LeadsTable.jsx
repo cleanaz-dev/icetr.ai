@@ -166,7 +166,7 @@ export default function LeadsTable({
               <React.Fragment key={lead.id}>
                 <TableRow
                   className={cn(
-                    "cursor-pointer hover:bg-muted/50",
+                    "cursor-pointer hover:bg-primary/50 odd:bg-muted/20",
                     selectedLead?.id === lead.id && "bg-muted"
                   )}
                 >

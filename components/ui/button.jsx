@@ -21,13 +21,14 @@ const buttonVariants = cva(
           "bg-transparent hover:bg-primary/50 transition-all duration-300 text-primary hover:text-white hover:scale-105",
         link: "text-primary underline-offset-4 hover:underline",
         transparent: "bg-transparent transition-all duration-300 text-primary hover:scale-110 transition-all duration-300",
-        muted: "bg-muted animated-pulse hover:bg-muted-foreground transition-all duration-200"
+        muted: "bg-muted animated-pulse hover:bg-muted-foreground transition-all duration-200",
+        outlineHero: "bg-transparent border-primary border-2 rounded-full text-primary-foreground  hover:bg-primary transition-all duration-200"
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        huge: "h-12 rounded-full px-8 has-[>svg]:px-6 text-lg hover:scale-105 duration-300 transition-all",
+        huge: "h-10 md:h-12 rounded-full px-8 has-[>svg]:px-6 text-lg hover:scale-110 duration-500 transition-all",
         hugeTransparent: "h-12 bg-transparent rounded-full px-8 has-[>svg]:px-6 text-lg hover:bg-secondary/50",
         icon: "size-9",
       },

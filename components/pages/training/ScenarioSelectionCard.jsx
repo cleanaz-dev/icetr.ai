@@ -50,7 +50,7 @@ export default function ScenarioSelectionCard({
   const current = scenarios.find((s) => s.id === selectedScenario);
 
   return (
-    <Card>
+    <Card className="border-0 bg-transparent">
       <CardHeader>
         <CardTitle>Select Practice Scenario</CardTitle>
         <CardDescription>

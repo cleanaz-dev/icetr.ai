@@ -12,7 +12,6 @@ import { navigation } from "@/lib/constants/frontend";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import NotificationsDialog from "./NotificationsDialog";
 
 // Define role-based navigation
@@ -133,7 +132,7 @@ export default function RoleBasedDashboardLayout({ children, userRole, notificat
                 title={sidebarCollapsed ? item.name : undefined}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
-                {!sidebarCollapsed && <span>{item.name}</span>}
+               {!sidebarCollapsed && (<span>{item.name}</span>)} 
               </Link>
             );
           })}

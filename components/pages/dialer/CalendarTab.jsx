@@ -21,7 +21,7 @@ if(!lead) {
       <InlineWidget
         url="https://calendly.com/llmgem-info"
         styles={{
-          height: '100%',
+          height: '80%',
           width: '100%',
         }}
         prefill={{

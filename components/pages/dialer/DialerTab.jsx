@@ -7,12 +7,12 @@ import {
   X,
   Keyboard,
   PhoneCall,
+  MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -31,12 +31,12 @@ export default function DialerTab({
   call,
   onCall,
   onHangup,
-  currentSession
+  currentSession,
 }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fromNumber, setFromNumber] = useState(FROM_NUMBERS[0].value);
   const [showDialpad, setShowDialpad] = useState(true);
-  const { user } = useUser()
+  const { user } = useUser();
 
   const clearNumber = () => {
     setPhoneNumber("");
@@ -54,27 +54,30 @@ export default function DialerTab({
     <>
       {/* Selected Lead Info */}
       {selectedLead && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
+        <div className="bg-card p-2 rounded-md">
+          <div className="flex justify-between">
+            <div className="text-lg font-semibold">
               {selectedLead.name || "Unknown"}
-           
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant={LEAD_STATUSES[selectedLead.status]?.variant}>
-                {LEAD_STATUSES[selectedLead.status]?.label}
-              </Badge>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
+            <Badge variant={LEAD_STATUSES[selectedLead.status]?.variant}>
+              {LEAD_STATUSES[selectedLead.status]?.label}
+            </Badge>
+          </div>
+          <div className="space-y-2">
             {selectedLead.company && (
               <div>
                 <div className="text-sm text-muted-foreground">Company</div>
-                <div className="text-sm">{selectedLead.company}</div>
+                <div className="flex gap-2 text-sm ">
+                  {selectedLead.company}
+                  <span className="flex items-center gap-0.5 text-accent text-xs">
+                    <MapPin className="size-3 -mt-0.5" />
+                    {selectedLead.region}
+                  </span>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Phone Number Input */}
@@ -87,6 +90,7 @@ export default function DialerTab({
             onChange={(e) => setPhoneNumber(e.target.value)}
             placeholder="+1 (555) 123-4567"
             className="font-mono"
+            disabled
           />
           {phoneNumber && (
             <Button variant="ghost" size="icon" onClick={clearNumber}>
@@ -107,9 +111,7 @@ export default function DialerTab({
             {FROM_NUMBERS.map((number) => (
               <SelectItem key={number.value} value={number.value}>
                 <div className="flex items-center gap-2">
-                  <span className="">
-                    {number.country}
-                  </span>
+                  <span className="">{number.country}</span>
                   {number.label}
                 </div>
               </SelectItem>
@@ -121,10 +123,17 @@ export default function DialerTab({
       {/* Call Controls */}
       <div className="grid grid-cols-2 gap-3">
         <Button
-          onClick={() => onCall(phoneNumber,selectedLead, fromNumber, currentSession.id, user.id)}
+          onClick={() =>
+            onCall(
+              phoneNumber,
+              selectedLead,
+              fromNumber,
+              currentSession.id,
+              user.id
+            )
+          }
           disabled={!phoneNumber || call}
           className="w-full"
-          size="lg"
         >
           {call ? (
             <div className="flex items-center">
@@ -143,7 +152,6 @@ export default function DialerTab({
           disabled={!call}
           variant="destructive"
           className="w-full"
-          size="lg"
         >
           <PhoneOff className="w-4 h-4 mr-2" />
           Hang Up
@@ -151,14 +159,14 @@ export default function DialerTab({
       </div>
 
       {/* Dialpad Toggle */}
-      <Button
+      {/* <Button
         variant="outline"
         className="w-full"
         onClick={() => setShowDialpad(!showDialpad)}
       >
         <Keyboard className="w-4 h-4 mr-2" />
         {showDialpad ? "Hide" : "Show"} Dialpad
-      </Button>
+      </Button> */}
 
       {/* Dialpad */}
       {showDialpad && (
