@@ -14,13 +14,27 @@ const baseUrl =
 
 export async function POST(request) {
   try {
-    const { firstname, lastname, email, orgId, id } = await request.json();
+    const { firstname, lastname, email, orgId, id:tempUUID, userRole, teamId } =
+      await request.json();
+
+    // Alternative: Log as a grouped object
+    console.log("User Data:", {
+      firstname,
+      lastname,
+      email,
+      orgId,
+      tempUUID,
+      userRole,
+      teamId,
+    });
+
+    // return NextResponse.json({ message: "Error, please try again or contact system admin." }, { status: 500 });
 
     // Optional: Check if user exists in your DB first
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
-        { success: false, message: "User already exists in your system" },
+        { success: false, message: "User already exists" },
         { status: 400 }
       );
     }
@@ -40,6 +54,9 @@ export async function POST(request) {
       emailAddress: [email],
       firstName: firstname,
       lastName: lastname,
+      publicMetadata: {
+        role: userRole,
+      },
     });
 
     const user = await prisma.user.create({
@@ -50,7 +67,8 @@ export async function POST(request) {
         clerkId: clerkUser.id,
         imageUrl: clerkUser.imageUrl,
         organization: { connect: { id: orgId } },
-        role: "Agent",
+        team: { connect: { id: teamId}},
+        role: userRole,
       },
     });
 
@@ -65,7 +83,7 @@ export async function POST(request) {
       expiresInSeconds: 300, // 5 minutes
     });
     // console.log("Sign-in token created:", signInToken);
-    await redis.json.set(`invitee:${id}`, ".status", "complete");
+    await redis.json.set(`invitee:${tempUUID}`, ".status", "complete");
 
     await prisma.notification.create({
       data: {

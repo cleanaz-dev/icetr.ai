@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Users,
+  UserRound,
+  BarChart2,
+  BadgeInfo,
   Phone,
   TrendingUp,
   Target,
@@ -20,6 +23,7 @@ import {
   MessageSquare,
   BookOpen,
 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const StatCard = ({
   title,
@@ -39,7 +43,9 @@ const StatCard = ({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-xs sm:text-sm font-medium truncate">
+          {title}
+        </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -64,11 +70,17 @@ export default function AgentDashboard({ data }) {
     followUps,
     todayCallSession,
     recentActivities,
-    campaigns,
     dashboardMetrics,
   } = data;
 
   // Set daily call target (could be configurable)
+  const {
+    teamName,
+    managerName,
+    teamMemberCount,
+    campaignCount,
+    managerImageUrl,
+  } = dashboardMetrics.teamInformation;
   const callTarget = 30;
   const weeklyBookingGoal = 8;
 
@@ -88,9 +100,74 @@ export default function AgentDashboard({ data }) {
           </p>
         </div>
       </div>
+      <div>
+        {/* Team Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-500" />
+
+                <span>{teamName}</span>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Manager */}
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <UserRound className="h-4 w-4 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Manager
+                  </p>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                   
+                    {managerName || (
+                      <span className="text-muted-foreground">Unassigned</span>
+                    )}
+                     <Avatar>
+                      <AvatarImage src={managerImageUrl} />
+                      <AvatarFallback>M</AvatarFallback>
+                    </Avatar>
+                  </div>
+                </div>
+              </div>
+
+              {/* Members */}
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <Users className="h-4 w-4 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Members
+                  </p>
+                  <p className="text-sm font-medium">{teamMemberCount}</p>
+                </div>
+              </div>
+
+              {/* Campaigns */}
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <BarChart2 className="h-4 w-4 text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Active Campaigns
+                  </p>
+                  <p className="text-sm font-medium">{campaignCount}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Key Performance Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
         <StatCard
           title="Assigned Leads"
           value={dashboardMetrics.assignedLeads}
@@ -121,12 +198,12 @@ export default function AgentDashboard({ data }) {
           icon={Clock}
           variant={followUps.overdue > 0 ? "danger" : "success"}
         />
-        <StatCard
+        {/* <StatCard
           title="Active Campaigns"
           value={dashboardMetrics.activeCampaigns}
           description="Campaigns you're part of"
           icon={BookOpen}
-        />
+        /> */}
       </div>
 
       {/* Daily Progress and Performance */}
@@ -171,140 +248,6 @@ export default function AgentDashboard({ data }) {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Performance Metrics
-            </CardTitle>
-            <CardDescription>
-              Your current performance indicators
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Key Metrics */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm flex items-center gap-2">
-                  <MessageSquare className="h-3 w-3" />
-                  Connect Rate
-                </span>
-                <Badge variant={connectRate >= 20 ? "default" : "secondary"}>
-                  {connectRate}%
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm flex items-center gap-2">
-                  <Users className="h-3 w-3" />
-                  Total Leads
-                </span>
-                <Badge variant="secondary">{leads.total}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm flex items-center gap-2">
-                  <AlertCircle className="h-3 w-3" />
-                  Overdue Follow-ups
-                </span>
-                <Badge
-                  variant={followUps.overdue > 0 ? "destructive" : "secondary"}
-                >
-                  {followUps.overdue}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Campaign Info */}
-            {campaigns.length > 0 && (
-              <div className="pt-3 border-t">
-                <h4 className="text-sm font-medium mb-2">
-                  {campaigns.length === 1
-                    ? "Active Campaign"
-                    : "Active Campaigns"}
-                </h4>
-                <div className="space-y-3">
-                  {campaigns.map((campaign, index) => (
-                    <div key={campaign.id || index} className="space-y-1">
-                      <p className="text-sm font-medium text-primary">{campaign.name}</p>
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {campaign.type}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Info Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Today's Focus</h3>
-              <p className="text-sm text-muted-foreground">
-                Recommended priority
-              </p>
-            </div>
-          </div>
-          <div className="mt-3">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              {followUps.overdue > 0
-                ? "Complete Overdue Follow-ups"
-                : callsToday < callTarget
-                ? "Reach Call Target"
-                : "Great Work Today!"}
-            </Badge>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Follow-up Status</h3>
-              <p className="text-sm text-muted-foreground">Current workload</p>
-            </div>
-          </div>
-          <div className="mt-3 space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Total:</span>
-              <span className="font-medium">{followUps.total}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Due Today:</span>
-              <span className="font-medium text-orange-600">
-                {followUps.dueToday}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Recent Activity</h3>
-              <p className="text-sm text-muted-foreground">Latest actions</p>
-            </div>
-          </div>
-          <div className="mt-3">
-            {recentActivities.length > 0 ? (
-              <p className="text-sm">
-                {recentActivities.length} recent activities
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No recent activity
-              </p>
-            )}
-          </div>
         </Card>
       </div>
     </div>

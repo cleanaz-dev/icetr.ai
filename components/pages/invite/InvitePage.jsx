@@ -16,6 +16,9 @@ export default function InvitePage({ userData = {} }) {
     email: userData.email || "",
     orgId: userData.orgId || "",
     id: userData.id,
+    teamId: userData.teamId || "",
+    userRole: userData.userRole || "Agent",
+    senderUserId: userData.senderUserId,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -150,7 +153,20 @@ export default function InvitePage({ userData = {} }) {
               autoComplete="email"
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid sm:grid-cols-2 gap-4">
+             <div className="space-y-2">
+            <Label htmlFor="teamId">Team ID</Label>
+            <Input
+              id="teamId"
+              name="teamId"
+              type="text"
+              value={formData.teamId}
+              disabled={!!userData.teamId}
+              autoComplete="teamId"
+              className="truncate"
+            />
+          </div>
+            <div className="space-y-2">
             <Label htmlFor="organization">Organization ID</Label>
             <Input
               id="organization"
@@ -159,7 +175,9 @@ export default function InvitePage({ userData = {} }) {
               value={formData.orgId}
               disabled={!!userData.orgId}
               autoComplete="organization"
+              className="truncate"
             />
+          </div>
           </div>
         </div>
 

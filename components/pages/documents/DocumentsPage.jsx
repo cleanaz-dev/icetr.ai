@@ -353,7 +353,7 @@ export default function DocumentsPage({ campaigns }) {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto max-w-7xl py-8 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Document Management</h1>

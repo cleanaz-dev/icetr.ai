@@ -16,9 +16,13 @@ export async function POST(req) {
       email,
       organizationName,
       country,
+      teamName,
+      teamDescription,
       invites = [],
     } = data;
 
+    console.log("data:",data)
+    return NextResponse.json(null,{status: 500})
     const response = await clerkClient.users.getUserList({
       emailAddress: [email],
     });

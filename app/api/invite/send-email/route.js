@@ -1,13 +1,19 @@
 import { sendInviteEmail } from "@/lib/service/resend";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/service/prisma";
 import redis from "@/lib/service/redis";
 
 
 
 export async function POST(request) {
   try {
-    const { email, orgId } = await request.json();
+    const { email, senderUserId, teamId, userRole = "Agent"  } = await request.json();
+    console.log("email", email)
+    console.log("senderUserId", senderUserId)
+    console.log("teamId", teamId)
+    console.log("user role", userRole)
+
 
     const existiningKeys = await redis.keys("invitee:*");
 
@@ -27,6 +33,11 @@ export async function POST(request) {
       }
     }
 
+    const sendingUser = await prisma.user.findUnique({
+      where: {clerkId: senderUserId },
+      select: {orgId: true}
+    })
+
     // Remove this line - it's preventing the invite creation code from running
     // return NextResponse.json({ message: "Exisiting User" }, { status: 500 });
 
@@ -38,13 +49,15 @@ export async function POST(request) {
     await redis.json.set(`invitee:${uuid}`, ".", {
       id: uuid,
       email: email,
-      orgId: orgId,
+      orgId: sendingUser.orgId,
+      userRole: userRole,
+      teamId: teamId,
       createdAt: new Date().toISOString(),
       status: "pending"
     });
 
-    // Set expiration (24 hours)
-    await redis.expire(`invitee:${uuid}`, 60 * 60 * 24);
+    // Set expiration (48 hours)
+    await redis.expire(`invitee:${uuid}`, 60 * 60 * 48);
 
     return NextResponse.json({ success: true });
   } catch (error) {

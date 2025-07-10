@@ -23,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserPlus, Loader2, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 
-export default function UnassignLeadsDialog({ leads, users, onComplete }) {
+export default function UnassignLeadsDialog({ leads, members, onComplete }) {
   // console.log("leads:", leads)
   // console.log("users:", users)
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +31,7 @@ export default function UnassignLeadsDialog({ leads, users, onComplete }) {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [isUnassigning, setIsUnassigning] = useState(false);
 
-  const selectedUser = users?.find((user) => user.id === selectedUserId);
+  const selectedUser = members?.find((member) => member.id === selectedUserId);
   const assignedLeads = leads.filter((lead) => lead.assignedUserId === selectedUserId);
 
   const handleUserSelect = (userId) => {
@@ -124,14 +124,14 @@ export default function UnassignLeadsDialog({ leads, users, onComplete }) {
                 <SelectValue placeholder="Choose a team member" />
               </SelectTrigger>
               <SelectContent>
-                {users?.map((user) => {
+                {members?.map((member) => {
                   const userLeadCount = leads.filter(
-                    (lead) => lead.assignedUserId === user.id
+                    (lead) => lead.assignedUserId === member.id
                   ).length;
                   return (
-                    <SelectItem key={user.id} value={user.id}>
+                    <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center justify-between w-full">
-                        <span>{user.firstname || user.email} {user.lastname}</span>
+                        <span>{member.firstname || member.email} {member.lastname}</span>
                         <Badge variant="secondary" className="ml-2">
                           {userLeadCount} leads
                         </Badge>

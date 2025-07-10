@@ -69,6 +69,8 @@ import { Users2 } from "lucide-react";
 import AssignLeadsDialog from "./AssignLeadsDialog";
 import UnassignLeadsDialog from "./UnassignLeadsDialog";
 import { useRouter } from "next/navigation";
+import { EnhancedLeadsTable } from "./EnhancedLeadsTable";
+import { EnhancedLeadsTableTanStack } from "./EnhancedLeadsTableTanStack";
 
 const statusOptions = [
   { value: "New", label: "New", color: "bg-blue-500" },
@@ -88,7 +90,7 @@ const sourceOptions = [
   "Cold Email",
 ];
 
-export default function LeadsPage({ data, users = [] }) {
+export default function LeadsPage({ data, members = [], team }) {
   const [leads, setLeads] = useState(data);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -245,17 +247,17 @@ export default function LeadsPage({ data, users = [] }) {
   };
 
   const refreshLeads = async () => {
-  const res = await fetch("/api/leads");
-  const updatedLeads = await res.json();
-  setLeads(updatedLeads);
-};
+    const res = await fetch("/api/leads");
+    const updatedLeads = await res.json();
+    setLeads(updatedLeads);
+  };
 
   return (
     <div className="space-y-6 px-4 py-6">
       {/* Header */}
       <header className="">
         <div className="flex items-center gap-2">
-          <div className="border border-2 p-2 border-primary rounded-full">
+          <div className="border-2 p-2 border-primary rounded-full">
             <Users2 className="text-primary" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
@@ -316,196 +318,31 @@ export default function LeadsPage({ data, users = [] }) {
       </div>
 
       {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Leads Management</CardTitle>
-          <CardDescription>Filter and manage your sales leads</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 mb-6">
-            {/* Search bar and Assign button */}
-            <div className="flex justify-between items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search leads..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <AssignLeadsDialog
-                leads={leads}
-                users={users}
-                onAssignComplete={(result) => {
-                  refresh();
-                  console.log("Assignment complete:", result);
-                }}
-              />
-              <UnassignLeadsDialog
-                leads={leads}
-                users={users}
-                onComplete={refreshLeads}
-              />
-            </div>
+      {/* <EnhancedLeadsTable
+        leads={leads}
+        members={members}
+        team={team}
+        UserDisplay={UserDisplay}
+        statusOptions={statusOptions}
+        sourceOptions={sourceOptions}
+        onAssignComplete={() => console.log("test")}
+        onUnassignComplete={() => console.log("test")}
+        refreshLeads={refreshLeads}
+        getStatusBadge={getStatusBadge}
+      /> */}
 
-            {/* Filter dropdowns */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Filter by source" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sourceOptions.map((source) => (
-                    <SelectItem key={source} value={source}>
-                      {source}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="All Campaigns" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Campaigns</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Leads Table */}
-          <div className="rounded-md border h-[400px] overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Industry</TableHead>
-                  <TableHead>Status</TableHead>
-
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead>Last Contact</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        {/* <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {lead.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar> */}
-                        <div>
-                          <p className="font-medium">{lead.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {lead.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {lead.company}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{lead.source}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="capitalize">{lead.industry}</span>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
-
-                    <TableCell>
-                      <UserDisplay user={lead.assignedUser} />
-                    </TableCell>
-                    <TableCell>{lead.lastContact}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                          // onClick={() => {
-                          //   setSelectedLead(lead);
-                          //   setIsDetailsOpen(true);
-                          // }}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Lead
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Phone className="mr-2 h-4 w-4" />
-                            Call Lead
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Send Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Schedule Meeting
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                          // onClick={() => deleteLead(lead.id)}
-                          // className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Lead
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {filteredLeads.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No leads found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search or filter criteria
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Lead
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <EnhancedLeadsTableTanStack
+        leads={leads}
+        team={team}
+        members={members}
+        statusOptions={statusOptions}
+        sourceOptions={sourceOptions}
+        onAssignComplete={() => console.log("test")}
+        onUnassignComplete={() => console.log("test")}
+        refreshLeads={refreshLeads}
+        getStatusBadge={getStatusBadge}
+        UserDisplay={UserDisplay}
+      />
 
       <LeadDetailsModal />
     </div>

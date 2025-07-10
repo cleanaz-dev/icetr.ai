@@ -20,9 +20,23 @@ model Organization {
   country   String
   users     User[]
   campaigns Campaign[]
+  teams     Team[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   createdBy String     @unique
+}
+
+model Team {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  orgId        String       @db.ObjectId
+  organization Organization @relation(fields: [orgId], references: [id])
+  campaigns    Campaign[]
+  managerId    String?      @db.ObjectId
+  manager      User?        @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  members      User[]       @relation("TeamMember")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
 
 model User {
@@ -35,7 +49,6 @@ model User {
   imageUrl          String
   orgId             String             @db.ObjectId
   organization      Organization       @relation(fields: [orgId], references: [id])
-  campaigns         CampaignUser[]
   assignedLeads     Lead[]
   activities        LeadActivity[]
   userSettings      UserSettings?
@@ -46,6 +59,11 @@ model User {
   Call              Call[]
   Training          Training[]
   Notification      Notification[]
+  reviewedTrainings ReviewTraining[]   @relation("TrainingReviewer")
+
+  managedTeams Team[]  @relation("TeamManager")
+  teamId       String? @db.ObjectId
+  team         Team?   @relation("TeamMember", fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model UserSettings {
@@ -62,11 +80,12 @@ model Campaign {
   id           String             @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   orgId        String             @db.ObjectId
+  organization Organization       @relation(fields: [orgId], references: [id])
+  teamId       String?            @db.ObjectId
+  team         Team?              @relation(fields: [teamId], references: [id])
   type         String
   status       Status             @default(Draft)
-  organization Organization       @relation(fields: [orgId], references: [id])
   leads        Lead[]
-  users        CampaignUser[]
   documents    CampaignDocument[]
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -263,16 +282,6 @@ model CampaignDocument {
   createdAt          DateTime @default(now())
 }
 
-model CampaignUser {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  campaignId String   @db.ObjectId
-  userId     String   @db.ObjectId
-  campaign   Campaign @relation(fields: [campaignId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-  role       Role     @default(Agent)
-  assignedAt DateTime @default(now())
-}
-
 model Training {
   id                        String       @id @default(auto()) @map("_id") @db.ObjectId
   userId                    String       @db.ObjectId
@@ -282,34 +291,39 @@ model Training {
   objectionHandled          Boolean?
   bookedMeeting             Boolean?
   valuePropositionDelivered Boolean?
+  // individual scores
   introQualityScore         String?
   discoveryScore            String?
+  rapportScore              String?
+  objectionScore            String?
+  closingScore              String?
+  closingCoach              String?
   overallScore              String?
-  scenario                  String?
-  recordingUrl              String?
-  transcript                String?
-  transcriptSummary         String?
-  improvements              String?
-  createdAt                 DateTime     @default(now())
-  updatedAt                 DateTime     @updatedAt
+  numericalGrade            Float?
+
+  scenario          String?
+  recordingUrl      String?
+  transcript        String?
+  transcriptSummary String?
+  improvements      String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  ReviewTraining    ReviewTraining[]
 }
 
-// model ReviewTraining {
-//   id             String       @id @default(auto()) @map("_id") @db.ObjectId
-//   userId         String       @db.ObjectId
-//   user           User         @relation(fields: [userId], references: [id])
+model ReviewTraining {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainingId String   @db.ObjectId
+  training   Training @relation(fields: [trainingId], references: [id])
 
-//   reviewerId     String       @db.ObjectId
-//   reviewer       User         @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+  reviewerId String @db.ObjectId
+  reviewer   User   @relation("TrainingReviewer", fields: [reviewerId], references: [id])
 
-//   type           TrainingType @default(REVIEW)
+  score       Int // 1-100
+  reviewNotes String?
 
-//   recordingUrl   String
-//   score          Int          // e.g., 1–100
-//   reviewNotes    String?
-
-//   createdAt      DateTime     @default(now())
-// }
+  createdAt DateTime @default(now())
+}
 
 enum NotificationStatus {
   pending
@@ -366,6 +380,9 @@ enum Role {
   Admin
   Manager
   Agent
+  TeamAdmin
+  OrgAdmin
+  SuperAdmin
 }
 
 enum Status {

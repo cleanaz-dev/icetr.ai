@@ -20,8 +20,8 @@ export default function SingleCampaignCard({ campaign }) {
     }).format(amount);
   };
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="flex flex-col h-full">
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <Card >
         {" "}
         {/* Add flex-col and h-full */}
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -36,7 +36,7 @@ export default function SingleCampaignCard({ campaign }) {
         </CardContent>
       </Card>
 
-      <Card className="flex flex-col h-full">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Conversion</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -47,7 +47,7 @@ export default function SingleCampaignCard({ campaign }) {
         </CardContent>
       </Card>
 
-      <Card className="flex flex-col h-full">
+      <Card >
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Budget Spent</CardTitle>
           <Activity className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +66,7 @@ export default function SingleCampaignCard({ campaign }) {
         </CardContent>
       </Card>
 
-      <Card className="flex flex-col h-full">
+      <Card >
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Pick Up Rate</CardTitle>
           <Phone className="h-4 w-4 text-muted-foreground" />

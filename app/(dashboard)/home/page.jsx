@@ -19,7 +19,7 @@ export default async function page() {
   const orgId = await getOrgId(userId)
   const dashboardStats = await getDashboardStats(orgId)
   const agentData = await getAgentDashboardStats(userId)
-  // console.log("agent data", agentData)
+  console.log("agent data", agentData)
   
   // Prepare data for both dashboards
   const dashboardData = { activities, leadCounts, dashboardStats };

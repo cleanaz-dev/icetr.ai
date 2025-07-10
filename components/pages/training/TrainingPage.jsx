@@ -345,7 +345,7 @@ export default function TrainingPage({
       {/* Container Div */}
       <div className="p-1 md:p-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="flex gap-2 text-4xl font-bold items-center">
             <PiStudent className="text-primary" /> Training
           </h1>
@@ -439,7 +439,7 @@ export default function TrainingPage({
         </Tabs>
       </div>
       {/* Bottom Bar*/}
-      <div className="sticky bottom-0 inset-x-0 z-50 border-t py-3 bg-card shadow-md">
+      <div className="sticky bottom-0 inset-x-0 z-50 border-t py-2.5 bg-card shadow-md">
         <div className="max-w-xl md:max-w-3xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4">
           <TrainingStatsCard trainingStats={trainingData} />
           <SystemStatus

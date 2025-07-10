@@ -12,24 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import {
-  Users,
-  TrendingUp,
-  Activity,
-  Calendar,
-  FileText,
-  Target,
-  Search,
-  Plus,
-  ArrowUp,
-  ArrowDown,
   Circle,
 } from "lucide-react";
 import { LayoutDashboard } from "lucide-react";
 import { useDashboard } from "@/lib/context/DashboardProvider";
 import LeadDistributionChart from "./LeadDistributionChart";
 import DashboardStatsCard from "./DashboardStatsCard";
-
-
 
 export default function Dashboard() {
   const { activities, leadCounts } = useDashboard();
@@ -49,13 +37,9 @@ export default function Dashboard() {
             Track and manage your leads and team performance
           </p>
         </div>
-
-       
       </header>
-
       {/* Stats Cards */}
      <DashboardStatsCard />
-
       {/* Main Content - Restructured Layout */}
       <div className="grid gap-6">
         {/* Pipeline and Recent Activities Side by Side */}

@@ -5,11 +5,17 @@ import { transcribePracticeCall } from "@/lib/service/assembly-ai";
 
 export async function POST(request) {
   try {
+    const { userId: clerkId } = await auth();
     const body = await request.json();
+    console.log("blandAI webhook:", body)
+    return NextResponse({ message: "Data Received"})
     const { recording_url, metadata, analysis } = body;
 
     const {
       overall_score,
+      rapport_score,
+      objection_score,
+      closing_score,
       rapport_built,
       objection_handled,
       intro_quality_score,
@@ -17,6 +23,7 @@ export async function POST(request) {
       discovery_quality_score,
       value_proposition_delivered,
       user_cold_call_improvements,
+      call_strengths,
     } = analysis;
 
     const { userId, scenario, timestamp } = metadata;
@@ -57,6 +64,8 @@ export async function POST(request) {
         introQualityScore: intro_quality_score || null,
         bookedMeeting: booked_meeting,
         discoveryScore: discovery_quality_score,
+        closingScore: closing_score,
+        objectScore: objection_score,
         overallScore: overall_score,
         valuePropositionDelivered: value_proposition_delivered,
         objectionHandled: objection_handled,

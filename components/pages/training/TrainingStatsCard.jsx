@@ -4,7 +4,7 @@ import React from "react";
 
 export default function TrainingStatsCard({ trainingStats }) {
   return (
-    <div className="flex items-center gap-6 text-xs md:text-sm">
+    <div className="flex items-center gap-6 text-xs">
       <div className="flex items-center gap-2 rounded-full bg-muted px-4 py-2">
         <Phone className="size-4" />
         <p className="text-muted-foreground ">

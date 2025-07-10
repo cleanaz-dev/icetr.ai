@@ -29,6 +29,7 @@ import {
   UserCheck,
   Sparkles,
   ArrowRight,
+  FileText
 } from "lucide-react";
 
 export default function Onboarding() {
@@ -44,13 +45,15 @@ export default function Onboarding() {
     email: "",
     code: "",
     organizationName: "",
+    teamName: "",
+    teamDescription: "",
     country: "",
     invites: [],
   });
 
   const [currentInvite, setCurrentInvite] = useState({
     email: "",
-    role: "standard",
+    role: "agent",
   });
 
   const updateFormData = (field, value) => {
@@ -437,7 +440,7 @@ const ProgressIndicator = () => {
     return (
       <>
       <ProgressIndicator />
-        <form onSubmit={handleOrganizationSetup} className="space-y-6">
+        <form onSubmit={handleOrganizationSetup} className="space-y-6 pb-6">
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -486,6 +489,50 @@ const ProgressIndicator = () => {
               </div>
             </div>
 
+            {/* Team Section - NEW */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              <h4 className="font-semibold text-lg">Create Your First Team</h4>
+              <Badge variant="destructive" className="ml-auto">Required</Badge>
+            </div>
+            
+            <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+              <p className="text-sm text-blue-700">
+                Teams help organize your campaigns, users and leads. You can create more teams later.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teamName" className="flex items-center gap-2 text-sm font-medium">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                Team Name *
+              </Label>
+              <Input
+                id="teamName"
+                value={formData.teamName}
+                onChange={(e) => updateFormData("teamName", e.target.value)}
+                placeholder="Sales Team, Marketing Team, etc."
+                className="h-11 border-2 focus:border-primary transition-all duration-200"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teamDescription" className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Team Description
+              </Label>
+              <Input
+                id="teamDescription"
+                value={formData.teamDescription}
+                onChange={(e) => updateFormData("teamDescription", e.target.value)}
+                placeholder="Brief description of this team's purpose"
+                className="h-11 border-2 focus:border-primary transition-all duration-200"
+              />
+            </div>
+          </div>
+
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
@@ -518,7 +565,7 @@ const ProgressIndicator = () => {
                         setCurrentInvite((prev) => ({ ...prev, role: value }))
                       }
                     >
-                      <SelectTrigger className="h-10 border-2 focus:border-primary transition-all duration-200">
+                      <SelectTrigger className="h-10 border-2 focus:border-primary transition-all duration-200 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -528,10 +575,16 @@ const ProgressIndicator = () => {
                             Admin
                           </div>
                         </SelectItem>
-                        <SelectItem value="standard">
+                        <SelectItem value="agent">
                           <div className="flex items-center gap-2">
                             <UserCheck className="w-4 h-4" />
-                            Standard
+                            Agent
+                          </div>
+                        </SelectItem>
+                         <SelectItem value="manager">
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="w-4 h-4" />
+                            Manager
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -565,7 +618,7 @@ const ProgressIndicator = () => {
                     {formData.invites.map((invite) => (
                       <div
                         key={invite.id}
-                        className="flex items-center justify-between p-3 bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
+                        className="flex items-center justify-between p-3 bg-card rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">

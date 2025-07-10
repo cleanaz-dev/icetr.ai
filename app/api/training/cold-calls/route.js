@@ -39,6 +39,9 @@ export async function POST(request) {
         record: true,
         analysis_schema: {
           intro_quality_score: "string (grade letter A,B,C,D or F)",
+          rapport_score: "string (grade letter A,B,C,D or F)",
+          objection_score: "string (grade letter A,B,C,D or F)",
+          closing_score: "string (grade letter A,B,C,D or F)",
           overall_score: "string (grade letter A,B,C,D or F)",
           discovery_quality_score: "string (grade letter A,B,C,D or F)",
           booked_meeting: "boolean",
@@ -54,7 +57,7 @@ export async function POST(request) {
           userId: userId,
           timestamp: new Date().toISOString()
         },
-        webhook: "https://raccoon-credible-elephant.ngrok-free.app/api/training/cold-calls/webhook"
+        webhook: "https://a162-173-176-66-217.ngrok-free.app/api/training/cold-calls/webhook"
       })
     });
 

@@ -273,7 +273,7 @@ export default function CampaignsPage({ campaigns = [] }) {
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{campaign.users?.length || 0}</span>
+                        <span>{campaign.team?.members.length || 0}</span>
                       </div>
                     </TableCell>
                     <TableCell>{formatDate(campaign.createdAt)}</TableCell>

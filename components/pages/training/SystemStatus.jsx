@@ -12,7 +12,7 @@ export default function SystemStatus({ status, audioPermissionGranted }) {
             : "bg-gray-400/10 animate-pulse"
         }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="text-xs flex items-center gap-2">
           <Phone
             className={`size-4 ${
               audioPermissionGranted ? "text-green-600" : "text-slate-700"
@@ -28,7 +28,7 @@ export default function SystemStatus({ status, audioPermissionGranted }) {
             }`}
           />
           <span
-            className={`text-xs md:text-sm font-medium ${
+            className={`text-xs font-medium ${
               status === "Ready" ? "text-green-600" : "text-yellow-600"
             }`}
           >

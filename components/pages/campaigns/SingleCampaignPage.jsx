@@ -78,8 +78,13 @@ import {
 import AddMemberDialog from "./AddMemberDialog";
 import SingleCampaignCard from "./SingleCampaignCard";
 import AssignLeadsDialog from "../leads/AssignLeadsDialog";
+import Link from "next/link";
 
-export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }) {
+export default function SingleCampaignPage({
+  campaign,
+  campaignUsers,
+  orgUsers,
+}) {
   const router = useRouter();
 
   const [leads, setLeads] = useState(campaign.leads);
@@ -187,7 +192,7 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
     );
   };
 
-  const unAssignedLeads = leads.filter(lead => lead.assignedUserId === null);
+  const unAssignedLeads = leads.filter((lead) => lead.assignedUserId === null);
 
   const getLeadStatusBadge = (status) => {
     const statusConfig = {
@@ -218,15 +223,16 @@ export default function SingleCampaignPage({ campaign, campaignUsers, orgUsers }
     setCampaign((prev) => ({ ...prev, status: newStatus }));
   };
 
-const filteredLeads = leads.filter((lead) => {
-  const matchesSearch =
-    lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.company?.toLowerCase().includes(searchTerm.toLowerCase());
-  const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
-  return matchesSearch && matchesStatus;
-});
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch =
+      lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.company?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || lead.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   if (!campaign) {
     return (
@@ -241,8 +247,6 @@ const filteredLeads = leads.filter((lead) => {
       </div>
     );
   }
-
-
 
   return (
     <div className="flex-1 space-y-6 p-6">
@@ -335,7 +339,10 @@ const filteredLeads = leads.filter((lead) => {
                       console.log(`Imported ${data.count} leads`);
                     }}
                   />
-                  <AssignLeadsDialog leads={unAssignedLeads} users={campaignUsers} />
+                  <AssignLeadsDialog
+                    leads={unAssignedLeads}
+                    users={campaignUsers}
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -458,55 +465,46 @@ const filteredLeads = leads.filter((lead) => {
                     Team members assigned to this campaign
                   </CardDescription>
                 </div>
-                <AddMemberDialog
-                  users={orgUsers}
-                  campaignId={campaign.id}
-                  onMembersAdded={() => {
-                    router.refresh();
-                  }}
-                />
+                <Button asChild>
+                  <Link href="/teams">View Teams</Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {campaign.users?.map(
-                  (
-                    { user } // Destructure the user object
-                  ) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
-                          <AvatarImage src={user.imageUrl} />
-                          <AvatarFallback>
-                            {user.firstname?.charAt(0) || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {user.firstname} {user.lastname}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {user.email || "No email"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {user.role}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          {user._count.assignedLeads || 0} leads
+                {campaign.team?.members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between px-4 py-2 border rounded-lg"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={member.imageUrl} />
+                        <AvatarFallback>
+                          {member.firstname?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="flex gap-1 items-center font-medium">
+                          {member.firstname} {member.lastname}
+                           <span className="text-sm text-muted-foreground font-light">
+                          {member.role}
+                        </span>
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Assigned
+                          {member.email || "No email"}
                         </p>
+                       
                       </div>
                     </div>
-                  )
-                )}
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {member._count.assignedLeads || 0} leads
+                      </p>
+                      <p className="text-sm text-muted-foreground">Assigned</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

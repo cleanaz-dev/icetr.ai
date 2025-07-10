@@ -59,7 +59,7 @@ const OverviewStats = ({ trainingData }) => {
       <Card>
         <CardContent className="p-4 text-center">
           <div className="text-2xl font-bold">{avgIntroScore.toFixed(1)}</div>
-          <div className="text-sm text-muted-foreground">Avg Intro Score</div>
+          <div className="text-sm text-muted-foreground">Avg Overall Score</div>
         </CardContent>
       </Card>
       

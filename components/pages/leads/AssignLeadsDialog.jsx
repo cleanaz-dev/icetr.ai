@@ -22,11 +22,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { LeadAssignmentComponent } from "./LeadAssignmentComponent";
 
-export default function AssignLeadsDialog({ 
-  leads, 
-  users, // Array of users to assign to
-  onAssignComplete 
+export default function AssignLeadsDialog({
+  leads,
+  members,
+  team,
+  onAssignComplete,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
@@ -45,16 +47,16 @@ export default function AssignLeadsDialog({
   // Handle individual lead selection
   const handleLeadToggle = (leadId, checked) => {
     if (checked) {
-      setSelectedLeadIds(prev => [...prev, leadId]);
+      setSelectedLeadIds((prev) => [...prev, leadId]);
     } else {
-      setSelectedLeadIds(prev => prev.filter(id => id !== leadId));
+      setSelectedLeadIds((prev) => prev.filter((id) => id !== leadId));
     }
   };
 
   // Handle select all/none
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedLeadIds(leads.map(lead => lead.id));
+      setSelectedLeadIds(leads.map((lead) => lead.id));
     } else {
       setSelectedLeadIds([]);
     }
@@ -72,7 +74,7 @@ export default function AssignLeadsDialog({
     }
 
     setIsAssigning(true);
-    
+
     try {
       const response = await fetch("/api/leads/assign", {
         method: "POST",
@@ -102,10 +104,14 @@ export default function AssignLeadsDialog({
     }
   };
 
-  const selectedUser = users?.find(user => user.id === selectedUserId);
-  const selectedLeads = leads.filter(lead => selectedLeadIds.includes(lead.id));
-  const allSelected = selectedLeadIds.length === leads.length && leads.length > 0;
-  const someSelected = selectedLeadIds.length > 0 && selectedLeadIds.length < leads.length;
+  const selectedUser = members?.find((member) => member.id === selectedUserId);
+  const selectedLeads = leads.filter((lead) =>
+    selectedLeadIds.includes(lead.id)
+  );
+  const allSelected =
+    selectedLeadIds.length === leads.length && leads.length > 0;
+  const someSelected =
+    selectedLeadIds.length > 0 && selectedLeadIds.length < leads.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -115,137 +121,44 @@ export default function AssignLeadsDialog({
           Assign Leads
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Assign Leads</DialogTitle>
           <DialogDescription>
             Select leads to assign to a team member
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4 flex-1 min-h-0">
-          {/* Lead Selection */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Select Leads:</h4>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="select-all"
-                  checked={allSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = someSelected;
-                  }}
-                  onCheckedChange={handleSelectAll}
-                />
-                <label htmlFor="select-all" className="text-sm text-muted-foreground">
-                  Select All ({leads.length})
-                </label>
-              </div>
-            </div>
-            
-            <ScrollArea className="h-96 border rounded-md p-2">
-              <div className="space-y-2">
-                {leads.map((lead) => (
-                  <div key={lead.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-sm">
-                    <Checkbox
-                      id={`lead-${lead.id}`}
-                      checked={selectedLeadIds.includes(lead.id)}
-                      onCheckedChange={(checked) => handleLeadToggle(lead.id, checked)}
-                    />
-                    <div className="flex-1 min-w-0 max-w-96">
-                      <div className="flex items-center justify-between">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
-                            {lead.phoneNumber}
-                          </p>
-                          {lead.company && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {lead.company}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 ml-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {lead.status}
-                          </Badge>
-                          {lead.assignedUser && (
-                            <Badge variant="outline" className="text-xs">
-                              {lead.assignedUser.firstname}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
 
-          {/* User Selection */}
-          {selectedLeadIds.length > 0 && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Assign to:
-              </label>
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a team member" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users?.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <div className="flex items-center space-x-2">
-                        {user.imageUrl && (
-                          <img 
-                            src={user.imageUrl} 
-                            alt={`${user.firstname} ${user.lastname}`}
-                            className="w-6 h-6 rounded-full"
-                          />
-                        )}
-                        <span>{user.firstname} {user.lastname}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {user.role}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        <LeadAssignmentComponent
+          leads={leads}
+          members={members}
+          selectedLeadIds={selectedLeadIds}
+          setSelectedLeadIds={setSelectedLeadIds}
+          selectedUserId={selectedUserId}
+          setSelectedUserId={setSelectedUserId}
+        />
 
-          {/* Assignment Summary */}
-          {selectedUser && selectedLeadIds.length > 0 && (
-            <div className="p-3 bg-muted rounded-md">
-              <div className="text-sm">
-                <span className="font-medium">Assigning to:</span> {selectedUser.firstname} {selectedUser.lastname}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {selectedLeadIds.length} lead{selectedLeadIds.length !== 1 ? 's' : ''} will be assigned
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex justify-between items-center pt-4">
           <div className="text-sm text-muted-foreground">
             {selectedLeadIds.length} of {leads.length} leads selected
           </div>
           <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsOpen(false)}
               disabled={isAssigning}
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleAssign} 
-              disabled={!selectedUserId || selectedLeadIds.length === 0 || isAssigning}
+            <Button
+              onClick={handleAssign}
+              disabled={
+                !selectedUserId || selectedLeadIds.length === 0 || isAssigning
+              }
             >
               {isAssigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Assign {selectedLeadIds.length} Lead{selectedLeadIds.length !== 1 ? 's' : ''}
+              Assign {selectedLeadIds.length} Lead
+              {selectedLeadIds.length !== 1 ? "s" : ""}
             </Button>
           </div>
         </div>
