@@ -167,7 +167,7 @@ export default function LeadsTable({
                 <TableRow
                   className={cn(
                     "cursor-pointer hover:bg-primary/50 ",
-                    selectedLead?.id === lead.id && "bg-primary/25"
+                    selectedLead?.id === lead.id && "bg-primary/"
                   )}
                 >
                   <TableCell
