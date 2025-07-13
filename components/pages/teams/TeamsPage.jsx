@@ -15,6 +15,10 @@ import {
   Target,
   Calendar,
   TrendingUp,
+  Flag,
+  Handshake,
+  ExternalLink,
+  User,
   X,
 } from "lucide-react";
 import CreateTeamDialog from "./CreateTeamDialog";
@@ -24,15 +28,16 @@ import AddTeamMemberDialog from "./AddTeamMemberDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AssignCampaignDialog from "./AssignCampaignDialog";
 import UnassignCampaignDialog from "./UnassignCampaignDialog";
-import { Flag } from "lucide-react";
-import { Handshake } from "lucide-react";
 import EditTeamDialog from "./EditTeamDialog";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 import DeleteTeamDialog from "./DeleteTeamDialog";
+import { Button } from "@/components/ui/button";
+import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
+
 
 export default function TeamsPage({
   teams = [],
+  leads = [],
   onCreateTeam,
   onEditTeam,
   onDeleteTeam,
@@ -58,7 +63,7 @@ export default function TeamsPage({
       case "admin":
         return <Crown className="w-4 h-4 text-amber-500" />;
       case "agent":
-        return <UserCheck className="w-4 h-4 text-blue-500" />;
+        return <User className="w-4 h-4 text-blue-500" />;
       default:
         return <UserCheck className="w-4 h-4 text-gray-500" />;
     }
@@ -105,6 +110,22 @@ export default function TeamsPage({
   const handleSuccess = () => {
     router.refresh(); // This will refresh the current page and refetch data
   };
+
+const handleAssignLeads = async (leadIds, memberId, assignerId) => {
+  const response = await fetch('/api/leads/assign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ leadIds, memberId, assignerId })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to assign leads');
+  }
+  
+  return response.json();
+};
+
+const unassignedLeads = leads.filter(lead => !lead.assignedUser)
 
   return (
     <div className="min-h-screen p-6">
@@ -170,6 +191,9 @@ export default function TeamsPage({
                           </p>
                         </div>
                       </button>
+                      <Link href={`/teams/${team.id}`} >
+                        <ExternalLink className="size-4 -mr-1 text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200"/>
+                      </Link>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -191,11 +215,16 @@ export default function TeamsPage({
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <BatchAssignTeamLeads 
+                          members={team.members}
+                          leads={unassignedLeads}
+                          onAssign={handleAssignLeads}
+                        />
                         <AddTeamMemberDialog
                           onClose={() => setIsDialogOpen(false)}
                           team={team}
                           members={team.members}
-                          // onAddMember={handleAddMember}
+                         
                         />
                         <EditTeamDialog onSuccess={handleSuccess} team={team} />
                        <DeleteTeamDialog onSuccess={handleSuccess} team={team} />
@@ -231,20 +260,17 @@ export default function TeamsPage({
                                       <AvatarFallback>U</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                      <p className="text-sm font-medium text-foreground">
+                                      <p className="flex gap-2 items-center text-sm font-medium text-foreground">
                                         {member.firstname +
                                           " " +
-                                          member.lastname || member.email}
+                                          member.lastname || member.email} {getRoleIcon(member.role)}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
                                         {member.email}
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    {getRoleIcon(member.role)}
-                                    {getRoleBadge(member.role)}
-                                  </div>
+                                  <p className="text-xs text-muted-foreground">Leads: {member._count.assignedLeads || 0}</p>
                                 </div>
                               ))
                             ) : (

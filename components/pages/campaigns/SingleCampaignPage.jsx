@@ -339,10 +339,6 @@ export default function SingleCampaignPage({
                       console.log(`Imported ${data.count} leads`);
                     }}
                   />
-                  <AssignLeadsDialog
-                    leads={unAssignedLeads}
-                    users={campaignUsers}
-                  />
                 </div>
               </div>
             </CardHeader>

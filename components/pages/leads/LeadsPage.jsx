@@ -14,21 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -38,21 +23,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Search,
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
   Phone,
   Mail,
   Calendar,
@@ -64,12 +34,10 @@ import {
   DollarSign,
   Target,
 } from "lucide-react";
-import { mockLeads } from "@/lib/constants/backend";
 import { Users2 } from "lucide-react";
 import AssignLeadsDialog from "./AssignLeadsDialog";
 import UnassignLeadsDialog from "./UnassignLeadsDialog";
 import { useRouter } from "next/navigation";
-import { EnhancedLeadsTable } from "./EnhancedLeadsTable";
 import { EnhancedLeadsTableTanStack } from "./EnhancedLeadsTableTanStack";
 
 const statusOptions = [
@@ -135,17 +103,6 @@ export default function LeadsPage({ data, members = [], team }) {
     );
   };
 
-  const updateLeadStatus = (leadId, newStatus) => {
-    setLeads(
-      leads.map((lead) =>
-        lead.id === leadId ? { ...lead, status: newStatus } : lead
-      )
-    );
-  };
-
-  const deleteLead = (leadId) => {
-    setLeads(leads.filter((lead) => lead.id !== leadId));
-  };
 
   const LeadDetailsModal = () => (
     <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -253,7 +210,7 @@ export default function LeadsPage({ data, members = [], team }) {
   };
 
   return (
-    <div className="space-y-6 px-4 py-6">
+    <div className="space-y-6 px-4 py-6 overflow-hidden">
       {/* Header */}
       <header className="">
         <div className="flex items-center gap-2">
@@ -317,19 +274,6 @@ export default function LeadsPage({ data, members = [], team }) {
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      {/* <EnhancedLeadsTable
-        leads={leads}
-        members={members}
-        team={team}
-        UserDisplay={UserDisplay}
-        statusOptions={statusOptions}
-        sourceOptions={sourceOptions}
-        onAssignComplete={() => console.log("test")}
-        onUnassignComplete={() => console.log("test")}
-        refreshLeads={refreshLeads}
-        getStatusBadge={getStatusBadge}
-      /> */}
 
       <EnhancedLeadsTableTanStack
         leads={leads}

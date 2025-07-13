@@ -21,6 +21,7 @@ model Organization {
   users     User[]
   campaigns Campaign[]
   teams     Team[]
+  leads     Lead[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   createdBy String     @unique
@@ -115,6 +116,8 @@ model Lead {
   updatedAt      DateTime       @updatedAt
   Call           Call[]
   Prospect       Prospect[]
+  Organization   Organization?  @relation(fields: [organizationId], references: [id])
+  organizationId String?        @db.ObjectId
 }
 
 model LeadActivity {

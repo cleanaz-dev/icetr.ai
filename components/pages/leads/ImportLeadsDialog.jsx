@@ -26,7 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Region } from "@/lib/constants/frontend";
 
-export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
+export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId }) {
   const [file, setFile] = useState(null);
   const [source, setSource] = useState("");
   const [industry, setIndustry] = useState("");
@@ -62,6 +62,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete }) {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("campaignId", campaignId);
+    formData.append("orgId", orgId)
     formData.append("source", source);
     formData.append("industry", industry);
     formData.append("country", country);

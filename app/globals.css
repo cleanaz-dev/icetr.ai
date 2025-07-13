@@ -58,8 +58,9 @@
   --secondary-foreground: oklch(0.985 0 0);
   
   /* Complementary accent color */
-  --accent: oklch(0.746 0.16 52.661); /* Complementary hue (golden) */
-  --accent-foreground: oklch(0.145 0 0);
+  /* --accent: oklch(0.746 0.16 52.661);  */
+  --accent: oklch(0.6358 0.1036 260.8315505321142);
+  --accent-foreground: oklch(0.985 0 0);
   
   /* Neutrals */
   --card: oklch(1 0 0); /* Pure white */
@@ -101,7 +102,8 @@
   --secondary-foreground: oklch(0.985 0 0);
   
   /* Accent */
-  --accent: oklch(0.746 0.16 52.661);
+  /* --accent: oklch(0.746 0.16 52.661); */
+  --accent: oklch(0.4606 0.22330793471932436 262.5845280715589);
   --accent-foreground: oklch(0.985 0 0);
   
   /* Neutrals */

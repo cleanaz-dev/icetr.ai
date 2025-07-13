@@ -81,8 +81,7 @@ export default function AssignCampaignDialog({ onSuccess, teamId, campaigns }) {
         <DialogHeader>
           <DialogTitle>
             <div className="flex gap-2 items-center">
-              <Plus className="size-4 text-primary" /> Assign Campaign
-              
+               Assign Campaign <Plus className="size-4 text-primary" />
             </div>
           </DialogTitle>
           <DialogDescription className="-mt-2">

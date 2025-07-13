@@ -57,6 +57,7 @@ import CreateCampaignDialog from "./CreateCampaignDialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import CampaignStatsCard from "./CampaignStatsCard";
+import { toast } from "sonner";
 
 
 export default function CampaignsPage({ campaigns = [] }) {
@@ -64,6 +65,7 @@ export default function CampaignsPage({ campaigns = [] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [updatingStatus, setUpdatingStatus] = useState(null)
 
   // Status options for filtering (matching your data structure)
   const statusOptions = [
@@ -139,11 +141,39 @@ export default function CampaignsPage({ campaigns = [] }) {
   };
 
   // Update campaign status
-  const updateCampaignStatus = (campaignId, newStatus) => {
-    // Implement your status update logic here
-    console.log(`Updating campaign ${campaignId} to ${newStatus}`);
-    // You might want to call an API here and then refresh
-  };
+const updateCampaignStatus = async (campaignId, newStatus) => {
+  setUpdatingStatus(true)
+  try {
+    const response = await fetch(`/api/campaigns/${campaignId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        campaignId: campaignId,
+        newStatus: newStatus
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    // Optional: parse response if needed
+    const data = await response.json()
+    
+    toast.success(`Updated status to ${newStatus}`)
+    
+    // Refresh data or update local state here
+    // For example: await fetchCampaigns() or setCampaigns(...)
+    
+  } catch (error) {
+    console.error('Error updating campaign status:', error)
+    toast.error('Failed to update campaign status')
+  } finally {
+    setUpdatingStatus(false)
+  }
+}
 
   // Delete campaign
   const deleteCampaign = (campaignId) => {

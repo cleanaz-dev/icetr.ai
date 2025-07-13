@@ -246,7 +246,7 @@ export default function TrainingInterfaceCard({
                           width={100}
                           height={100}
                           alt="practice-avatar"
-                          className="rounded-full"
+                          className="rounded-full w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-[100px] lg:h-[100px]"
                         />
                         <Badge
                           className={`${getDifficultyColor(

@@ -5,6 +5,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
@@ -45,18 +46,20 @@ import {
 import {
   Search,
   Users,
-  Plus,
   MoreHorizontal,
   Eye,
-  Edit,
-  Phone,
-  Mail,
-  Calendar,
   Trash2,
   UserPlus,
   UserMinus,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
+import { BatchAssignDialog } from "./BatchAssignDialog";
+import { toast } from "sonner";
+import ImportLeadsDialog from "./ImportLeadsDialog";
 
 const columnHelper = createColumnHelper();
 
@@ -80,37 +83,23 @@ export function EnhancedLeadsTableTanStack({
   const [isAssigning, setIsAssigning] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   // Column definitions
   const columns = useMemo(
     () => [
-      // Selection column
-      columnHelper.display({
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      }),
       // Lead info column
       columnHelper.accessor("name", {
         header: ({ column }) => {
           return (
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               className="h-auto p-0 font-medium"
             >
               Lead
@@ -135,7 +124,9 @@ export function EnhancedLeadsTableTanStack({
           return (
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               className="h-auto p-0 font-medium"
             >
               Company
@@ -153,7 +144,9 @@ export function EnhancedLeadsTableTanStack({
           return (
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               className="h-auto p-0 font-medium"
             >
               Source
@@ -169,7 +162,9 @@ export function EnhancedLeadsTableTanStack({
           return (
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               className="h-auto p-0 font-medium"
             >
               Industry
@@ -187,7 +182,9 @@ export function EnhancedLeadsTableTanStack({
           return (
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               className="h-auto p-0 font-medium"
             >
               Status
@@ -220,29 +217,12 @@ export function EnhancedLeadsTableTanStack({
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuItem>
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Eye className="mr-2 h-4 w-4 hover:text-accent-foreground" />
                     View Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Lead
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <Phone className="mr-2 h-4 w-4" />
-                    Call Lead
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Email
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Schedule Meeting
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4 hover:text-accent-foreground" />
                     Delete Lead
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -287,11 +267,14 @@ export function EnhancedLeadsTableTanStack({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       rowSelection,
+      pagination,
     },
     enableRowSelection: true,
   });
@@ -338,13 +321,45 @@ export function EnhancedLeadsTableTanStack({
     }
   };
 
-  const filtersApplied = statusFilter !== "all" || sourceFilter !== "all" || assignmentFilter !== "all";
+  const filtersApplied =
+    statusFilter !== "all" ||
+    sourceFilter !== "all" ||
+    assignmentFilter !== "all";
+
+  const assignLeads = async (leadIds, assignToId) => {
+    try {
+      const response = await fetch("/api/leads/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadIds, assignedToId: assignToId }),
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `HTTP error! status: ${response.status}`,
+        };
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
+        <div className="flex justify-between">
+          <div>
         <CardTitle>Leads Management</CardTitle>
         <CardDescription>Filter and manage your sales leads</CardDescription>
+        </div>
+        <div>
+          <ImportLeadsDialog />
+        </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4 mb-6">
@@ -362,7 +377,7 @@ export function EnhancedLeadsTableTanStack({
           </div>
 
           {/* Filter dropdowns */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Filter by status" />
@@ -416,78 +431,128 @@ export function EnhancedLeadsTableTanStack({
           </div>
 
           {/* Bulk Assignment Section */}
-          <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/25 justify-evenly">
-            <span className="text-sm font-medium">
-              {selectedLeadIds.length} selected
-            </span>
-            <Select
-              value={selectedAssigneeId}
-              onValueChange={setSelectedAssigneeId}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select assignee" />
-              </SelectTrigger>
-              <SelectContent>
-                {members?.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    <div className="flex items-center space-x-2">
-                      {member.imageUrl && (
-                        <img
-                          src={member.imageUrl}
-                          alt={`${member.firstname} ${member.lastname}`}
-                          className="w-6 h-6 rounded-full"
-                        />
-                      )}
-                      <span>
-                        {member.firstname} {member.lastname}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleBulkAssign}
-              disabled={!selectedAssigneeId || isAssigning}
-              size="sm"
-            >
-              <UserPlus className="h-4 w-4 mr-1" />
-              Assign
-            </Button>
-            <Button
-              onClick={handleBulkUnassign}
-              disabled={isAssigning}
-              variant="outline"
-              size="sm"
-            >
-              <UserMinus className="h-4 w-4 mr-1" />
-              Unassign
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.toggleAllPageRowsSelected()}
-            >
-              {table.getIsAllPageRowsSelected() ? "Deselect All" : "Select All"}
-            </Button>
-            <Button
-              onClick={() => setRowSelection({})}
-              variant="ghost"
-              size="sm"
-            >
-              Clear
-            </Button>
+          {selectedLeadIds.length > 0 && (
+            <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/25 justify-evenly">
+              <span className="text-sm font-medium">
+                {selectedLeadIds.length} selected
+              </span>
+              <Select
+                value={selectedAssigneeId}
+                onValueChange={setSelectedAssigneeId}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members?.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center space-x-2">
+                        {member.imageUrl && (
+                          <img
+                            src={member.imageUrl}
+                            alt={`${member.firstname} ${member.lastname}`}
+                            className="w-6 h-6 rounded-full"
+                          />
+                        )}
+                        <span>
+                          {member.firstname} {member.lastname}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleBulkAssign}
+                disabled={!selectedAssigneeId || isAssigning}
+                size="sm"
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Assign
+              </Button>
+              <Button
+                onClick={handleBulkUnassign}
+                disabled={isAssigning}
+                variant="outline"
+                size="sm"
+              >
+                <UserMinus className="h-4 w-4 mr-1" />
+                Unassign
+              </Button>
+              <BatchAssignDialog
+                leads={leads}
+                members={members}
+                onAssign={assignLeads}
+              />
+
+              <Button
+                onClick={() => setRowSelection({})}
+                variant="ghost"
+                size="sm"
+              >
+                Clear
+              </Button>
+            </div>
+          )}
+        </div>
+          {table.getState().pagination.pageSize > 10 && (
+ <div className="flex justify-between ">
+           <div className="p-1 self-end text-xs text-muted-foreground flex items-end">
+    Showing {table.getRowModel().rows.length} of {filteredData.length} leads
+  </div>
+
+          <div className="flex justify-between  mb-1  space-x-6 lg:space-x-8">
+            <div className="flex items-center space-x-2 ">
+              <p className="text-sm font-medium">
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to first page</span>
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">Go to next page</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">Go to last page</span>
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
-
-        <div className="flex text-xs text-muted-foreground mb-4">
-          <span>
-            Showing {filteredData.length} of {leads.length} leads
-          </span>
-        </div>
+          )}
+       
 
         {/* Table */}
-        <div className="rounded-md border h-[400px] overflow-auto">
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -524,7 +589,10 @@ export function EnhancedLeadsTableTanStack({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-80 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-80 text-center"
+                  >
                     <div className="flex flex-col items-center justify-center h-full">
                       <Users className="h-12 w-12 text-muted-foreground mb-4" />
                       <h3 className="text-lg font-medium mb-2">
@@ -537,16 +605,84 @@ export function EnhancedLeadsTableTanStack({
                           ? "Try adjusting your search or filter criteria"
                           : "Get started by adding your first lead"}
                       </p>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Lead
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-2 py-4">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to first page</span>
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">Go to next page</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">Go to last page</span>
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

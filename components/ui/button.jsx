@@ -21,6 +21,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost:
           "bg-transparent hover:bg-primary/50 transition-all duration-300 text-primary hover:text-white",
+        ghostMuted: "bg-transparent transition-all duration-300 text-primary hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         transparent: "bg-transparent transition-all duration-300 text-primary hover:scale-110 transition-all duration-300",
         muted: "bg-muted animated-pulse hover:bg-muted-foreground transition-all duration-200",

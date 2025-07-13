@@ -64,47 +64,57 @@ export default function UnassignCampaignDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="warn">
-          <MinusCircle className="" />
+          <MinusCircle className="w-4 h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl -mb-2">
-            <span className="decoration-1.5 underline decoration-amber-500">
-              Unassign Campaign
-            </span>
+            <span className="text-amber-500">Unassign Campaign</span>
             <MinusCircle className="w-5 h-5 text-amber-500" />
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to unassign this campaign?{" "}
+            Are you sure you want to unassign this campaign?
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col gap-2 mb-4">
             <Label>Selected Campaign:</Label>
-            <p className="flex items-center gap-1 rounded-2xl text-xl">{campaign.name}</p>
+            <p className="text-lg font-medium">{campaign.name}</p>
           </div>
-          <div className="flex gap-1 items-center mt-2 text-xs underline decoration-1 decoration-amber-500">
-            <AlertCircle className="size-4 " />
-            <p>This action will also unassign leads</p>
+
+          <div className="bg-muted/50 border border-amber-100 rounded-lg p-3 mb-4">
+            <div className="flex gap-2 items-center text-amber-500">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm">
+                This action will also unassign all associated leads
+              </p>
+            </div>
           </div>
+
           <div className="flex flex-row gap-4 mt-4 justify-end">
             <Button
               type="button"
               className="w-1/4"
               onClick={() => setOpen(false)}
-              variant="ghost"
+              variant="outline"
             >
-              Close
+              Cancel
             </Button>
             <Button
               type="submit"
-              onClick={handleSubmit}
               className="w-1/4"
               disabled={isLoading}
               variant="warn"
             >
-              {isLoading ? "Submitting..." : "Submit"}
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting
+                </span>
+              ) : (
+                "Confirm"
+              )}
             </Button>
           </div>
         </form>
