@@ -5,10 +5,10 @@ import React from 'react'
 
 export default async function page() {
   const { userId } = await auth()
-  const { user, teams} = await getTeamData(userId)
+  const { user, teams, orgMembers } = await getTeamData(userId)
   const leads = await getAllOrgLeads(userId)
-  // console.log("teams:", teams)
+  // console.log("orgmembers:", orgMembers)
   return (
-    <div><TeamsPage teams={teams} leads={leads} /></div>
+    <div><TeamsPage teams={teams} leads={leads} orgMembers={orgMembers}/></div>
   )
 } 

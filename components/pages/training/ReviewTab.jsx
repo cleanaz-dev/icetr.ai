@@ -173,7 +173,7 @@ export default function ReviewTab({ trainingData = [], trainingUser }) {
 
   return (
     <TabsContent value="review" className="space-y-0">
-      <div className="min-h-[calc(100vh-100px)]">
+      <div className="">
         <Card className="transition-all duration-300 ease-in-out">
           <CardHeader>
             <CardTitle className="text-2xl">Training Reviews</CardTitle>

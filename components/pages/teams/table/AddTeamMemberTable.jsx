@@ -21,13 +21,18 @@ export default function AddTeamMemberTable({ teamId, members, onClose }) {
   const [loading, setLoading] = useState(false);
 
 const unassignedFilteredMembers = members
-  .filter(member => member.assigned === null)
-  .filter((member) =>
+  .filter(member => {
+    // Check if user is NOT in this team (teamId comes from props)
+    const isAlreadyInTeam = member.teamMemberships?.some(
+      membership => membership.teamId === teamId
+    );
+    return !isAlreadyInTeam;
+  })
+  .filter(member => 
     `${member.firstname} ${member.lastname}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
-
   // Fixed handleSelect function - now works with member objects consistently
   const handleSelect = (member) => {
     setSelectedMembers((prev) => {
@@ -52,12 +57,13 @@ const unassignedFilteredMembers = members
     setLoading(true);
     try {
       const response = await fetch(`/api/teams/${teamId}/members`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          users: selectedMembers
+          users: selectedMembers,
+          teamId: teamId
         })
       });
 

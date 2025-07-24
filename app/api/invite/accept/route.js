@@ -67,7 +67,11 @@ export async function POST(request) {
         clerkId: clerkUser.id,
         imageUrl: clerkUser.imageUrl,
         organization: { connect: { id: orgId } },
-        team: { connect: { id: teamId}},
+        teamMemberships: {
+          create: {
+            teamId: teamId
+          }
+        },
         role: userRole,
       },
     });

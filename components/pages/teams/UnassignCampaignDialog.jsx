@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { MinusCircle } from "lucide-react";
 import { AlertCircle } from "lucide-react";
 import { Target } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function UnassignCampaignDialog({
   onSuccess,
@@ -70,8 +71,9 @@ export default function UnassignCampaignDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl -mb-2">
-            <span className="text-amber-500">Unassign Campaign</span>
             <MinusCircle className="w-5 h-5 text-amber-500" />
+            <span>Unassign Campaign</span>
+            
           </DialogTitle>
           <DialogDescription>
             Are you sure you want to unassign this campaign?
@@ -83,7 +85,7 @@ export default function UnassignCampaignDialog({
             <p className="text-lg font-medium">{campaign.name}</p>
           </div>
 
-          <div className="bg-muted/50 border border-amber-100 rounded-lg p-3 mb-4">
+          <div className="bg-muted/50 rounded-lg p-3 mb-4">
             <div className="flex gap-2 items-center text-amber-500">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <p className="text-sm">

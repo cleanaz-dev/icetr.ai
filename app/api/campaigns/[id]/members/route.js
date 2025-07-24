@@ -11,7 +11,7 @@ export async function POST(request, { params }) {
   try {
     const { id: campaignId } = await params;
     const { users } = await request.json();
-    console.log("users", users)
+    // console.log("users", users)
 
     // Validate input
     if (!users || !Array.isArray(users) || users.length === 0) {

@@ -46,6 +46,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     setSortField,
     sortDirection,
     setSortDirection,
+    updateLead,
+    saveLead,
   } = useLeadManagement(data);
 
   // UI state
@@ -172,7 +174,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
           <div className="flex-shrink-0 border-b p-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="border border-2 p-2 border-primary rounded-full">
+                <div className="border p-2 border-primary rounded-full">
                   <Phone className="w-6 h-6 text-transparent fill-primary" />
                 </div>
                 <h1 className="text-2xl font-bold">Dialer</h1>
@@ -219,6 +221,8 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
                 }
               }}
               onShowDialer={() => setShowDialer(true)}
+              onUpdateLead={updateLead} // Pass the update function
+              onSaveLead={saveLead}
             />
           </div>
           <div className="sticky bottom-0 left-0 right-0 z-50 bg-background ">

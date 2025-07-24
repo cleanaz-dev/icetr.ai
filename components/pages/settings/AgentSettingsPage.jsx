@@ -14,8 +14,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -24,19 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Building,
   Users,
@@ -48,9 +34,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Cog } from "lucide-react";
-
-
-
+import ProfileImageUpload from "./ProfileImageUpload";
 
 // Language options
 const languageOptions = [
@@ -88,10 +72,6 @@ export default function AgentSettingsPage({ settings }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Invite user state
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-
   // User settings state
 
   const [language, setLanguage] = useState(settings?.language || "en-US");
@@ -99,84 +79,33 @@ export default function AgentSettingsPage({ settings }) {
     settings?.timezone || "America/New_York"
   );
 
-
-  // Save organization settings
-  const handleSaveOrgSettings = () => {
-    setOrganization((prev) => ({
-      ...prev,
-      name: orgName,
-      updatedAt: new Date(),
-    }));
-
-    toast.success("Your organization settings have been updated successfully.");
-  };
   // Save user settings
-  const handleSaveUserSettings = () => {
-    const updatedUsers = users.map((user) => {
-      if (user.id === currentUser.id) {
-        return {
-          ...user,
-          userSettings: {
-            ...user.userSettings,
-            language,
-            timezone,
-            updatedAt: new Date(),
-          },
-          updatedAt: new Date(),
-        };
-      }
-      return user;
-    });
-
-    setUsers(updatedUsers);
-
-    toast.success("Your personal settings have been updated successfully.");
-  };
-  // Invite user
-  const handleInviteUser = async () => {
-    if (!inviteEmail) return;
-    setLoading(true);
-
+  const handleSaveUserSettings = async () => {
     try {
-      const response = await fetch("/api/invite/send-email", {
-        method: "POST",
-        headers: { "Content-type": "application/json" },
+      setLoading(true);
+
+      const res = await fetch(`/api/users/${settings.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          email: inviteEmail,
-          orgId: organization.id,
+          language,
+          timezone,
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        toast.error(data.message || "What???");
-        return;
+      if (!res.ok) {
+        toast.error("Unable to update user settings");
       }
 
-      // In a real app, this would send an API request to invite the user
-      toast.success(`An invitation has been sent to ${inviteEmail}`);
-
-      setInviteEmail("");
-      setInviteDialogOpen(false);
+      toast.success("Your personal settings have been updated successfully.");
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to send email");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
-
-  // Remove user
-  const handleRemoveUser = (userId) => {
-    const updatedUsers = users.filter((user) => user.id !== userId);
-    setUsers(updatedUsers);
-
-    toast.success("The user has been removed from your organization.");
-  };
-
-  const handleRemoveInvitee = async (id) => {
-      console.log("Delete Invitee", id)
-  }
 
   return (
     <div className=" max-w-7xl px-4 py-6">
@@ -197,7 +126,6 @@ export default function AgentSettingsPage({ settings }) {
             <Settings className="w-4 h-4" />
             <span>My Account</span>
           </TabsTrigger>
-         
         </TabsList>
 
         {/* Organization Settings */}
@@ -251,10 +179,7 @@ export default function AgentSettingsPage({ settings }) {
                   </div>
                 </div>
               </CardContent>
-             
             </Card>
-
-         
           </div>
         </TabsContent>
 
@@ -263,24 +188,24 @@ export default function AgentSettingsPage({ settings }) {
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>My Profile</CardTitle>
+                <CardTitle>My Account</CardTitle>
                 <CardDescription>
                   Manage your personal information
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="size-16">
-                    <AvatarImage src={settings.imageUrl} />
-                    <AvatarFallback className="text-lg">U</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium text-lg">
-                      {settings.firstname} {settings.lastname}
-                    </h3>
-                    <p className="text-muted-foreground">{settings.email}</p>
-                  </div>
-                </div>
+                <ProfileImageUpload
+                  user={{
+                    id: settings.id,
+                    email: settings.email,
+                    firstname: settings.firstname,
+                    lastname: settings.lastname,
+                    imageUrl: settings.imageUrl,
+                  }}
+                  onUploadSuccess={() =>
+                    toast.success("Profile picture updated!")
+                  }
+                />
 
                 <Separator />
 
@@ -325,15 +250,13 @@ export default function AgentSettingsPage({ settings }) {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button onClick={handleSaveUserSettings}>Save Changes</Button>
+                <Button onClick={handleSaveUserSettings}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
               </CardFooter>
             </Card>
-
-           
           </div>
         </TabsContent>
-
-        
       </Tabs>
     </div>
   );

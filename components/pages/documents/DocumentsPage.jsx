@@ -357,7 +357,7 @@ export default function DocumentsPage({ campaigns }) {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Document Management</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Manage documents for your campaigns - scripts, training materials, compliance docs, and more.
         </p>
       </div>
@@ -429,8 +429,8 @@ export default function DocumentsPage({ campaigns }) {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Select a Campaign</h3>
+              <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-medium mb-2">Select a Campaign</h3>
               <p className="text-muted-foreground mb-6">
                 Choose a campaign from the dropdown above to view and manage its documents.
               </p>

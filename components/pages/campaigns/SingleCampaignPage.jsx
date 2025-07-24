@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Target,
@@ -82,11 +81,9 @@ import Link from "next/link";
 
 export default function SingleCampaignPage({
   campaign,
-  campaignUsers,
+  campaignUsers = [],
   orgUsers,
 }) {
-  const router = useRouter();
-
   const [leads, setLeads] = useState(campaign.leads);
 
   const [loading, setLoading] = useState(false);
@@ -191,8 +188,6 @@ export default function SingleCampaignPage({
       </div>
     );
   };
-
-  const unAssignedLeads = leads.filter((lead) => lead.assignedUserId === null);
 
   const getLeadStatusBadge = (status) => {
     const statusConfig = {
@@ -468,39 +463,51 @@ export default function SingleCampaignPage({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {campaign.team?.members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between px-4 py-2 border rounded-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarImage src={member.imageUrl} />
-                        <AvatarFallback>
-                          {member.firstname?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="flex gap-1 items-center font-medium">
-                          {member.firstname} {member.lastname}
-                           <span className="text-sm text-muted-foreground font-light">
-                          {member.role}
-                        </span>
+                {campaign.team?.members?.length > 0 ? (
+                  campaign.team.members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between px-4 py-2 border rounded-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <Avatar>
+                          <AvatarImage src={member.user.imageUrl} />
+                          <AvatarFallback>
+                            {member.user.firstname?.charAt(0) || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="flex gap-1 items-center font-medium">
+                            {member.user.firstname} {member.user.lastname}
+                            <span className="text-sm text-muted-foreground font-light">
+                              {member.user.role}
+                            </span>
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {member.user.email || "No email"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">
+                          {member.user._count.assignedLeads || 0} leads
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {member.email || "No email"}
+                          Assigned
                         </p>
-                       
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {member._count.assignedLeads || 0} leads
-                      </p>
-                      <p className="text-sm text-muted-foreground">Assigned</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      No team members assigned to this campaign
+                    </p>
+                    <Button variant="outline" asChild>
+                      <Link href="/teams">Assign Team Members</Link>
+                    </Button>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

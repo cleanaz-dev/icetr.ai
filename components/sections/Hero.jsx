@@ -10,7 +10,7 @@ export const Hero = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto max-w-3xl px-4 text-center mt-12 md:mt-0">
+      <div className="container mx-auto max-w-3xl px-4 text-center mt-20">
         <Badge
           variant="secondary"
           className="mb-4 text-primary border-primary rounded-full bg-transparent"
@@ -60,7 +60,7 @@ export const Hero = () => {
             <Image
               src={heroImg}
               alt="hero-image-phone"
-              className="object-cover size-60 md:size-72" // 192px on mobile, 384px on md+
+              className="object-cover size-60 md:size-96" // 192px on mobile, 384px on md+
               height={400}
               width={400}
             />

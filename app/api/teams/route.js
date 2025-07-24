@@ -26,16 +26,28 @@ export async function POST(request) {
       );
     }
 
-    const team = await prisma.team.create({
-      data: {
-        name: data.name,
-        organization: { connect: { id: user.orgId } },
-        manager: { connect: { id: user.id } },
-        members: { connect: { id: user.id } },
-      },
+    // Use transaction to ensure both operations succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      const team = await tx.team.create({
+        data: {
+          name: data.name,
+          organization: { connect: { id: user.orgId } },
+          manager: { connect: { id: user.id } },
+        },
+      });
+
+      await tx.teamMember.create({
+        data: {
+          userId: user.id,
+          teamId: team.id,
+        },
+      });
+
+      return team;
     });
+
     return NextResponse.json({
-      message: `Team ${team.name} created successfully`,
+      message: `Team ${result.name} created successfully`,
     });
   } catch (error) {
     console.error(error);

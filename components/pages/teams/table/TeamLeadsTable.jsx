@@ -177,7 +177,7 @@ export default function TeamLeadsTable({ leads = [], team }) {
               <TableHead>Company</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Assigned To</TableHead>
-              <TableHead>Created</TableHead>
+              {/* <TableHead>Actions</TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -268,11 +268,11 @@ export default function TeamLeadsTable({ leads = [], team }) {
                     <span className="text-muted-foreground">Unassigned</span>
                   )}
                 </TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <Button size="icon" variant="ghostMuted">
                     <EllipsisVertical />
                   </Button>
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
           </TableBody>

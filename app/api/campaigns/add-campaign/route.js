@@ -10,7 +10,11 @@ export async function POST(request) {
       return NextResponse.json({ message: "Invalid User" }, { status: 401 });
     }
 
-    const { name, type } = await request.json();
+    const {
+      name,
+      campaignType: type,
+      assignmentStrategy,
+    } = await request.json();
 
     if (!name || !type) {
       return NextResponse.json({ message: "Invalid Data" }, { status: 403 });
@@ -29,19 +33,12 @@ export async function POST(request) {
       );
     }
 
-   const campaign = await prisma.campaign.create({
+    await prisma.campaign.create({
       data: {
         name,
         type,
+        assignmentStrategy,
         orgId: user.orgId,
-      },
-    });
-
-    await prisma.campaignUser.create({
-      data: {
-        campaignId: campaign.id,
-        userId: user.id, 
-        role: "Admin"
       },
     });
 

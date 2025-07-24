@@ -14,6 +14,8 @@ const buttonVariants = cva(
           actionGreen: "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 focus-visible:ring-emerald-200 dark:focus-visible:ring-emerald-400 dark:bg-emerald-700/90",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        destructiveAlt:
+          "bg-background text-destructive border border-destructive/30 hover:bg-destructive/10 hover:border-destructive/40 focus-visible:ring-destructive/20",
         warn: "bg-amber-500 text-white shadow-xs hover:bg-amber-600 focus-visible:ring-amber-200 dark:focus-visible:ring-amber-400 dark:bg-amber-600/90",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
@@ -25,10 +27,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         transparent: "bg-transparent transition-all duration-300 text-primary hover:scale-110 transition-all duration-300",
         muted: "bg-muted animated-pulse hover:bg-muted-foreground transition-all duration-200",
-        outlineHero: "bg-transparent border-primary border-2 rounded-full text-primary-foreground  hover:bg-primary transition-all duration-200"
+        menu: "bg-transparent" ,
+        outlineHero: "bg-transparent border-primary border-2 rounded-full hover:bg-primary transition-all duration-200"
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        xs: "h-6 rounded-md px-2 has-[>svg]:px-2",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         huge: "h-10 md:h-12 rounded-full px-8 has-[>svg]:px-6 text-lg hover:scale-110 duration-500 transition-all",

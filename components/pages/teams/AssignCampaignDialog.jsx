@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,18 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { UserPlus, Mail, User, Shield, Crown, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
-export default function AssignCampaignDialog({ onSuccess, teamId, campaigns }) {
+export default function AssignCampaignDialog({ onSuccess, teamId, campaigns = [] }) {
   const [selectedCampaign, setSelectedCampaign] = useState("");
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Safely filter unassigned campaigns
   const unassignedCampaigns = campaigns.filter(
-    (campaign) => campaign.teamId === null
+    campaign => campaign.teamId === null
   );
 
   const handleClose = () => {
@@ -40,6 +38,8 @@ export default function AssignCampaignDialog({ onSuccess, teamId, campaigns }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedCampaign) return;
+    
     setIsLoading(true);
     try {
       const result = await fetch(`/api/teams/${teamId}/assign-campaign`, {
@@ -52,16 +52,13 @@ export default function AssignCampaignDialog({ onSuccess, teamId, campaigns }) {
         }),
       });
 
+      const data = await result.json();
       if (!result.ok) {
-        const { message } = await result.json();
-        toast.error(message || "Failed to assign campaign");
-        return;
+        throw new Error(data.message || "Failed to assign campaign");
       }
-      const { message } = await result.json();
-      toast.success(message);
-      if (typeof onSuccess === "function") {
-        onSuccess();
-      }
+      
+      toast.success(data.message || "Campaign assigned successfully");
+      onSuccess?.();
       setOpen(false);
     } catch (error) {
       toast.error(error.message || "An error occurred");
@@ -74,62 +71,68 @@ export default function AssignCampaignDialog({ onSuccess, teamId, campaigns }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <Plus /> Assign Campaign
+          <Plus className="mr-2 h-4 w-4" /> Assign Campaign
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            <div className="flex gap-2 items-center">
-               Assign Campaign <Plus className="size-4 text-primary" />
-            </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="h-4 w-4 text-primary" />
+            Assign Campaign
           </DialogTitle>
-          <DialogDescription className="-mt-2">
-            Assign a new campaign for your team!
+          <DialogDescription>
+            Assign a new campaign to your team
           </DialogDescription>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
-            <Label>Please Select Campaign</Label>
-            <Select
-              value={selectedCampaign}
-              onValueChange={setSelectedCampaign}
-            >
-              <SelectTrigger id="campaign-select">
-                <SelectValue placeholder="Choose a campaign..." />
-              </SelectTrigger>
-              <SelectContent>
-                {unassignedCampaigns.length > 0 ? (
-                  unassignedCampaigns.map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="" disabled>
-                    No unassigned campaigns available
-                  </SelectItem>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="campaign">Select Campaign</Label>
+              <Select 
+                value={selectedCampaign} 
+                onValueChange={setSelectedCampaign}
+                disabled={unassignedCampaigns.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    unassignedCampaigns.length === 0 
+                      ? "No available campaigns" 
+                      : "Select a campaign"
+                  } />
+                </SelectTrigger>
+                {unassignedCampaigns.length > 0 && (
+                  <SelectContent>
+                    {unassignedCampaigns.map((campaign) => (
+                      <SelectItem key={campaign.id} value={campaign.id}>
+                        {campaign.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-row gap-4 mt-4 justify-end">
-            <Button
-              type="button"
-              className="w-1/4"
-              onClick={handleClose}
-              variant="ghost"
-            >
-              Close
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              className="w-1/4"
-              disabled={!selectedCampaign || isLoading}
-            >
-              {isLoading ? "Submitting..." : "Submit"}
-            </Button>
+              </Select>
+              {unassignedCampaigns.length === 0 && (
+                <p className="text-sm text-muted-foreground decoration-primary underline">
+                  All campaigns are already assigned
+                </p>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleClose}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!selectedCampaign || isLoading || unassignedCampaigns.length === 0}
+              >
+                {isLoading ? "Assigning..." : "Assign Campaign"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

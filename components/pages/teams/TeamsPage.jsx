@@ -3,15 +3,10 @@
 import React, { useState } from "react";
 import {
   Users,
-  UserPlus,
-  Settings,
   Crown,
   UserCheck,
   ChevronDown,
   ChevronRight,
-  Plus,
-  Edit,
-  Trash2,
   Target,
   Calendar,
   TrendingUp,
@@ -19,7 +14,6 @@ import {
   Handshake,
   ExternalLink,
   User,
-  X,
 } from "lucide-react";
 import CreateTeamDialog from "./CreateTeamDialog";
 import { useRouter } from "next/navigation";
@@ -31,13 +25,13 @@ import UnassignCampaignDialog from "./UnassignCampaignDialog";
 import EditTeamDialog from "./EditTeamDialog";
 import Link from "next/link";
 import DeleteTeamDialog from "./DeleteTeamDialog";
-import { Button } from "@/components/ui/button";
-import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
 
+import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
 
 export default function TeamsPage({
   teams = [],
   leads = [],
+  orgMembers = [],
   onCreateTeam,
   onEditTeam,
   onDeleteTeam,
@@ -111,21 +105,22 @@ export default function TeamsPage({
     router.refresh(); // This will refresh the current page and refetch data
   };
 
-const handleAssignLeads = async (leadIds, memberId, assignerId) => {
-  const response = await fetch('/api/leads/assign', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ leadIds, memberId, assignerId })
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to assign leads');
-  }
-  
-  return response.json();
-};
+  const handleAssignLeads = async (leadIds, memberId, assignerId) => {
+    const response = await fetch("/api/leads/assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadIds, memberId, assignerId }),
+    });
 
-const unassignedLeads = leads.filter(lead => !lead.assignedUser)
+    if (!response.ok) {
+      throw new Error("Failed to assign leads");
+    }
+
+    return response.json();
+  };
+
+  const unassignedLeads = leads.filter((lead) => !lead.assignedUser);
+
 
   return (
     <div className="min-h-screen p-6">
@@ -191,8 +186,8 @@ const unassignedLeads = leads.filter(lead => !lead.assignedUser)
                           </p>
                         </div>
                       </button>
-                      <Link href={`/teams/${team.id}`} >
-                        <ExternalLink className="size-4 -mr-1 text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200"/>
+                      <Link href={`/teams/${team.id}`}>
+                        <ExternalLink className="size-4 -mr-1 text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200" />
                       </Link>
                     </div>
 
@@ -215,19 +210,21 @@ const unassignedLeads = leads.filter(lead => !lead.assignedUser)
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <BatchAssignTeamLeads 
-                          members={team.members}
+                        <BatchAssignTeamLeads
+                          members={team.members.map((member) => member.user)}
                           leads={unassignedLeads}
                           onAssign={handleAssignLeads}
                         />
                         <AddTeamMemberDialog
                           onClose={() => setIsDialogOpen(false)}
                           team={team}
-                          members={team.members}
-                         
+                          members={orgMembers}
                         />
                         <EditTeamDialog onSuccess={handleSuccess} team={team} />
-                       <DeleteTeamDialog onSuccess={handleSuccess} team={team} />
+                        <DeleteTeamDialog
+                          onSuccess={handleSuccess}
+                          team={team}
+                        />
                       </div>
                     </div>
                   </div>
@@ -249,28 +246,34 @@ const unassignedLeads = leads.filter(lead => !lead.assignedUser)
 
                           <div className="space-y-2">
                             {team.members?.length > 0 ? (
-                              team.members.map((member) => (
+                              team.members.map(({ id, user }) => (
                                 <div
-                                  key={member.id}
+                                  key={id}
                                   className="flex items-center justify-between p-3 bg-card rounded-lg border"
                                 >
                                   <div className="flex items-center gap-3">
                                     <Avatar>
-                                      <AvatarImage src={member.imageUrl} />
-                                      <AvatarFallback>U</AvatarFallback>
+                                      <AvatarImage src={user?.imageUrl} />
+                                      <AvatarFallback>
+                                        {(user?.firstname?.[0] || "") +
+                                          (user?.lastname?.[0] || "") || "U"}
+                                      </AvatarFallback>
                                     </Avatar>
                                     <div>
                                       <p className="flex gap-2 items-center text-sm font-medium text-foreground">
-                                        {member.firstname +
-                                          " " +
-                                          member.lastname || member.email} {getRoleIcon(member.role)}
+                                        {`${user?.firstname || ""} ${
+                                          user?.lastname || ""
+                                        }`.trim() || user?.email}
+                                        {getRoleIcon(user?.role)}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        {member.email}
+                                        {user?.email}
                                       </p>
                                     </div>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">Leads: {member._count.assignedLeads || 0}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Leads: {user?._count?.assignedLeads || 0}
+                                  </p>
                                 </div>
                               ))
                             ) : (
@@ -313,7 +316,7 @@ const unassignedLeads = leads.filter(lead => !lead.assignedUser)
                                         {campaign.name}
                                       </h5>
                                       <Link href={`/campaigns/${campaign.id}`}>
-                                      <ExternalLink className="size-4"/>
+                                        <ExternalLink className="size-4" />
                                       </Link>
                                     </div>
 

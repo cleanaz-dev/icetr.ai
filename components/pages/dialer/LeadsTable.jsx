@@ -42,6 +42,7 @@ import LeadActivities from "./LeadActivities";
 import EditLeadDialog from "./EditLeadDialog";
 import EmailDialog from "./EmailDialog";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function LeadsTable({
   leads,
@@ -56,10 +57,13 @@ export default function LeadsTable({
   sortDirection,
   onSort,
   onShowDialer,
+  onUpdateLead,  // New prop
+  onSaveLead,    // New prop
 }) {
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const { refresh } = useRouter()
 
   const onEditLead = () => {
     setEditDialogOpen(true);
@@ -72,7 +76,7 @@ export default function LeadsTable({
     console.log("email sent to lead")
   }
 
-  const handleSaveLead = async (leadId, updatedData) => {
+const handleSaveLead = async (leadId, updatedData) => {
     try {
       const response = await fetch(`/api/leads/${leadId}`, {
         method: "PATCH",
@@ -83,10 +87,22 @@ export default function LeadsTable({
       if (!response.ok) {
         throw new Error("Failed to update lead");
       }
-
-      return await response.json();
+      
+      const updatedLead = await response.json();
+      
+      // Use the prop function to update state instead of refresh()
+      onUpdateLead(leadId, updatedLead);
+      
+      // Close the edit dialog
+      setEditDialogOpen(false);
+      
+      // Show success toast
+      toast.success("Lead updated successfully");
+      
+      return updatedLead;
     } catch (error) {
       console.error("Error updating lead:", error);
+      toast.error("Failed to update lead");
       throw error;
     }
   };

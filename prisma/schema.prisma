@@ -15,16 +15,158 @@ datasource db {
 }
 
 model Organization {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  country   String
-  users     User[]
-  campaigns Campaign[]
-  teams     Team[]
-  leads     Lead[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  createdBy String     @unique
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  country         String
+  users           User[]
+  campaigns       Campaign[]
+  apiKeys         ApiKey[]
+  teams           Team[]
+  leads           Lead[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       String          @unique
+  orgIntegrations OrgIntegration?
+  auditLogs       AuditLog[]
+}
+
+model OrgIntegration {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String       @unique @db.ObjectId
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Shared across all
+  webhookUrl String?
+
+  // Relations to service integrations
+  twilio   TwilioIntegration?
+  calendly CalendlyIntegration?
+  zoom     ZoomIntegration?
+  make     MakeIntegration?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TwilioIntegration {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  orgIntegrationId String         @unique @db.ObjectId
+  orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
+  enabled          Boolean        @default(false)
+  accountSid       String
+  authToken        String
+  apiKey           String?
+  apiSecret        String?
+  appSid           String?
+  phoneNumbers     String[]
+  voiceUrl         String?
+  smsUrl           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CalendlyIntegration {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  orgIntegrationId String         @unique @db.ObjectId
+  orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
+  enabled          Boolean        @default(false)
+  apiKey           String
+  orgUri           String?
+  webhookUrl       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ZoomIntegration {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  orgIntegrationId String         @unique @db.ObjectId
+  orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id])
+  enabled          Boolean        @default(false)
+  clientId         String
+  clientSecretKms  String
+  accountId        String?
+  webhookSecretKms String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MakeIntegration {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  orgIntegrationId String         @unique @db.ObjectId
+  orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
+  enabled          Boolean        @default(false)
+  apiKeyKms        String
+  webhookUrl       String?
+  scenarioId       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String  @db.ObjectId
+  userId         String? @db.ObjectId // Nullable for system actions
+
+  // Action details
+  action     String // 'create', 'update', 'delete', 'test', 'view', 'export'
+  resource   String // 'integration', 'user', 'setting', 'api_key'
+  resourceId String? // ID of the specific resource
+  service    String? // 'twilio', 'calendly', 'makeZoom' (for integrations)
+
+  // Request context
+  ipAddress String?
+  userAgent String?
+  endpoint  String? // API endpoint called
+  method    String? // HTTP method
+
+  // Results
+  success      Boolean @default(true)
+  errorCode    String?
+  errorMessage String?
+
+  // Additional context
+  metadata Json? // Flexible field for extra data
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Indexes for performance
+  @@index([organizationId, createdAt])
+  @@index([organizationId, action, resource])
+  @@index([organizationId, userId])
+  @@index([createdAt]) // For cleanup/archival
+  @@map("auditLogs")
+}
+
+model ApiKey {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  key         String       @unique // hashed version
+  plainKey    String?
+  name        String
+  description String?
+  orgId       String       @db.ObjectId
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaignIds String[]     @default([]) @db.ObjectId
+  campaigns   Campaign[]   @relation("CampaignApiKeys", fields: [campaignIds], references: [id])
+  scopes      String[]     @default([]) // ["lead:create", "campaign:read", "analytics:view"]
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([orgId])
+  @@index([expiresAt])
+  @@index([isActive])
 }
 
 model Team {
@@ -35,9 +177,27 @@ model Team {
   campaigns    Campaign[]
   managerId    String?      @db.ObjectId
   manager      User?        @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  members      User[]       @relation("TeamMember")
+  members      TeamMember[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+model TeamMember {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  teamId    String    @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  teamRole  TeamRole? @default(MEMBER)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+enum TeamRole {
+  JUNIOR
+  MEMBER
+  SENIOR
+  LEAD
 }
 
 model User {
@@ -62,9 +222,9 @@ model User {
   Notification      Notification[]
   reviewedTrainings ReviewTraining[]   @relation("TrainingReviewer")
 
-  managedTeams Team[]  @relation("TeamManager")
-  teamId       String? @db.ObjectId
-  team         Team?   @relation("TeamMember", fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  managedTeams    Team[]       @relation("TeamManager")
+  teamMemberships TeamMember[]
+  auditLogs       AuditLog[]
 }
 
 model UserSettings {
@@ -78,25 +238,38 @@ model UserSettings {
 }
 
 model Campaign {
-  id           String             @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  orgId        String             @db.ObjectId
-  organization Organization       @relation(fields: [orgId], references: [id])
-  teamId       String?            @db.ObjectId
-  team         Team?              @relation(fields: [teamId], references: [id])
-  type         String
-  status       Status             @default(Draft)
-  leads        Lead[]
-  documents    CampaignDocument[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  callSessions CallSession[]
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  orgId              String              @db.ObjectId
+  organization       Organization        @relation(fields: [orgId], references: [id])
+  assignmentStrategy AssignmentStrategy? @default(MANUAL)
+  apiKeyIds          String[]            @default([]) @db.ObjectId
+  apiKeys            ApiKey[]            @relation("CampaignApiKeys", fields: [apiKeyIds], references: [id])
+  teamId             String?             @db.ObjectId
+  team               Team?               @relation(fields: [teamId], references: [id])
+  type               CampaignType        @default(CALLS)
+  status             Status              @default(Draft)
+  leads              Lead[]
+  documents          CampaignDocument[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  callSessions       CallSession[]
+
+  @@index([orgId])
+  @@index([teamId])
+  @@index([status])
+}
+
+enum CampaignType {
+  CALLS
+  FORMS
+  INBOUND
 }
 
 model Lead {
   id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  campaignId     String         @db.ObjectId
-  campaign       Campaign       @relation(fields: [campaignId], references: [id])
+  campaignId     String?        @db.ObjectId
+  campaign       Campaign?      @relation(fields: [campaignId], references: [id])
   assignedUserId String?        @db.ObjectId
   assignedUser   User?          @relation(fields: [assignedUserId], references: [id])
   name           String?
@@ -394,4 +567,11 @@ enum Status {
   Paused
   Completed
   Cancelled
+}
+
+enum AssignmentStrategy {
+  ROUND_ROBIN
+  LEAST_LOADED
+  ROLE_BASED
+  MANUAL
 }

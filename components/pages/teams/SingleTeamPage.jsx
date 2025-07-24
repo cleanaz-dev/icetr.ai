@@ -23,22 +23,20 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
-import { MinusCircle } from "lucide-react";
-import { UserMinus } from "lucide-react";
 import TeamLeadsTable from "./table/TeamLeadsTable";
+import TeamReviewTab from "./TeamReviewTab";
+import { format } from "date-fns";
+import TeamCalls from "./TeamCalls";
 
-export default function SingleTeamPage({ leads, team, members, campaigns }) {
+export default function SingleTeamPage({
+  leads,
+  team,
+  members,
+  campaigns,
+  trainingData,
+}) {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -53,15 +51,18 @@ export default function SingleTeamPage({ leads, team, members, campaigns }) {
     conversionRate: 23.5, // Mock data
   };
 
-const filteredLeads = leads.filter((lead) => {
-  const matchesSearch =
-    (lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-    (lead.company?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-    (lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-  const matchesFilter =
-    filterStatus === "all" || lead.status === filterStatus;
-  return matchesSearch && matchesFilter;
-});
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch =
+      lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      lead.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false;
+    const matchesFilter =
+      filterStatus === "all" || lead.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
 
   const StatCard = ({
     title,
@@ -191,6 +192,18 @@ const filteredLeads = leads.filter((lead) => {
               isActive={activeTab === "analytics"}
               onClick={setActiveTab}
             />
+            <TabButton
+              id="reviews"
+              label="Training Reviews"
+              isActive={activeTab === "reviews"}
+              onClick={setActiveTab}
+            />
+            <TabButton
+              id="calls"
+              label="Calls"
+              isActive={activeTab === "calls"}
+              onClick={setActiveTab}
+            />
           </nav>
         </div>
       </div>
@@ -297,18 +310,16 @@ const filteredLeads = leads.filter((lead) => {
           </div>
         )}
 
-        {activeTab === "leads" && (
-          <TeamLeadsTable leads={leads} team={team}/>
-        )}
+        {activeTab === "leads" && <TeamLeadsTable leads={leads} team={team} />}
 
         {activeTab === "campaigns" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Team Campaigns</h2>
-              <Button>
+              {/* <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Campaign
-              </Button>
+              </Button> */}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaigns.map((campaign) => (
@@ -334,7 +345,7 @@ const filteredLeads = leads.filter((lead) => {
                         Total Leads
                       </span>
                       <span className="text-sm font-medium">
-                        {campaign.leadsCount || 0}
+                        {campaign._count.leads || 0}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -347,7 +358,9 @@ const filteredLeads = leads.filter((lead) => {
                       <span className="text-sm text-muted-foreground">
                         Last Updated
                       </span>
-                      <span className="text-sm font-medium">2 days ago</span>
+                      <span className="text-sm font-medium">
+                        {format(new Date(campaign.updatedAt), "MMM d, yyyy")}
+                      </span>
                     </div>
                   </div>
                   <div className="mt-4 flex space-x-2">
@@ -446,6 +459,16 @@ const filteredLeads = leads.filter((lead) => {
             </div>
           </div>
         )}
+
+        {activeTab === "reviews" && (
+          <TeamReviewTab
+            team={team}
+            members={members}
+            trainingData={trainingData}
+          />
+        )}
+
+        {activeTab === "calls" && <TeamCalls team={team}/>}
       </div>
     </div>
   );
