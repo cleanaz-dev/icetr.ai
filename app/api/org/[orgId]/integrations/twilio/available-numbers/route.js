@@ -62,42 +62,25 @@ export async function GET(request, { params }) {
 
     // 6. Build search parameters
     const searchOptions = {
-      areaCode: 438, // optional: Toronto area
-      // contains: "", // optional: pattern match
-      limit: 5, // how many numbers to return
+      limit: 25, // how many numbers to return
     };
 
-    // if (areaCode) {
-    //   searchOptions.areaCode = areaCode;
-    // }
+    if (areaCode) {
+      searchOptions.areaCode = areaCode;
+    }
 
-    // if (contains) {
-    //   searchOptions.contains = contains;
-    // }
+    if (contains) {
+      searchOptions.contains = contains;
+    }
 
     // 7. Search for available numbers
-    try {
+   
       const availableNumbers = await twilioClient
         .availablePhoneNumbers("CA")
         .local.list(searchOptions);
-      console.log("available numbers:", availableNumbers);
+   
 
-      return NextResponse.json(availableNumbers);
-    } catch (error) {
-      console.error("Twilio number search error:", {
-        message: error.message,
-        stack: error.stack,
-        code: error.code,
-        status: error.status,
-        more: error,
-      });
-
-      return NextResponse.json(
-        { error: "Failed to search available phone numbers." },
-        { status: 500 }
-      );
-    }
-
+     
     // 8. Format response
     const formattedNumbers = availableNumbers.map((number) => ({
       phoneNumber: number.phoneNumber,
