@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-   
+
     // 6. Initialize Twilio client
     // const twilioClient = twilio(
     //   twilioIntegration.accountSid, // Plain text
@@ -62,7 +62,7 @@ export async function GET(request, { params }) {
     const twilioClient = twilio(
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_AUTH_TOKEN
-    )
+    );
 
     // 6. Build search parameters
     const searchOptions = {
@@ -82,9 +82,11 @@ export async function GET(request, { params }) {
     // 7. Search for available numbers
     try {
       const availableNumbers = await twilioClient
-        .availablePhoneNumbers("CA").local.list(searchOptions)
-        
-      return availableNumbers;
+        .availablePhoneNumbers("CA")
+        .local.list(searchOptions);
+        console.log("available numbers:", availableNumbers)
+
+      return NextResponse.json(availableNumbers);
     } catch (error) {
       console.error("Twilio number search error:", {
         message: error.message,
@@ -93,7 +95,11 @@ export async function GET(request, { params }) {
         status: error.status,
         more: error,
       });
-      throw new Error("Failed to search available phone numbers.");
+
+      return NextResponse.json(
+        { error: "Failed to search available phone numbers." },
+        { status: 500 }
+      );
     }
 
     // 8. Format response
