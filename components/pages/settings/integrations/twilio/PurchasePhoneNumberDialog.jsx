@@ -10,7 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Phone, Search } from "lucide-react";
@@ -43,8 +49,10 @@ export default function PurchasePhoneNumberDialog({
     try {
       const params = new URLSearchParams();
       params.append("countryCode", searchParams.countryCode);
-      if (searchParams.areaCode) params.append("areaCode", searchParams.areaCode);
-      if (searchParams.contains) params.append("contains", searchParams.contains);
+      if (searchParams.areaCode)
+        params.append("areaCode", searchParams.areaCode);
+      if (searchParams.contains)
+        params.append("contains", searchParams.contains);
 
       const res = await fetch(
         `/api/org/${orgId}/integrations/twilio/available-numbers?${params}`,
@@ -58,7 +66,7 @@ export default function PurchasePhoneNumberDialog({
 
       const data = await res.json();
       setAvailableNumbers(data.numbers || []);
-      
+
       if (data.numbers?.length === 0) {
         toast.info("No numbers found matching your criteria");
       }
@@ -95,7 +103,7 @@ export default function PurchasePhoneNumberDialog({
       const data = await res.json();
       toast.success(`Successfully purchased ${selectedNumber.friendlyName}!`);
       setOpen(false);
-      
+
       // Reset form
       setAvailableNumbers([]);
       setSelectedNumber(null);
@@ -124,12 +132,13 @@ export default function PurchasePhoneNumberDialog({
           Purchase Phone Number
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Purchase Twilio Phone Number</DialogTitle>
           <DialogDescription>
-            Search for and purchase a new phone number for your Twilio integration.
+            Search for and purchase a new phone number for your Twilio
+            integration.
           </DialogDescription>
         </DialogHeader>
 
@@ -137,14 +146,14 @@ export default function PurchasePhoneNumberDialog({
           {/* Search Form */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Search Criteria</h3>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="countryCode">Country</Label>
                 <Select
                   value={searchParams.countryCode}
                   onValueChange={(value) =>
-                    setSearchParams(prev => ({ ...prev, countryCode: value }))
+                    setSearchParams((prev) => ({ ...prev, countryCode: value }))
                   }
                 >
                   <SelectTrigger>
@@ -166,7 +175,10 @@ export default function PurchasePhoneNumberDialog({
                   placeholder="e.g. 415"
                   value={searchParams.areaCode}
                   onChange={(e) =>
-                    setSearchParams(prev => ({ ...prev, areaCode: e.target.value }))
+                    setSearchParams((prev) => ({
+                      ...prev,
+                      areaCode: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -178,7 +190,10 @@ export default function PurchasePhoneNumberDialog({
                   placeholder="e.g. 1234"
                   value={searchParams.contains}
                   onChange={(e) =>
-                    setSearchParams(prev => ({ ...prev, contains: e.target.value }))
+                    setSearchParams((prev) => ({
+                      ...prev,
+                      contains: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -207,54 +222,60 @@ export default function PurchasePhoneNumberDialog({
           {availableNumbers.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Available Numbers</h3>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {availableNumbers.map((number, index) => (
-                  <Card
+
+              <div className="space-y-1 max-h-60 overflow-y-auto">
+                {availableNumbers.map((number) => (
+                  <div
                     key={number.phoneNumber}
-                    className={`cursor-pointer transition-colors ${
+                    className={`rounded-md px-3 py-2 bg-card text-sm cursor-pointer transition-colors ${
                       selectedNumber?.phoneNumber === number.phoneNumber
-                        ? "border-primary bg-primary/5"
+                        ? "border border-primary bg-primary/5"
                         : "hover:bg-muted/50"
                     }`}
                     onClick={() => setSelectedNumber(number)}
                   >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium">
-                              {formatPhoneNumber(number.phoneNumber)}
-                            </div>
-                            {number.locality && (
-                              <div className="text-sm text-muted-foreground">
-                                {number.locality}, {number.region}
-                              </div>
-                            )}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">
+                            {formatPhoneNumber(number.phoneNumber)}
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          {number.capabilities?.voice && (
-                            <Badge variant="secondary" className="text-xs">
-                              Voice
-                            </Badge>
-                          )}
-                          {number.capabilities?.sms && (
-                            <Badge variant="secondary" className="text-xs">
-                              SMS
-                            </Badge>
-                          )}
-                          {number.capabilities?.mms && (
-                            <Badge variant="secondary" className="text-xs">
-                              MMS
-                            </Badge>
+                          {number.locality && (
+                            <div className="text-xs text-muted-foreground">
+                              {number.locality}, {number.region}
+                            </div>
                           )}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex items-center space-x-1">
+                        {number.capabilities?.voice && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5"
+                          >
+                            Voice
+                          </Badge>
+                        )}
+                        {number.capabilities?.sms && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5"
+                          >
+                            SMS
+                          </Badge>
+                        )}
+                        {number.capabilities?.mms && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5"
+                          >
+                            MMS
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -269,7 +290,7 @@ export default function PurchasePhoneNumberDialog({
                   {formatPhoneNumber(selectedNumber.phoneNumber)}
                 </span>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button
                   onClick={() => setOpen(false)}
