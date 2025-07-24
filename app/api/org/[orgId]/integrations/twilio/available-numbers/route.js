@@ -55,13 +55,9 @@ export async function GET(request, { params }) {
     }
 
     // 6. Initialize Twilio client
-    // const twilioClient = twilio(
-    //   twilioIntegration.accountSid, // Plain text
-    //   decryptedAuthToken.authToken // Decrypted
-    // );
     const twilioClient = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
+      twilioIntegration.accountSid, // Plain text
+      decryptedAuthToken.authToken // Decrypted
     );
 
     // 6. Build search parameters
@@ -84,7 +80,7 @@ export async function GET(request, { params }) {
       const availableNumbers = await twilioClient
         .availablePhoneNumbers("CA")
         .local.list(searchOptions);
-        console.log("available numbers:", availableNumbers)
+      console.log("available numbers:", availableNumbers);
 
       return NextResponse.json(availableNumbers);
     } catch (error) {
