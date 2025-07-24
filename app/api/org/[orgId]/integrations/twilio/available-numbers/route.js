@@ -76,7 +76,7 @@ export async function GET(request, { params }) {
     // 7. Search for available numbers
    
       const availableNumbers = await twilioClient
-        .availablePhoneNumbers("CA")
+        .availablePhoneNumbers(countryCode)
         .local.list(searchOptions);
    
 
