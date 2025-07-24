@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-    console.log("twilio integration", twilioIntegration);
+    // console.log("twilio integration", twilioIntegration);
 
     // 5. Decrypt the auth token
     let decryptedAuthToken;
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-    console.log("decryptedAuth", decryptedAuthToken)
+   
     // 6. Initialize Twilio client
     // const twilioClient = twilio(
     //   twilioIntegration.accountSid, // Plain text
@@ -82,8 +82,8 @@ export async function GET(request, { params }) {
     // 7. Search for available numbers
     try {
       const availableNumbers = await twilioClient
-        .availablePhoneNumbers("CA").national
-        .list(searchOptions);
+        .availablePhoneNumbers("CA").local.list(searchOptions)
+        
       return availableNumbers;
     } catch (error) {
       console.error("Twilio number search error:", {
