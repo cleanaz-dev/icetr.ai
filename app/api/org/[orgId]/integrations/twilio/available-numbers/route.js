@@ -68,7 +68,7 @@ export async function GET(request, { params }) {
     const searchOptions = {
       areaCode: 438, // optional: Toronto area
       // contains: "", // optional: pattern match
-      limit: 1, // how many numbers to return
+      limit: 5, // how many numbers to return
     };
 
     // if (areaCode) {
