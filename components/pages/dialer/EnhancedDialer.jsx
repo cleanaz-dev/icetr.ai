@@ -14,10 +14,16 @@ import { useTwilioDevice } from "@/lib/hooks/useTwilioDevice";
 import { useCallManagement, CALL_STATUS } from "@/lib/hooks/useCallManagement";
 import { useLeadManagement } from "@/lib/hooks/useLeadManagement";
 import CallSession from "./CallSession";
+import UnifiedStatusBar from "./UnifiedStatusBar";
 
-export default function EnhancedDialer({ data, callScriptData, campaignId }) {
+export default function EnhancedDialer({
+  data,
+  callScriptData,
+  campaignId,
+  orgId,
+}) {
   // Custom hooks for state management
-  const { device, status, error } = useTwilioDevice();
+  const { device, status, error } = useTwilioDevice(orgId);
   const {
     call,
     callStartTime,
@@ -70,7 +76,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        const response = await fetch("/api/leads/call-sessions/", {
+        const response = await fetch(`/api/org/${orgId}/calls/call-sessions/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -96,38 +102,41 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     ];
 
     if (callEndedStates.includes(callStatus)) {
-      console.log("Call ended, local data:", callData);
+      
       setPostCallDialogOpen(true);
     }
   }, [callStatus]);
 
   useEffect(() => {
     if (currentCallData) {
-      console.log("Storing call data locally:", currentCallData);
+   
       setCallData(currentCallData);
     }
   }, [currentCallData]);
 
   const saveCallActivity = async (leadId, callData, outcome, notes) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}/activities`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "call",
-          outcome: outcome,
-          notes: notes,
-          duration: callData?.duration || 0,
-          timestamp: new Date().toISOString(),
-          callStartTime: callData?.startTime || new Date(),
-          callEndTime: new Date(),
-          sessionId: currentSession.id,
-          followUpTime: followUpTime,
-          leadActivityId: callData.leadActivityId,
-        }),
-      });
+      const response = await fetch(
+        `/api/org/${orgId}/leads/${leadId}/activities`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "call",
+            outcome: outcome,
+            notes: notes,
+            duration: callData?.duration || 0,
+            timestamp: new Date().toISOString(),
+            callStartTime: callData?.startTime || new Date(),
+            callEndTime: new Date(),
+            sessionId: currentSession.id,
+            followUpTime: followUpTime,
+            leadActivityId: callData.leadActivityId,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -225,8 +234,14 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
               onSaveLead={saveLead}
             />
           </div>
+          {/* Bottom Status Bar */}
           <div className="sticky bottom-0 left-0 right-0 z-50 bg-background ">
-            <CallSession session={currentSession} />
+            <UnifiedStatusBar
+              mode="main"
+              session={currentSession}
+              data={data}
+              callScriptData={callScriptData}
+            />
           </div>
         </div>
 

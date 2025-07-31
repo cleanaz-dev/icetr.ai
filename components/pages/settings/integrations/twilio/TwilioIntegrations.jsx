@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,26 +15,58 @@ import {
   getFirstErrorMessage,
 } from "@/lib/validations/integrations";
 import PurchasePhoneNumberDialog from "./PurchasePhoneNumberDialog";
+import Link from "next/link";
+
 
 export default function TwilioIntegrations({ integration = {}, orgId }) {
   const [loading, setLoading] = useState(false);
   const [disabling, setDisabling] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
+  const [show, setShow] = useState(false);
   const [enabled, setEnabled] = useState(integration.enabled ?? false);
   const [sid, setSid] = useState(integration.accountSid ?? "");
   const [token, setToken] = useState(integration.authToken ?? "");
-  const [voiceUrl, setVoiceUrl] = useState(integration.voiceUrl ?? "");
+  const [appSid, setAppSid] = useState(integration.appSid ?? "");
+  const [apiSecret, setApiSecret] = useState(integration.apiSecret ?? "");
+  const [apiKey, setApiKey] = useState(integration.apiKey ?? "");
+  const [voiceUrl, setVoiceUrl] = useState(integration.voiceUrl);
   const [smsUrl, setSmsUrl] = useState(integration.smsUrl ?? "");
   const [errors, setErrors] = useState({});
-  const [openTwilioDialog, setOpenTwilioDialog] = useState(null)
+  const [openTwilioDialog, setOpenTwilioDialog] = useState(null);
+  const formRef = useRef(null);
+console.log({
+  enabled,
+  sid,
+  token,
+  appSid,
+  apiSecret,
+  apiKey,
+  voiceUrl,
+});
+
+  function hasIntegrationValues() {
+  return (
+    enabled &&
+    Boolean(sid) &&
+    Boolean(token) &&
+    Boolean(appSid) &&
+    Boolean(apiSecret) &&
+    Boolean(apiKey) && 
+    Boolean(voiceUrl)
+   
+  );
+}
+
 
   // Update state when prop data changes
   useEffect(() => {
     if (!integration) return;
-
-    setEnabled(integration.enabled ?? true);
+    setEnabled(integration.enabled ?? false);
     setSid(integration.accountSid ?? "");
     setToken(integration.authToken ?? "");
+    setAppSid(integration.appSid ?? "");
+    setApiKey(integration.apiKey ?? "");
+    setApiSecret(integration.apiSecret ?? "");
     setVoiceUrl(integration.voiceUrl ?? "");
     setSmsUrl(integration.smsUrl ?? "");
     setErrors({});
@@ -52,6 +84,9 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
       ...(enabled && {
         accountSid: sid.trim(),
         authToken: token.trim(),
+        appSid: appSid.trim() || null,
+        apiKey: apiKey.trim() || null,
+        apiSecret: apiSecret.trim() || null,
         voiceUrl: voiceUrl.trim() || null,
         smsUrl: smsUrl.trim() || null,
       }),
@@ -160,39 +195,55 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
     }
   };
 
+  const handleShow = () => {
+    setShow(!show);
+    if (!show) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  };
+
   const hasRequiredFields = sid.trim() && token.trim();
 
   return (
     <div>
-      <header className="p-4">
-        <h1 className="text-lg font-semibold">Integrations</h1>
-        <p className="text-sm text-muted-foreground">
-          Connect Twilio and other services to power calls, texts, and
-          automations.
-        </p>
-      </header>
-
       <div className="flex gap-6 items-start px-4">
         <Card className="flex-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center space-x-2">
-              <Phone className="h-5 w-5" />
               <CardTitle>Twilio SMS/Voice</CardTitle>
-              <PurchasePhoneNumberDialog 
+              <PurchasePhoneNumberDialog
                 open={openTwilioDialog}
                 setOpen={setOpenTwilioDialog}
                 orgId={orgId}
                 orgIntegrationId={integration.id}
               />
+              {hasIntegrationValues() && (
+                <Button size="sm" asChild>
+                  <Link href="/settings/phone-configuration">
+                    Phone Configuration
+                  </Link>
+                </Button>
+              )}
             </div>
-            <div className="flex gap-6">
-              
+
+            <div className="flex gap-2 items-center">
+              {enabled && integration && (
+                <Button size="sm" variant="ghost" onClick={handleShow}>
+                  {show ? "Hide" : "Show"}
+                </Button>
+              )}
               <Switch checked={enabled} onCheckedChange={setEnabled} />
             </div>
           </CardHeader>
 
-          {enabled && (
-            <CardContent className="space-y-4">
+          {enabled && show && (
+            <CardContent ref={formRef} className="space-y-4">
+              {/* Account SID */}
               <div className="space-y-2">
                 <Label htmlFor="sid">Account SID *</Label>
                 <Input
@@ -200,7 +251,13 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                   placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   value={sid}
                   onChange={(e) => setSid(e.target.value)}
-                  className={errors.twilioAccountSid ? "border-red-500" : ""}
+                  className={
+                    errors.sid
+                      ? "border-red-500"
+                      : sid
+                      ? "border-green-500/50" // Color when there's a value
+                      : "" // Default when empty
+                  }
                 />
                 {errors.twilioAccountSid && (
                   <p className="text-sm text-red-500">
@@ -208,7 +265,7 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                   </p>
                 )}
               </div>
-
+              {/* Auth Token */}
               <div className="space-y-2">
                 <Label htmlFor="token">Auth Token *</Label>
                 <Input
@@ -217,7 +274,13 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                   placeholder="••••••••"
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
-                  className={errors.twilioAuthToken ? "border-red-500" : ""}
+                  className={
+                    errors.twilioAuthToken
+                      ? "border-red-500"
+                      : token
+                      ? "border-emerald-500/50"
+                      : ""
+                  }
                 />
                 {errors.twilioAuthToken && (
                   <p className="text-sm text-red-500">
@@ -225,15 +288,81 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                   </p>
                 )}
               </div>
+              {/* App SID */}
+              <div className="space-y-2">
+                <Label htmlFor="appSid">Twilio App SID (optional)</Label>
+                <Input
+                  id="appSid"
+                  placeholder="APxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={appSid}
+                  onChange={(e) => setAppSid(e.target.value)}
+                  className={
+                    errors.appSid
+                      ? "border-red-500"
+                      : appSid
+                      ? "border-emerald-500/50"
+                      : ""
+                  }
+                />
+                {errors.appSid && (
+                  <p className="text-sm text-red-500">{errors.appSid}</p>
+                )}
+              </div>
+
+              {/* API Key */}
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key (optional)</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  placeholder="SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className={
+                    errors.apiKey
+                      ? "border-red-500"
+                      : apiKey
+                      ? "border-emerald-500/50"
+                      : ""
+                  }
+                  autoComplete="off"
+                />
+                {errors.apiKey && (
+                  <p className="text-sm text-red-500">{errors.apiKey}</p>
+                )}
+              </div>
+
+              {/* API Secret */}
+              <div className="space-y-2">
+                <Label htmlFor="apiSecret">API Secret (optional)</Label>
+                <Input
+                  id="apiSecret"
+                  type="password"
+                  placeholder="••••••••"
+                  value={apiSecret}
+                  onChange={(e) => setApiSecret(e.target.value)}
+                  className={
+                    errors.apiSecret
+                      ? "border-red-500"
+                      : apiSecret
+                      ? "border-emerald-500/50"
+                      : ""
+                  }
+                  autoComplete="off"
+                />
+                {errors.apiSecret && (
+                  <p className="text-sm text-red-500">{errors.apiSecret}</p>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="voiceUrl">Voice Webhook URL</Label>
                 <Input
                   id="voiceUrl"
-                  placeholder="https://your-app.com/twilio/voice"
                   value={voiceUrl}
                   onChange={(e) => setVoiceUrl(e.target.value)}
                   className={errors.twilioVoiceUrl ? "border-red-500" : ""}
+                 
                 />
                 {errors.twilioVoiceUrl && (
                   <p className="text-sm text-red-5000">
@@ -246,10 +375,11 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                 <Label htmlFor="smsUrl">SMS Webhook URL</Label>
                 <Input
                   id="smsUrl"
-                  placeholder="https://your-app.com/twilio/sms"
-                  value={smsUrl}
+                  value={`https://icretrai.vercel.app/api/org/${orgId}/sms`}
                   onChange={(e) => setSmsUrl(e.target.value)}
                   className={errors.twilioSmsUrl ? "border-red-500" : ""}
+                  readOnly
+                  disabled
                 />
                 {errors.twilioSmsUrl && (
                   <p className="text-sm text-red-500">{errors.twilioSmsUrl}</p>
@@ -269,7 +399,7 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
           )}
 
           {/* Show save button when disabled but has existing data */}
-          {!enabled && (sid || token || voiceUrl || smsUrl) && (
+          {!enabled && (sid || token || voiceUrl) && (
             <CardContent className="pt-4">
               <div className="text-sm text-muted-foreground mb-4">
                 Integration is disabled. Settings are preserved.

@@ -1,14 +1,16 @@
-import TeamsPage from '@/components/pages/teams/TeamsPage'
-import { getAllOrgLeads, getTeamData } from '@/lib/service/prismaQueries'
-import { auth } from '@clerk/nextjs/server'
-import React from 'react'
+import TeamsPage from "@/components/pages/teams/TeamsPage";
+import { getOrgId } from "@/lib/services/db/org";
+import { getAllOrgLeads, getTeamData } from "@/lib/services/prismaQueries";
+import { auth } from "@clerk/nextjs/server";
+import React from "react";
 
 export default async function page() {
-  const { userId } = await auth()
-  const { user, teams, orgMembers } = await getTeamData(userId)
-  const leads = await getAllOrgLeads(userId)
-  // console.log("orgmembers:", orgMembers)
+  const { userId: clerkId } = await auth();
+
+
   return (
-    <div><TeamsPage teams={teams} leads={leads} orgMembers={orgMembers}/></div>
-  )
-} 
+    <div>
+      <TeamsPage />
+    </div>
+  );
+}

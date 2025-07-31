@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 
 export async function POST(req, { params }) {
   const { campaignId } = await params;
@@ -141,7 +141,7 @@ export async function POST(req, { params }) {
       email: email || null,
       status: "New",
       source: additionalData.source || "API", // Default to API source
-      organizationId: campaign.orgId,
+      orgId: campaign.orgId,
       metadata: {
         firstName,
         lastName,
@@ -268,7 +268,7 @@ export async function GET(req, { params }) {
     const campaign = await prisma.campaign.findUnique({
       where: { 
         id: campaignId,
-        organizationId: apiKeyRecord.orgId // Additional security
+        orgId: apiKeyRecord.orgId // Additional security
       },
       select: {
         id: true,

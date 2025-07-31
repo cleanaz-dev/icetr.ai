@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 
 export async function POST(req) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req) {
 
     const updatedLeads = await prisma.lead.updateMany({
         data: {
-            organizationId: exisitingOrg.id
+            orgId: exisitingOrg.id
         }
     })
      return NextResponse.json({ message: "Org ID recieved, leads updated" }, { status: 200 });

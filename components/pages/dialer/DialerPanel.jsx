@@ -9,16 +9,17 @@ import {
   TabsTrigger,
 } from "@/components/ui/dialer-tabs";
 import { cn } from "@/lib/utils";
-import DialerTab from "./DialerTab";
-import CallHistoryTab from "./CallHistoryTab";
-import CallScriptTab from "./CallScriptTab";
+import DialerTab from "./tabs/DialerTab";
+import CallHistoryTab from "./tabs/CallHistoryTab";
+import CallScriptTab from "./tabs/CallScriptTab";
 import DocumentsTab from "./DocumentsTab";
 import { BiDialpad } from "react-icons/bi";
 import { CgTranscript } from "react-icons/cg";
 import { FaReadme, FaRegCalendarAlt } from "react-icons/fa";
 import { FaHistory } from "react-icons/fa";
-import CalendarTab from "./CalendarTab";
-import FollowUpTab from "./FollowUpTab";
+import CalendarTab from "./tabs/CalendarTab";
+import FollowUpTab from "./tabs/FollowUpTab";
+import { useTeamContext } from "@/context/TeamProvider";
 
 export default function DialerPanel({
   showDialer,
@@ -37,7 +38,8 @@ export default function DialerPanel({
   campaignId,
   setLead,
 }) {
-  const [activeTab, setActiveTab] = useState("dialer");
+  const { orgId } = useTeamContext();
+  const [activeTab, setActiveTab] = useState("dialpad");
 
   return (
     <div
@@ -47,8 +49,10 @@ export default function DialerPanel({
         showDialer ? "block" : "hidden lg:block"
       )}
     >
-      <div className="p-4.5 border-b flex justify-between items-center">
-        <h3 className="font-semibold capitalize  underline decoration-primary">{activeTab}</h3>
+      <div className="p-5 flex justify-between items-center">
+        <h3 className="text-lg font-semibold capitalize  underline decoration-primary">
+          {activeTab}
+        </h3>
         <Button
           variant="ghost"
           size="sm"
@@ -64,8 +68,8 @@ export default function DialerPanel({
         onValueChange={setActiveTab}
         className="flex flex-col"
       >
-        <TabsList className=" flex justify-around w-full mt-4">
-          <TabsTrigger value="dialer" className="text-xs cursor-pointer">
+        <TabsList className=" flex justify-around w-full mt-2">
+          <TabsTrigger value="dialpad" className="text-xs cursor-pointer">
             <BiDialpad className="text-primary " />
           </TabsTrigger>
           <TabsTrigger value="scripts" className="text-xs cursor-pointer">
@@ -83,7 +87,7 @@ export default function DialerPanel({
         </TabsList>
 
         <TabsContent
-          value="dialer"
+          value="dialpad"
           className="flex-1 p-4 space-y-4 overflow-y-auto"
         >
           <DialerTab
@@ -94,6 +98,7 @@ export default function DialerPanel({
             currentSession={currentSession}
             onCall={onCall}
             onHangup={onHangup}
+            orgId={orgId}
           />
         </TabsContent>
 
@@ -101,23 +106,25 @@ export default function DialerPanel({
           <CallScriptTab
             selectedLead={selectedLead}
             callScriptData={callScriptData}
+            orgId={orgId}
           />
         </TabsContent>
         <TabsContent value="documents" className="flex-1 p-4 overflow-y-auto">
-          <DocumentsTab campaignId={campaignId} />
+          <DocumentsTab campaignId={campaignId} orgId={orgId} />
         </TabsContent>
 
         <TabsContent value="followup" className="flex-1 p-4 overflow-y-auto">
           <FollowUpTab
             onLeadSelect={(lead) => {
               setLead(lead);
-              setActiveTab("dialer");
+              setActiveTab("dialpad");
             }}
+            orgId={orgId}
           />
         </TabsContent>
 
         <TabsContent value="calendar" className="flex-1 p-4 overflow-y-auto">
-          <CalendarTab lead={selectedLead} />
+          <CalendarTab lead={selectedLead} orgId={orgId} />
         </TabsContent>
       </Tabs>
     </div>

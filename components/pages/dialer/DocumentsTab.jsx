@@ -6,7 +6,7 @@ import { FileText, ExternalLink, Download } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { BsFiletypePdf, BsFiletypeDocx, BsFiletypeTxt, BsFiletypeCsv } from "react-icons/bs";
 
-export default function DocumentsTab({campaignId}) {
+export default function DocumentsTab({campaignId, orgId}) {
   const [documents,setDocuments] = useState()
   const [loading, setLoading] = useState(false)
 
@@ -16,7 +16,7 @@ useEffect(() => {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}/documents`);
+      const response = await fetch(`/api/org/${orgId}/campaigns/${campaignId}/documents`);
       if (!response.ok) {
         throw new Error('Failed to fetch documents');
       }

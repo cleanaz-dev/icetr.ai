@@ -17,7 +17,12 @@ import {
   SelectItem,
   SelectGroup,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs-og";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,8 +32,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { useTeamContext } from "@/context/TeamProvider";
+import Image from "next/image";
 
-export function BatchAssignTeamLeads({ leads = [], members = [], onAssign }) {
+export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
+
+  const { getTeamMembersByTeamId } = useTeamContext();
+
+  const members = getTeamMembersByTeamId(teamId);
+  
   const [quantity, setQuantity] = useState(50);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,7 +51,7 @@ export function BatchAssignTeamLeads({ leads = [], members = [], onAssign }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { user } = useUser()
+  const { user } = useUser();
 
   // Batch assign filters
   const [filters, setFilters] = useState({
@@ -200,7 +212,7 @@ export function BatchAssignTeamLeads({ leads = [], members = [], onAssign }) {
         <Button variant="ghostMuted">Assign Leads</Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <DialogContent className="min-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>
             Assign Leads <span></span>
@@ -285,11 +297,19 @@ export function BatchAssignTeamLeads({ leads = [], members = [], onAssign }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {members.map((m) => {
-                      const name = `${m.firstname} ${m.lastname}`;
+                    {members.map(({ user }) => {
                       return (
-                        <SelectItem key={m.id} value={m}>
-                          {name}
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src={user.imageUrl}
+                              alt={user.fullname}
+                              width={24}
+                              height={24}
+                              className="rounded-full object-cover"
+                            />
+                            <span>{user.fullname}</span>
+                          </div>
                         </SelectItem>
                       );
                     })}
@@ -479,11 +499,19 @@ export function BatchAssignTeamLeads({ leads = [], members = [], onAssign }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {members.map((m) => {
-                      const name = `${m.firstname} ${m.lastname}`;
+                    {members.map(({ user }) => {
                       return (
-                        <SelectItem key={m.id} value={m}>
-                          {name}
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src={user.imageUrl}
+                              alt={user.fullname}
+                              width={24}
+                              height={24}
+                              className="rounded-full object-cover"
+                            />
+                            <span>{user.fullname}</span>
+                          </div>
                         </SelectItem>
                       );
                     })}

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs-og";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -84,7 +84,7 @@ export default function AgentSettingsPage({ settings }) {
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/users/${settings.id}`, {
+      const res = await fetch(`/api/org/${orgId}/users/${settings.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

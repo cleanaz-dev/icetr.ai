@@ -69,7 +69,7 @@ export default function EditCampaignDialog({
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/campaigns/${campaign.id}`, {
+      const response = await fetch(`/api/org/${orgId}/campaigns/${campaign.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

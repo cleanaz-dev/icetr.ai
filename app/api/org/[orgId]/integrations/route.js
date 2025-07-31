@@ -3,11 +3,12 @@
 // ==========================================
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 import {
   encryptIntegrationData,
   decryptIntegrationData,
 } from "@/lib/encryption";
+
 
 export async function GET(req, { params }) {
   try {
@@ -45,7 +46,7 @@ export async function GET(req, { params }) {
     }
 
     const integrations = await prisma.orgIntegration.findMany({
-      where: { organizationId: orgId },
+      where: { orgId: orgId },
       select: {
         id: true,
         service: true,
@@ -208,11 +209,11 @@ export async function POST(req, { params }) {
     // Update the integration record
     const result = await prisma.orgIntegration.upsert({
       where: {
-        organizationId: orgId,
+        orgId: orgId,
       },
       update: updates,
       create: {
-        organizationId: orgId,
+        orgId: orgId,
         ...updates,
       },
     });
@@ -270,7 +271,7 @@ export async function PATCH(req, { params }) {
 
     const integration = await prisma.orgIntegration.findUnique({
       where: {
-          organizationId: orgId,
+          orgId: orgId,
           service,
         },
     });
@@ -356,7 +357,7 @@ export async function DELETE(req, { params }) {
 
     await prisma.orgIntegration.delete({
       where: {
-          organizationId: orgId,
+          orgId: orgId,
           service,
       },
     });
@@ -401,7 +402,7 @@ function getConfiguredFields(integration) {
       integration[key] &&
       ![
         "id",
-        "organizationId",
+        "orgId",
         "service",
         "enabled",
         "createdAt",
@@ -414,7 +415,7 @@ function getConfiguredFields(integration) {
   return fields;
 }
 
-async function prepareIntegrationData(service, credentials, organizationId) {
+async function prepareIntegrationData(service, credentials, orgId) {
   try {
     const fields = {};
 
@@ -428,7 +429,7 @@ async function prepareIntegrationData(service, credentials, organizationId) {
         }
         const encryptedAuthToken = encryptIntegrationData(
           { authToken: credentials.authToken },
-          organizationId
+          orgId
         );
         fields.twilioAccountSid = credentials.accountSid;
         fields.twilioAuthToken = encryptedAuthToken;
@@ -444,7 +445,7 @@ async function prepareIntegrationData(service, credentials, organizationId) {
         }
         const encryptedCalendlyKey = encryptIntegrationData(
           { apiKey: credentials.apiKey },
-          organizationId
+          orgId
         );
         fields.calendlyApiKey = encryptedCalendlyKey;
         fields.calendlyWebhookUrl = credentials.webhookUrl || null;
@@ -467,7 +468,7 @@ async function prepareIntegrationData(service, credentials, organizationId) {
               apiKey: credentials.zoomApiKey,
               apiSecret: credentials.zoomApiSecret,
             },
-            organizationId
+            orgId
           );
           fields.zoomApiKey = encryptedZoomCreds;
         }

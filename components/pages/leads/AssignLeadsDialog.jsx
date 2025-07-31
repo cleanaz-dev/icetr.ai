@@ -76,7 +76,7 @@ export default function AssignLeadsDialog({
     setIsAssigning(true);
 
     try {
-      const response = await fetch("/api/leads/assign", {
+      const response = await fetch(`/api/org/${orgId}/leads/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

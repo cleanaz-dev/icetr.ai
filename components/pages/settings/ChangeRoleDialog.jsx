@@ -26,7 +26,7 @@ export default function ChangeRoleDialog({ user, currentRole, open, onOpenChange
   const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/users/${user.id}/role`, {
+      const res = await fetch(`/api/org/${orgId}/users/${user.id}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),

@@ -65,7 +65,7 @@ export default function UnassignLeadsDialog({ leads, members, onComplete }) {
 
     setIsUnassigning(true);
     try {
-      const response = await fetch("/api/leads/unassign", {
+      const response = await fetch(`/api/org/${orgId}/leads/unassign`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

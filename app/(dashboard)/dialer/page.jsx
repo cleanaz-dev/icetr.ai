@@ -5,10 +5,12 @@ import {
   getCallScriptDetails,
   getLeadsForUser,
   getOrganization,
-} from "@/lib/service/prismaQueries";
+} from "@/lib/services/prismaQueries";
+import { getOrgId } from "@/lib/services/db/org";
 
 export default async function page() {
   const { userId } = await auth();
+  const orgId = await getOrgId(userId);
   const leads = await getLeadsForUser(userId);
   const callScriptData = await getCallScriptDetails(userId);
   const campaignId = leads[0]?.campaignId; // Safe access in case leads is empty
@@ -18,7 +20,12 @@ export default async function page() {
   // console.log("campaignID", campaignId);
   return (
     <div>
-      <EnhancedDialer data={leads} callScriptData={callScriptData} campaignId={campaignId}/>
+      <EnhancedDialer
+        data={leads}
+        callScriptData={callScriptData}
+        campaignId={campaignId}
+        orgId={orgId}
+      />
     </div>
   );
 }

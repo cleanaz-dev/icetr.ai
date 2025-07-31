@@ -78,7 +78,7 @@ export default function LeadsTable({
 
 const handleSaveLead = async (leadId, updatedData) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`/api/org/${orgId}/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedData),
@@ -166,14 +166,14 @@ const handleSaveLead = async (leadId, updatedData) => {
                   Status <ArrowUpDown className="w-3 h-3" />
                 </div>
               </TableHead>
-              <TableHead
+              {/* <TableHead
                 className="hidden lg:table-cell cursor-pointer hover:bg-muted"
                 onClick={() => onSort("createdAt")}
               >
                 <div className="flex items-center gap-1">
                   Created <ArrowUpDown className="w-3 h-3" />
                 </div>
-              </TableHead>
+              </TableHead> */}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -182,7 +182,7 @@ const handleSaveLead = async (leadId, updatedData) => {
               <React.Fragment key={lead.id}>
                 <TableRow
                   className={cn(
-                    "cursor-pointer hover:bg-primary/50 ",
+                    "cursor-pointer hover:bg-primary/50 even:bg-muted/40",
                     selectedLead?.id === lead.id && "bg-primary/25"
                   )}
                 >
@@ -224,12 +224,12 @@ const handleSaveLead = async (leadId, updatedData) => {
                       {LEAD_STATUSES[lead.status]?.label || lead.status}
                     </Badge>
                   </TableCell>
-                  <TableCell
+                  {/* <TableCell
                     className="hidden lg:table-cell text-sm text-muted-foreground"
                     onClick={() => onSelectLead(lead)}
                   >
                     {new Date(lead.createdAt).toLocaleDateString()}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <div className="flex gap-1">
                       <Button

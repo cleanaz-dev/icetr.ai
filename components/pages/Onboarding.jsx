@@ -153,7 +153,7 @@ export default function Onboarding() {
       if (formData.invites.length > 0) {
         // Send invitations logic here
       }
-      const response = await fetch("/api/onboarding", {
+      const response = await fetch("/api/public/onboarding", {
         method: "POST",
         body: JSON.stringify(formData),
         headers: {

@@ -10,7 +10,7 @@ import {
  CardHeader,
  CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs-og";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,7 +58,7 @@ import {
 import ChangeRoleDialog from "./ChangeRoleDialog";
 import { RefreshCw } from "lucide-react";
 
-export default function UsersTab({ settings }) {
+export default function UsersTab({ settings, orgId }) {
  const [users, setUsers] = useState(null);
  const [searchTerm, setSearchTerm] = useState("");
  const [roleFilter, setRoleFilter] = useState("all");
@@ -99,7 +99,7 @@ export default function UsersTab({ settings }) {
  };
 
  const uniqueRoles = [
-  ...new Set(settings.organization.users.map((user) => user.role)),
+  ...new Set(settings.organization.users.map((user) => user.role.type)),
  ];
  const uniqueTeams = [
   ...new Set(
@@ -129,7 +129,7 @@ export default function UsersTab({ settings }) {
  const handleFetchInvitees = async () => {
   setLoading(true);
   try {
-   const response = await fetch("/api/invite/pending");
+   const response = await fetch(`/api/org/${orgId}/invite/pending`);
    if (!response.ok) {
     throw new Error("Failed to fetch invitees");
    }
@@ -245,11 +245,11 @@ export default function UsersTab({ settings }) {
              </div>
              <div className="flex items-center gap-3">
               <Badge
-               variant={getRoleBadgeVariant(user.role)}
+               variant={getRoleBadgeVariant(user.role.type)}
                className="flex items-center gap-1"
               >
-               {getRoleIcon(user.role)}
-               {user.role}
+               {getRoleIcon(user.role.type)}
+               {user.role.type}
               </Badge>
               <Badge variant="outline">{user.team?.name || "Unassigned"}</Badge>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">

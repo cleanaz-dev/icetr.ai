@@ -52,12 +52,15 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { usePermissionContext } from "@/context/PermissionProvider";
+import PermissionGate from "@/components/auth/PermissionGate";
 
 export default function CampaignsTable({
   campaigns = [],
   onEdit,
   onStatus,
   onDelete,
+  orgId,
 }) {
   const { refresh } = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -119,7 +122,7 @@ export default function CampaignsTable({
   const updateCampaignStatus = async (campaignId, newStatus) => {
     setUpdatingStatus(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}/status`, {
+      const response = await fetch(`/api/org/${orgId}/campaigns/${campaignId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -205,7 +208,9 @@ export default function CampaignsTable({
                 ))}
               </SelectContent>
             </Select>
-            <CreateCampaignDialog onSuccess={refresh} />
+            <PermissionGate permission="campaign.create">
+              <CreateCampaignDialog onSuccess={refresh} />
+            </PermissionGate>
           </div>
 
           {/* Campaigns Table */}
@@ -286,10 +291,12 @@ export default function CampaignsTable({
                               View Details
                             </Link>
                           </DropdownMenuItem>
+
                           <DropdownMenuItem onClick={() => onEdit(campaign)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Campaign
                           </DropdownMenuItem>
+
                           <DropdownMenuSeparator />
                           {campaign.status === "Active" ? (
                             <DropdownMenuItem
@@ -314,13 +321,15 @@ export default function CampaignsTable({
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onDelete(campaign)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Campaign
-                          </DropdownMenuItem>
+                          <PermissionGate permission="campaign.delete">
+                            <DropdownMenuItem
+                              onClick={() => onDelete(campaign)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Campaign
+                            </DropdownMenuItem>
+                          </PermissionGate>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

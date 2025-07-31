@@ -76,7 +76,7 @@ export function useLeadManagement(data) {
   // Add this function to handle API calls and state updates
   const saveLead = async (leadId, updatedData) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`/api/org/${orgId}/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedData),

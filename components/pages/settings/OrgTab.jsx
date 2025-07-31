@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs-og";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Copy, EyeOff, Eye, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -42,7 +42,7 @@ export default function OrgTab({ organization }) {
   const [currentOrg, setCurrentOrg ] = useState(organization)
 
   async function handleGenerateKey() {
-    const res = await fetch(`/api/organizations/${organization.id}/keys`, {
+    const res = await fetch(`/api/org/${organization.id}/keys`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -72,7 +72,7 @@ export default function OrgTab({ organization }) {
   };
 
   const revealKey = async (orgId, keyId) => {
-    const res = await fetch(`/api/organizations/${orgId}/keys/${keyId}`);
+    const res = await fetch(`/api/org/${orgId}/keys/${keyId}`);
     const data = await res.json();
     return data.key;
   };
@@ -144,7 +144,7 @@ export default function OrgTab({ organization }) {
 
     try {
       const response = await fetch(
-        `/api/organizations/${orgId}/keys/${keyId}`,
+        `/api/org/${orgId}/keys/${keyId}`,
         {
           method: "DELETE",
         }
@@ -175,13 +175,13 @@ export default function OrgTab({ organization }) {
   };
 
   async function fetchKeys() {
-    const res = await fetch(`/api/organizations/${organization.id}/keys`);
+    const res = await fetch(`/api/org/${organization.id}/keys`);
     setKeys(res.ok ? await res.json() : []);
   }
 
   // fetch campaigns so admin can pick which ones the key can hit
   async function fetchCampaigns() {
-    const res = await fetch(`/api/organizations/${organization.id}/campaigns`);
+    const res = await fetch(`/api/org/${organization.id}/campaigns`);
     setAllCampaigns(res.ok ? await res.json() : []);
   }
 

@@ -2,21 +2,27 @@
 
 import { SignIn, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
   const { push } = useRouter();
   const { user, isLoaded } = useUser();
 
-  if (!isLoaded) return null; // Prevents rendering before Clerk loads user
+  useEffect(() => {
+    if (isLoaded && user) {
+      push("/home");
+    }
+  }, [isLoaded, user, push]);
+
+  if (!isLoaded) return null;
 
   if (!user) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <SignIn withSignUp="false" />
+        <SignIn withSignUp={false} />
       </div>
     );
   }
 
-  push("/home");
-  return null; // Prevents rendering anything else
+  return null;
 }

@@ -1,7 +1,7 @@
 import CampaingsPage from "@/components/pages/campaigns/CampaingsPage";
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
-import { getUserCampaigns } from "@/lib/service/prismaQueries";
+import { getUserCampaigns } from "@/lib/services/prismaQueries";
 import { revalidatePath } from "next/cache";
 
 export default async function page() {

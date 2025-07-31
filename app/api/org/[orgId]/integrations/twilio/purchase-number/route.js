@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { decryptIntegrationData } from "@/lib/encryption";
 

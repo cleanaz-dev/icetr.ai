@@ -14,53 +14,25 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-export default function EditTeamDialog({ onSuccess, team }) {
+export default function EditTeamDialog({ onEdit, team, orgId }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [teamName, setTeamName] = useState(team.name);
+  const [teamName, setTeamName] = useState(team?.name || "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const response = await fetch(`/api/teams/${team.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          teamName: teamName,
-        }),
-      });
-
-      const { message } = await response.json();
-
-      if (!response.ok) {
-        // Show error toast with message from API
-        toast.error(message || "Failed to update team");
-        return;
-      }
-
-      // Show success toast
-      toast.success(message || "Team updated successfully!");
-      
-      // Call success callback
-      if (typeof onSuccess === "function") {
-        onSuccess()
-      }
-      
-      // Close dialog
+      const result = await onEdit(team.id, { teamName }, orgId);
+      toast.success(result.message || "Team updated successfully!");
       setOpen(false);
-      
     } catch (error) {
-      console.error("Error updating team:", error);
-      toast.error("An unexpected error occurred");
+      toast.error(error.message || "Failed to update team");
     } finally {
       setLoading(false);
     }
   };
-
   const handleClose = () => {
     setOpen(false);
     // Reset form to original values
@@ -76,7 +48,13 @@ export default function EditTeamDialog({ onSuccess, team }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle><span className="flex items-center gap-2"> <Edit className="size-4"/>Edit Team</span></DialogTitle>
+          <DialogTitle>
+            <span className="flex items-center gap-2">
+              {" "}
+              <Edit className="size-4" />
+              Edit Team
+            </span>
+          </DialogTitle>
           <DialogDescription>
             Update the team name and save your changes.
           </DialogDescription>

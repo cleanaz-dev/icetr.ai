@@ -48,7 +48,7 @@ export default function ProfileImageUpload({ user }) {
             const formData = new FormData();
             formData.append('image', selectedFile);
 
-            const response = await fetch(`/api/users/${user.id}/upload-image`, {
+            const response = await fetch(`/api/org/${orgId}/users/${user.id}/upload-image`, {
                 method: 'POST',
                 body: formData,
             });

@@ -15,12 +15,12 @@ import {
   Circle,
 } from "lucide-react";
 import { LayoutDashboard } from "lucide-react";
-import { useDashboard } from "@/lib/context/DashboardProvider";
 import LeadDistributionChart from "./LeadDistributionChart";
 import DashboardStatsCard from "./DashboardStatsCard";
+import { useDashboard } from "@/context/DashboardProvider";
 
 export default function Dashboard() {
-  const { activities, leadCounts } = useDashboard();
+  const { activities, leadCounts  } = useDashboard()
 
   return (
     <div className="space-y-6 px-4 py-6">

@@ -1,25 +1,41 @@
-import TrainingPage from "@/components/pages/training/TrainingPage";
-import StatusBar from "@/components/pages/training/StatusBar";
+import TrainingPage from "@/components/pages/training/main-page/TrainingPage";
+import StatusBar from "@/components/pages/training/status-bar/StatusBar";
 import { auth } from "@clerk/nextjs/server";
-import { getUserTrainingData } from "@/lib/service/prismaQueries";
+import {
+  getTrainingData,
+  getTrainingAvgAndCount,
+} from "@/lib/services/db/training";
+import { getUserProfile, isAdmin } from "@/lib/services/db/user";
+import { getOrgId } from "@/lib/services/db/org";
+import { getBlandAiSettings } from "@/lib/services/db/integrations";
+import UnifiedStatusBar from "@/components/pages/dialer/UnifiedStatusBar";
 
 export default async function TrainingRoute() {
   const { userId } = await auth();
-  const { user: trainingUser, training } = await getUserTrainingData(userId);
+  const orgId = await getOrgId(userId);
+  const userProfile = await getUserProfile(userId);
+  const trainingAvgAndCount = await getTrainingAvgAndCount(userId, orgId);
+  const trainingData = await getTrainingData(userId, orgId);
+  const blandAiSettings = await getBlandAiSettings(userId, orgId);
 
   return (
     <div className="flex flex-col h-screen">
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto relative">
-        <TrainingPage trainingData={training} trainingUser={trainingUser} />
+        <TrainingPage
+          trainingData={trainingData}
+          userProfile={userProfile}
+          orgId={orgId}
+          blandAiSettings={blandAiSettings}
+          trainingAvgAndCount={trainingAvgAndCount}
+        />
       </div>
-
       {/* Fixed bottom bar */}
       <div className="w-full">
-        <StatusBar 
-          trainingData={training} 
-          audioPermissionGranted={true} 
-          status="idle" 
+        <UnifiedStatusBar
+          mode="training"
+          trainingStats={trainingAvgAndCount}
+          
         />
       </div>
     </div>

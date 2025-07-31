@@ -1,22 +1,30 @@
 import LeadsPage from "@/components/pages/leads/LeadsPage";
-import React from "react";
-import { getAllLeads, getUserTeamsWithMembers } from "@/lib/service/prismaQueries";
 import { auth } from "@clerk/nextjs/server";
+import {
+  getOrgId,
+  getOrgTeamsAndMembers,
+} from "@/lib/services/db/org";
+
 
 export default async function page() {
-  const { userId } = await auth()
-  const leads = await getAllLeads();
-  const { team, members } = await getUserTeamsWithMembers(userId)
- 
-  
-  // Extract unique members from all campaigns
+  const { userId } = await auth();
+  const orgId = await getOrgId(userId);
+
+  const { members, teams, teamCampaigns } = await getOrgTeamsAndMembers(orgId);
 
 
-  // console.log("campaignusers", campaignUsers)
+  // console.log("teams:", teams);
+  // console.log("members:", members);
+  // console.log("campaigns:", teamCampaigns);
 
   return (
     <div>
-      <LeadsPage data={leads} members={members} team={team}/>
+      <LeadsPage
+        members={members}
+        teams={teams}
+        orgId={orgId}
+        teamCampaigns={teamCampaigns}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDashboard } from "@/lib/context/DashboardProvider";
+import { useDashboard } from "@/context/DashboardProvider";
 import { ArrowDown, ArrowUp, Target, TrendingUp, Users, Calendar } from "lucide-react";
 
 export default function DashboardStatsCard() {

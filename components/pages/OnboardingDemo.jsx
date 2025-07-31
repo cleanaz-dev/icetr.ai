@@ -210,7 +210,7 @@ const resendVerificationCode = async () => {
     setError("");
 
     try {
-      const response = await fetch("/api/onboarding", {
+      const response = await fetch("/api/public/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

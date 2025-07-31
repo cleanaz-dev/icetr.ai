@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,15 +25,25 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Region } from "@/lib/constants/frontend";
+import { Info } from "lucide-react";
 
-export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId }) {
+export default function ImportLeadsDialog({
+  campaigns,
+  onImportComplete,
+  orgId,
+  importLeads,
+}) {
+  console.log("campaigns", campaigns);
   const [file, setFile] = useState(null);
+  const [open, setOpen] = useState(false);
   const [source, setSource] = useState("");
   const [industry, setIndustry] = useState("");
   const [country, setCountry] = useState("canada");
   const [region, setRegion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState("");
+  const selectedCampaignObj = campaigns?.find((c) => c.id === selectedCampaign);
   const regionOptions =
     Region[0][country === "canada" ? "provinces" : "states"] || [];
 
@@ -47,57 +57,62 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
     }
   };
 
-  const handleImport = async () => {
-    if (!file) {
-      toast.error("Please select a file to import");
-      return;
-    }
+  const resetForm = () => {
+    setIndustry("");
+    setFile();
+    setCountry("canada");
+    setRegion("");
+    setSelectedCampaign();
+    setSelectedTeam();
+    setSource("");
+  };
 
-    if (!campaignId) {
-      toast.error("Campaign ID is required");
+  const buildLeadImportFormData = () => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("campaignId", selectedCampaign);
+    formData.append("teamId", selectedTeam || "");
+    formData.append("orgId", orgId);
+    formData.append("source", source || "");
+    formData.append("industry", industry || "");
+    formData.append("country", country || "");
+    formData.append("region", region || "");
+    formData.append(
+      "assignmentStrategy",
+      selectedCampaignObj?.assignmentStrategy || ""
+    );
+    return formData;
+  };
+
+  const handleSubmit = async () => {
+    if (!file || !selectedCampaign) {
+      toast.error(
+        !file ? "Please select a file to import" : "Campaign ID is required"
+      );
       return;
     }
 
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("campaignId", campaignId);
-    formData.append("orgId", orgId)
-    formData.append("source", source);
-    formData.append("industry", industry);
-    formData.append("country", country);
-    formData.append("region", region);
 
     try {
-      const response = await fetch("/api/import/leads", {
-        method: "POST",
-        body: formData,
-      });
+      const formData = buildLeadImportFormData();
+      const result = await importLeads(formData, orgId);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(`Successfully imported ${data.count || 0} leads`);
-        setFile(null);
-        setIsOpen(false);
-        // Reset file input
-        const fileInput = document.getElementById("csv-file-input");
-        if (fileInput) fileInput.value = "";
-
-        // Call callback if provided
-        if (onImportComplete) {
-          onImportComplete(data);
-        }
-      } else {
-        toast.error(data.error || "Failed to import leads");
+      if(!result.ok) {
+        throw new Error(result.error)
       }
+
+      toast.success(result.message);
+      resetForm();
     } catch (error) {
       console.error("Import error:", error);
       toast.error("An error occurred while importing leads");
     } finally {
       setIsLoading(false);
+      setOpen(false)
     }
   };
+
 
   const removeFile = () => {
     setFile(null);
@@ -105,15 +120,22 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
     if (fileInput) fileInput.value = "";
   };
 
+  const handleCloseDialog = (isOpen) => {
+    setOpen(isOpen);
+
+    if (!isOpen) {
+      resetForm();
+    }
+  };
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={handleCloseDialog}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Upload className="w-4 h-4 mr-2" />
           Import Leads
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className=" min-w-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Import Leads from CSV</DialogTitle>
           <DialogDescription>
@@ -156,17 +178,73 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
-              <Label>Source</Label>
-              <Select value={source} onValueChange={setSource}>
+              <Label>Campaign</Label>
+              <Select
+                value={selectedCampaign}
+                onValueChange={setSelectedCampaign}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select lead type" />
+                  <SelectValue placeholder="Select campaign" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="google_scraper">
-                      Google Scraper
-                    </SelectItem>
-                    <SelectItem value="apollo">Apollo</SelectItem>
+                    {campaigns?.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Team</Label>
+              <Select
+                value={selectedTeam}
+                onValueChange={setSelectedTeam}
+                disabled={
+                  !selectedCampaign ||
+                  campaigns.find((c) => c.id === selectedCampaign)
+                    ?.assignmentStrategy === "MANUAL" ||
+                  !campaigns.find((c) => c.id === selectedCampaign)?.team
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={(() => {
+                      const selected = campaigns.find(
+                        (c) => c.id === selectedCampaign
+                      );
+
+                      if (!selected) return "Select campaign first";
+
+                      // ✅ Always show "No team assigned" if there's no team
+                      if (!selected.team) return "No team assigned";
+
+                      // ✅ Only show "Not required" if strategy is MANUAL and team exists
+                      if (selected.assignmentStrategy === "MANUAL")
+                        return "Not required";
+
+                      // ✅ Otherwise show the actual team name
+                      return selected.team.name;
+                    })()}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {(() => {
+                      const selected = campaigns.find(
+                        (c) => c.id === selectedCampaign
+                      );
+                      if (!selected?.team) return null;
+
+                      return (
+                        <SelectItem value={selected.team.id}>
+                          {selected.team.name}
+                        </SelectItem>
+                      );
+                    })()}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -182,6 +260,22 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
                     <SelectItem value="trades">Trades</SelectItem>
                     <SelectItem value="real-estate">Real Estate</SelectItem>
                     <SelectItem value="education">Education</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Source</Label>
+              <Select value={source} onValueChange={setSource}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select lead type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="google_scraper">
+                      Google Scraper
+                    </SelectItem>
+                    <SelectItem value="apollo">Apollo</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -223,6 +317,55 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
                 </Select>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Assignment Strategy</Label>
+              <Input
+                value={
+                  selectedCampaign
+                    ? campaigns
+                        .find((c) => c.id === selectedCampaign)
+                        ?.assignmentStrategy?.replace("_", " ")
+                        .toLowerCase()
+                        .replace(/\b\w/g, (l) => l.toUpperCase()) ||
+                      "Not specified"
+                    : "Not specified"
+                }
+                readOnly
+              />
+            </div>
+          </div>
+          <div className="col-span-2">
+            {selectedCampaign && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50">
+                <Info className="h-4 w-4 text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  {(() => {
+                    const selected = campaigns.find(
+                      (c) => c.id === selectedCampaign
+                    );
+                    const strategy = selected?.assignmentStrategy;
+                    const hasNoTeam = !selected?.team;
+
+                    if (hasNoTeam) {
+                      return "No team is assigned to this campaign — leads will remain unassigned.";
+                    }
+
+                    const messages = {
+                      MANUAL: "You will need to assign leads manually",
+                      ROUND_ROBIN:
+                        "Leads will be evenly spread across team members",
+                      ROLE_BASED:
+                        "Leads will be assigned based on team member roles",
+                    };
+
+                    return (
+                      messages[strategy] ?? "Assignment method not specified"
+                    );
+                  })()}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="text-xs text-muted-foreground space-y-1">
@@ -245,7 +388,7 @@ export default function ImportLeadsDialog({ campaignId, onImportComplete, orgId 
               Cancel
             </Button>
           </DialogClose>
-          <Button onClick={handleImport} disabled={!file || isLoading}>
+          <Button onClick={handleSubmit} disabled={!file || isLoading}>
             {isLoading ? "Importing..." : "Import Leads"}
           </Button>
         </DialogFooter>

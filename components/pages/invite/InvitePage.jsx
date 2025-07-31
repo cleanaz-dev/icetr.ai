@@ -37,7 +37,7 @@ export default function InvitePage({ userData = {} }) {
         throw new Error("First name and last name are required");
       }
 
-      const response = await fetch("/api/invite/accept", {
+      const response = await fetch(`/api/org/${orgId}/invite/accept`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

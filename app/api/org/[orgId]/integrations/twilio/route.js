@@ -1,22 +1,20 @@
-// app/api/org/[orgid]/integrations/twilio/route.js
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 import {
   encryptIntegrationData,
-  decryptIntegrationData,
+  isEncrypted,
+  safeDecryptField,
 } from "@/lib/encryption";
 import {
   twilioIntegrationSchema,
   formatZodError,
-} from "@/lib/validations/integrations"; // adjust path
+} from "@/lib/validations/integrations";
+import twilio from "twilio";
 
-/* ------------------------------------------------------------------ */
-/* POST – create / update Twilio integration                          */
-/* ------------------------------------------------------------------ */
 export async function POST(req, { params }) {
   try {
-    /* ------------ 1. Auth & Org checks ------------ */
+    // 1. Auth & org checks
     const { userId } = await auth();
     if (!userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,18 +28,14 @@ export async function POST(req, { params }) {
 
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: {
-        orgId: true,
-        role: true,
-      },
+      select: { orgId: true, role: true },
     });
-    if (!user || user.orgId !== orgId || user.role !== "Admin") {
+    if (!user || user.orgId !== orgId || user.role.type !== "SuperAdmin") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    /* ------------ 2. Validate body with Zod ------------ */
+    // 2. Validate body (expect appSid, voiceUrl, smsUrl, etc.)
     const body = await req.json();
-    // console.log("body", body);
     const parsed = twilioIntegrationSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -49,15 +43,32 @@ export async function POST(req, { params }) {
         { status: 400 }
       );
     }
-    // console.log("parsed data:", parsed);
-    const { enabled, accountSid, authToken, phoneNumbers, ...rest } =
-      parsed.data;
 
-    /* ------------ 3. Upsert TwilioIntegration ------------ */
+    const {
+      enabled,
+      accountSid,
+      authToken,
+      appSid, // TwiML App SID to update
+      voiceUrl,
+      smsUrl,
+      ...rest
+    } = parsed.data;
+
+    console.log("Twilio config:", {
+      enabled,
+      accountSid,
+      authToken,
+      appSid,
+      voiceUrl,
+      smsUrl,
+      ...rest,
+    });
+  
+    // 3. Upsert integration in DB (store the new values)
     const parent = await prisma.orgIntegration.upsert({
-      where: { organizationId: orgId },
-      update: {}, // nothing to change on parent row
-      create: { organizationId: orgId },
+      where: { orgId },
+      update: {},
+      create: { orgId },
     });
 
     const result = await prisma.twilioIntegration.upsert({
@@ -66,51 +77,71 @@ export async function POST(req, { params }) {
         enabled,
         accountSid: enabled ? accountSid : null,
         authToken: enabled
-          ? encryptIntegrationData({ authToken }, orgId)
+          ? isEncrypted(authToken)
+            ? authToken
+            : encryptIntegrationData({ authToken }, orgId)
           : null,
-        phoneNumbers: enabled ? phoneNumbers : [],
-        voiceUrl: rest.voiceUrl ?? null,
-        smsUrl: rest.smsUrl ?? null,
-        apiKey: rest.apiKey ?? null,
-        apiSecret: rest.apiSecret
-          ? encryptIntegrationData({ apiSecret: rest.apiSecret }, orgId)
-          : null,
-        appSid: rest.appSid ?? null,
+        voiceUrl: voiceUrl ?? null,
+        smsUrl: smsUrl ?? null,
+        appSid: appSid ?? null,
+        // Keep other fields unchanged or add as needed
       },
       create: {
-        orgIntegration: { connect: { organizationId: orgId } },
+        orgIntegration: { connect: { orgId } },
         enabled,
         accountSid: enabled ? accountSid : null,
         authToken: enabled
           ? encryptIntegrationData({ authToken }, orgId)
           : null,
-        phoneNumbers: enabled ? phoneNumbers : [],
-        voiceUrl: rest.voiceUrl ?? null,
-        smsUrl: rest.smsUrl ?? null,
-        apiKey: rest.apiKey ?? null,
-        apiSecret: rest.apiSecret
-          ? encryptIntegrationData({ apiSecret: rest.apiSecret }, orgId)
-          : null,
-        appSid: rest.appSid ?? null,
+        voiceUrl: voiceUrl ?? null,
+        smsUrl: smsUrl ?? null,
+        appSid: appSid ?? null,
       },
     });
 
-    /* ------------ 4. Return safe, decrypted subset ------------ */
-    const decrypted = decryptIntegrationData(result.authToken, orgId);
+    // 4. If enabled & have credentials & appSid, update TwiML App webhooks
+    if (enabled && accountSid && authToken && appSid && (voiceUrl || smsUrl)) {
+      const decryptedAuthToken = safeDecryptField(
+        authToken,
+        orgId,
+        "authToken"
+      );
+
+      if (!decryptedAuthToken) {
+        console.warn(
+          "Auth token decryption failed; skipping TwiML App update."
+        );
+      } else {
+        const client = twilio(accountSid, decryptedAuthToken);
+
+        try {
+          await client.applications(appSid).update({
+            voiceUrl,
+            voiceMethod: "POST",
+            smsUrl,
+            smsMethod: "POST",
+          });
+        } catch (e) {
+          console.error(`Failed to update TwiML App ${appSid}:`, e.message);
+          return NextResponse.json(
+            { error: "Failed to update TwiML App", details: e.message },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    // 5. Return safe response (decrypt fields as needed)
     return NextResponse.json({
       success: true,
       data: {
         enabled: result.enabled,
         accountSid: result.accountSid,
-        phoneNumbers: result.phoneNumbers,
         voiceUrl: result.voiceUrl,
         smsUrl: result.smsUrl,
         appSid: result.appSid,
-        apiKey: result.apiKey,
-        apiSecret: result.apiSecret
-          ? decryptIntegrationData(result.apiSecret, orgId)
-          : null,
-        // NEVER send the raw authToken back
+        apiKey: safeDecryptField(result.apiKey, orgId, "apiKey"),
+        apiSecret: safeDecryptField(result.apiSecret, orgId, "apiSecret"),
       },
     });
   } catch (err) {
@@ -142,7 +173,7 @@ export async function PATCH(req, { params }) {
         role: true,
       },
     });
-    if (!user || user.orgId !== orgId || user.role !== "Admin") {
+    if (!user || user.orgId !== orgId || user.role.type !== "SuperAdmin") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

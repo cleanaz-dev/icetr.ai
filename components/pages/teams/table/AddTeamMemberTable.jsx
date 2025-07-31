@@ -15,37 +15,47 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-export default function AddTeamMemberTable({ teamId, members, onClose }) {
+export default function AddTeamMemberTable({
+  teamId,
+  members,
+  onClose,
+  orgId,
+  onAddMember,
+}) {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
-const unassignedFilteredMembers = members
-  .filter(member => {
-    // Check if user is NOT in this team (teamId comes from props)
-    const isAlreadyInTeam = member.teamMemberships?.some(
-      membership => membership.teamId === teamId
+  const unassignedFilteredMembers = members
+    .filter((member) => {
+      // Check if user is NOT in this team (teamId comes from props)
+      const isAlreadyInTeam = member.teamMemberships?.some(
+        (membership) => membership.teamId === teamId
+      );
+      return !isAlreadyInTeam;
+    })
+    .filter((member) =>
+      `${member.firstname} ${member.lastname}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
     );
-    return !isAlreadyInTeam;
-  })
-  .filter(member => 
-    `${member.firstname} ${member.lastname}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
   // Fixed handleSelect function - now works with member objects consistently
   const handleSelect = (member) => {
     setSelectedMembers((prev) => {
-      const isSelected = prev.some(selectedMember => selectedMember.id === member.id);
+      const isSelected = prev.some(
+        (selectedMember) => selectedMember.id === member.id
+      );
       return isSelected
-        ? prev.filter(selectedMember => selectedMember.id !== member.id)
+        ? prev.filter((selectedMember) => selectedMember.id !== member.id)
         : [...prev, member];
     });
   };
 
   // Helper function to check if a member is selected
   const isSelected = (member) => {
-    return selectedMembers.some(selectedMember => selectedMember.id === member.id);
+    return selectedMembers.some(
+      (selectedMember) => selectedMember.id === member.id
+    );
   };
 
   const handleAddMembers = async () => {
@@ -56,37 +66,37 @@ const unassignedFilteredMembers = members
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/teams/${teamId}/members`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          users: selectedMembers,
-          teamId: teamId
-        })
-      });
+      const response = await fetch(
+        `/api/org/${orgId}/teams/${teamId}/members`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            users: selectedMembers,
+            teamId: teamId,
+          }),
+        }
+      );
+      const { members = [], message } = await response.json();
 
       if (!response.ok) {
-        const { message } = await response.json();
-        toast.error(message || 'Failed to add members');
+        toast.error(message || "Failed to add members");
         return;
       }
 
-      const data = await response.json();
-      
-      toast.success(`Successfully added ${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''} to the team`);
-      
-      // Reset form state
+      toast.success(message);
+
+      onAddMember?.(members);
       setSelectedMembers([]);
       setSearchTerm("");
-      
+
       // Call onClose to close the dialog
       onClose();
-      
     } catch (error) {
-      console.error('Error adding members:', error);
-      toast.error(error.message || 'Failed to add members. Please try again.');
+      console.error("Error adding members:", error);
+      toast.error(error.message || "Failed to add members. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -97,7 +107,6 @@ const unassignedFilteredMembers = members
     setSelectedMembers([]);
     setSearchTerm("");
   };
-
 
   return (
     <div className="space-y-4">
@@ -120,18 +129,21 @@ const unassignedFilteredMembers = members
           <TableBody>
             {unassignedFilteredMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  {searchTerm ? 'No members found matching your search' : 'No members available'}
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-muted-foreground"
+                >
+                  {searchTerm
+                    ? "No members found matching your search"
+                    : "No members available"}
                 </TableCell>
               </TableRow>
             ) : (
               unassignedFilteredMembers.map((member) => (
-                <TableRow 
-                  key={member.id} 
+                <TableRow
+                  key={member.id}
                   className={`cursor-pointer transition-colors ${
-                    isSelected(member) 
-                      ? 'bg-muted' 
-                      : 'hover:bg-muted/50'
+                    isSelected(member) ? "bg-muted" : "hover:bg-muted/50"
                   }`}
                   onClick={() => handleSelect(member)}
                 >
@@ -139,7 +151,7 @@ const unassignedFilteredMembers = members
                     <Checkbox
                       checked={isSelected(member)}
                       onCheckedChange={() => handleSelect(member)}
-                      className="cursor-pointer"
+                      className="cursor-pointer ml-2 mb-0.5"
                       onClick={(e) => e.stopPropagation()} // Prevent double-firing from row click
                     />
                   </TableCell>
@@ -158,7 +170,9 @@ const unassignedFilteredMembers = members
                     </div>
                   </TableCell>
                   <TableCell>{member.email}</TableCell>
-                  <TableCell className="capitalize">{member.role}</TableCell>
+                  <TableCell className="capitalize">
+                    {member.role.type}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -170,11 +184,15 @@ const unassignedFilteredMembers = members
         <Button variant="outline" onClick={handleCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button 
+        <Button
           onClick={handleAddMembers}
           disabled={selectedMembers.length === 0 || loading}
         >
-          {loading ? 'Adding...' : `Add ${selectedMembers.length > 0 ? `(${selectedMembers.length})` : ""} Members`}
+          {loading
+            ? "Adding..."
+            : `Add ${
+                selectedMembers.length > 0 ? `(${selectedMembers.length})` : ""
+              } Members`}
         </Button>
       </div>
     </div>

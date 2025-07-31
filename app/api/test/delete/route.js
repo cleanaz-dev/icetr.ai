@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import redis from "@/lib/service/redis";
+import redis from "@/lib/services/integrations/redis";
 
 export async function DELETE() {
   try {

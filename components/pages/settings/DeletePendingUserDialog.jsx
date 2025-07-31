@@ -21,7 +21,7 @@ export default function DeletePendingUserDialog({ invitee, onSuccess }) {
     const toastId = toast.loading("Deleting invitation...");
     
     try {
-      const response = await fetch(`/api/invite/${invitee.id}`, {
+      const response = await fetch(`/api/org/${orgId}/invite/${invitee.id}`, {
         method: 'DELETE'
       });
 

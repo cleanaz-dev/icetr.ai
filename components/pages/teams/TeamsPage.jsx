@@ -14,6 +14,8 @@ import {
   Handshake,
   ExternalLink,
   User,
+  ContactRound,
+  Phone,
 } from "lucide-react";
 import CreateTeamDialog from "./CreateTeamDialog";
 import { useRouter } from "next/navigation";
@@ -25,21 +27,32 @@ import UnassignCampaignDialog from "./UnassignCampaignDialog";
 import EditTeamDialog from "./EditTeamDialog";
 import Link from "next/link";
 import DeleteTeamDialog from "./DeleteTeamDialog";
-
 import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
+import PermissionGate from "@/components/auth/PermissionGate";
+import { getRoleIcon, getCampaignType } from "@/lib/utils";
+import { toast } from "sonner";
+// Context/Providers
+import { useTeamContext } from "@/context/TeamProvider";
+import { useLeads } from "@/context/LeadsProvider";
 
-export default function TeamsPage({
-  teams = [],
-  leads = [],
-  orgMembers = [],
-  onCreateTeam,
-  onEditTeam,
-  onDeleteTeam,
-  onAddMember,
-}) {
+export default function TeamsPage() {
+  const {
+    teams,
+    orgMembers,
+    orgId,
+    assignCampaign,
+    unassignCampaign,
+    setTeams,
+    updateTeam,
+    deleteTeam,
+    createTeam,
+    orgCampaigns,
+  } = useTeamContext();
+  const { leads } = useLeads();
+
   const [expandedTeams, setExpandedTeams] = useState(new Set());
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const router = useRouter();
+
   const { user } = useUser();
 
   const toggleTeamExpansion = (teamId) => {
@@ -52,61 +65,8 @@ export default function TeamsPage({
     setExpandedTeams(newExpanded);
   };
 
-  const getRoleIcon = (role) => {
-    switch (role.toLowerCase()) {
-      case "admin":
-        return <Crown className="w-4 h-4 text-amber-500" />;
-      case "agent":
-        return <User className="w-4 h-4 text-blue-500" />;
-      default:
-        return <UserCheck className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getRoleBadge = (role) => {
-    switch (role.toLowerCase()) {
-      case "admin":
-        return <span>Admin</span>;
-      case "manager":
-        return (
-          <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
-            Manager
-          </span>
-        );
-      case "agent":
-        return (
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            Agent
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
-            Member
-          </span>
-        );
-    }
-  };
-
-  const getCampaignStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "paused":
-        return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-blue-100 text-blue-800";
-    }
-  };
-
-  const handleSuccess = () => {
-    router.refresh(); // This will refresh the current page and refetch data
-  };
-
   const handleAssignLeads = async (leadIds, memberId, assignerId) => {
-    const response = await fetch("/api/leads/assign", {
+    const response = await fetch(`/api/org/${orgId}/leads/assign`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ leadIds, memberId, assignerId }),
@@ -120,7 +80,6 @@ export default function TeamsPage({
   };
 
   const unassignedLeads = leads.filter((lead) => !lead.assignedUser);
-
 
   return (
     <div className="min-h-screen p-6">
@@ -140,7 +99,7 @@ export default function TeamsPage({
               </p>
             </div>
             {teams.length > 0 && (
-              <CreateTeamDialog userId={user.id} onSuccess={handleSuccess} />
+              <CreateTeamDialog orgId={orgId} onCreate={createTeam} />
             )}
           </div>
         </div>
@@ -155,7 +114,9 @@ export default function TeamsPage({
                 Create your first team to get started with organizing your
                 campaigns and members.
               </p>
-              <CreateTeamDialog onSuccess={handleSuccess} />
+              <PermissionGate permission="team.create">
+                <CreateTeamDialog orgId={orgId} onCreate={createTeam} />
+              </PermissionGate>
             </div>
           ) : (
             teams.map((team) => (
@@ -210,21 +171,38 @@ export default function TeamsPage({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <BatchAssignTeamLeads
-                          members={team.members.map((member) => member.user)}
-                          leads={unassignedLeads}
-                          onAssign={handleAssignLeads}
-                        />
-                        <AddTeamMemberDialog
-                          onClose={() => setIsDialogOpen(false)}
-                          team={team}
-                          members={orgMembers}
-                        />
-                        <EditTeamDialog onSuccess={handleSuccess} team={team} />
-                        <DeleteTeamDialog
-                          onSuccess={handleSuccess}
-                          team={team}
-                        />
+                        <PermissionGate permission="lead.assign">
+                          <BatchAssignTeamLeads
+                            teamId={team.id}
+                            leads={unassignedLeads}
+                            onAssign={handleAssignLeads}
+                          />
+                        </PermissionGate>
+                        <PermissionGate permission="team.assign">
+                          <AddTeamMemberDialog
+                            onClose={() => setIsDialogOpen(false)}
+                            team={team}
+                            members={orgMembers}
+                            orgId={orgId}
+                            onAddMember={(newMembers) =>
+                              setOrgMembers((prev) => [...prev, ...newMembers])
+                            }
+                          />
+                        </PermissionGate>
+                        <PermissionGate permission="team.update">
+                          <EditTeamDialog
+                            onEdit={updateTeam}
+                            team={team}
+                            orgId={orgId}
+                          />
+                        </PermissionGate>
+                        <PermissionGate permission="team.delete">
+                          <DeleteTeamDialog
+                            team={team}
+                            orgId={orgId}
+                            onDelete={deleteTeam}
+                          />
+                        </PermissionGate>
                       </div>
                     </div>
                   </div>
@@ -246,9 +224,9 @@ export default function TeamsPage({
 
                           <div className="space-y-2">
                             {team.members?.length > 0 ? (
-                              team.members.map(({ id, user }) => (
+                              team.members.map(({ id, user }, index) => (
                                 <div
-                                  key={id}
+                                  key={index}
                                   className="flex items-center justify-between p-3 bg-card rounded-lg border"
                                 >
                                   <div className="flex items-center gap-3">
@@ -264,7 +242,7 @@ export default function TeamsPage({
                                         {`${user?.firstname || ""} ${
                                           user?.lastname || ""
                                         }`.trim() || user?.email}
-                                        {getRoleIcon(user?.role)}
+                                        {getRoleIcon(user?.role.type)}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
                                         {user?.email}
@@ -295,11 +273,17 @@ export default function TeamsPage({
                               Assigned Campaigns ({team.campaigns?.length || 0})
                             </h4>
                             {/* Add campaign assignment button */}
-                            <AssignCampaignDialog
-                              teamId={team.id}
-                              campaigns={team.organization.campaigns}
-                              onSuccess={handleSuccess}
-                            />
+                            <PermissionGate permission="campaign.update">
+                              <AssignCampaignDialog
+                                teamId={team.id}
+                                campaigns={orgCampaigns}
+                                orgId={orgId}
+                                handleAssign={assignCampaign}
+                                onSuccess={() =>
+                                  toast.success("Campaign Assigned")
+                                }
+                              />
+                            </PermissionGate>
                           </div>
 
                           <div className="space-y-3">
@@ -322,11 +306,17 @@ export default function TeamsPage({
 
                                     <div className="flex items-center gap-2">
                                       {/* Unassign button */}
-                                      <UnassignCampaignDialog
-                                        teamId={team.id}
-                                        campaign={campaign}
-                                        onSuccess={handleSuccess}
-                                      />
+                                      <PermissionGate permission="campaign.update">
+                                        <UnassignCampaignDialog
+                                          teamId={team.id}
+                                          campaign={campaign}
+                                          handleUnassign={unassignCampaign}
+                                          onSuccess={() =>
+                                            toast.success("Campaign Unassigned")
+                                          }
+                                          orgId={orgId}
+                                        />
+                                      </PermissionGate>
                                     </div>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-3">
@@ -337,16 +327,25 @@ export default function TeamsPage({
                                       <Calendar className="w-3 h-3 text-primary" />
                                       <span>
                                         Created{" "}
-                                        {new Date(
-                                          campaign.createdAt
-                                        ).toLocaleDateString()}
+                                        {campaign.createdAt
+                                          ? new Date(
+                                              campaign.createdAt
+                                            ).toLocaleDateString("en-US", {
+                                              year: "numeric",
+                                              month: "short",
+                                              day: "numeric",
+                                            })
+                                          : "Unknown"}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <TrendingUp className="w-3 h-3 text-primary" />
                                       <span>
-                                        {campaign.leads?.length || 0} leads
+                                        {campaign._count.leads || 0} leads
                                       </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      {getCampaignType(campaign.type)}
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Flag className="w-3 h-3 text-primary" />
@@ -364,25 +363,6 @@ export default function TeamsPage({
                               </div>
                             )}
                           </div>
-
-                          {/* Quick stats when campaigns are assigned */}
-                          {/* {team.campaigns?.length > 0 && (
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-blue-700 font-medium">
-                                  Total Campaigns: {team.campaigns.length}
-                                </span>
-                                <span className="text-blue-600">
-                                  Active:{" "}
-                                  {
-                                    team.campaigns.filter(
-                                      (c) => c.status === "active"
-                                    ).length
-                                  }
-                                </span>
-                              </div>
-                            </div>
-                          )} */}
                         </div>
                       </div>
                     </div>

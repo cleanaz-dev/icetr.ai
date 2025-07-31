@@ -56,7 +56,7 @@ export default function CampaignStatusDialog({
 const handleStatusUpdate = async () => {
   setIsLoading(true);
   try {
-    const response = await fetch(`/api/campaigns/${campaign.id}/status`, {
+    const response = await fetch(`/api/org/${orgId}/campaigns/${campaign.id}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

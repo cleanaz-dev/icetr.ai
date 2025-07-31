@@ -1,14 +1,17 @@
-import DocumentsPage from '@/components/pages/documents/DocumentsPage'
-import React from 'react'
+
 import { auth } from '@clerk/nextjs/server'
-import { getCampaignDocuments } from '@/lib/service/prismaQueries'
+import { getOrgId } from '@/lib/services/db/org'
+import DocumentsPage from '@/components/pages/documents/DocumentsPage'
+import { getOrgCampaignDocuments } from '@/lib/services/db/campaigns'
+
 
 export default async function page() {
   const { userId } = await auth()
-  const campaigns = await getCampaignDocuments(userId)
+  const orgId = await getOrgId(userId)
+  const campaigns = await getOrgCampaignDocuments(userId, orgId)
   // console.log("campaigns", campaigns[0]?.documents[0]);
-
+ console.log("campaigns", campaigns)
   return (
-    <div><DocumentsPage campaigns={campaigns}/></div>
+    <div><DocumentsPage campaigns={campaigns} orgId={orgId}/></div>
   )
 }

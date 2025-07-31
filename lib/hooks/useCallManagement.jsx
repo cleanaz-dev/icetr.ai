@@ -1,5 +1,6 @@
 "use client";
 
+import { useTeamContext } from "@/context/TeamProvider";
 import { useState, useEffect, useCallback } from "react";
 
 // Call status constants
@@ -18,6 +19,7 @@ export const CALL_STATUS = {
 };
 
 export function useCallManagement(device) {
+  const { orgId } = useTeamContext();
   const [call, setCall] = useState(null);
   const [callStatus, setCallStatus] = useState(CALL_STATUS.IDLE);
   const [callStartTime, setCallStartTime] = useState(null);
@@ -25,7 +27,7 @@ export function useCallManagement(device) {
   const [sessionCalls, setSessionCalls] = useState([]);
   const [currentCallData, setCurrentCallData] = useState(null);
   const [isCallActive, setIsCallActive] = useState(false);
-  const [callSid, setCallSid] = useState(null)
+  const [callSid, setCallSid] = useState(null);
   const [error, setError] = useState(null);
 
   // Timer for call duration
@@ -118,31 +120,14 @@ export function useCallManagement(device) {
         setCallStatus(CALL_STATUS.CONNECTING);
         setError(null);
 
-        // // 1. Create LeadActivity first via API route
-        // const leadActivityResponse = await fetch(
-        //   "/api/calls",
-        //   {
-        //     method: "POST",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({
-        //       leadId: leadData.id,
-        //       type: "outbound",
-        //       content: `Calling ${phoneNumber}...`,
-        //       to: phoneNumber,
-        //       from: fromNumber
-        //     }),
-        //   }
-        // );
-
-        // const { leadActivity } = await leadActivityResponse.json();
-
         const outgoingCall = await device.connect({
           params: {
             To: phoneNumber,
             fromNumber: fromNumber,
             leadId: leadData?.id,
             callSessionId: currentSession,
-            userId: userId
+            userId: userId,
+            orgId: orgId,
           },
         });
 
@@ -153,62 +138,71 @@ export function useCallManagement(device) {
           leadData,
           startTime: new Date(),
           type: "outbound",
-          
         };
         setCurrentCallData(newCallData);
 
         setupCallEventListeners(outgoingCall);
-      
+
         console.log("Outgoing call initiated");
-     
       } catch (error) {
         console.error("Failed to make call:", error);
         setError(error.message || "Failed to make call");
         setCallStatus(CALL_STATUS.FAILED);
       }
     },
-     [device, setError, setCallStatus, setCall, setCurrentCallData, setupCallEventListeners] 
+    [
+      device,
+      setError,
+      setCallStatus,
+      setCall,
+      setCurrentCallData,
+      setupCallEventListeners,
+    ]
   );
-const handlePracticeCall = useCallback(
-  async (phoneNumber, fromNumber = null, currentSession = null, userId = null) => {
-    if (!device || !phoneNumber) {
-      console.error("Device not ready or no phone number provided");
-      setError("Device not ready or no phone number provided");
-      setCallStatus(CALL_STATUS.FAILED);
-      return;
-    }
+  const handlePracticeCall = useCallback(
+    async (
+      phoneNumber,
+      fromNumber = null,
+      currentSession = null,
+      userId = null
+    ) => {
+      if (!device || !phoneNumber) {
+        console.error("Device not ready or no phone number provided");
+        setError("Device not ready or no phone number provided");
+        setCallStatus(CALL_STATUS.FAILED);
+        return;
+      }
 
-    try {
-      setCallStatus(CALL_STATUS.CONNECTING);
-      setError(null);
+      try {
+        setCallStatus(CALL_STATUS.CONNECTING);
+        setError(null);
 
-      // For practice calls, we're just waiting for the incoming call from Bland AI
-      // The actual call initiation happens via the training API route
-      
-      const newCallData = {
-        phoneNumber,
-        startTime: new Date(),
-        type: "practice",
-      };
-      setCurrentCallData(newCallData);
+        // For practice calls, we're just waiting for the incoming call from Bland AI
+        // The actual call initiation happens via the training API route
 
-      console.log("Practice call setup complete, waiting for Bland AI to call");
-     
-    } catch (error) {
-      console.error("Failed to setup practice call:", error);
-      setError(error.message || "Failed to setup practice call");
-      setCallStatus(CALL_STATUS.FAILED);
-    }
-  },
-  [device, setError, setCallStatus, setCurrentCallData]
-);
+        const newCallData = {
+          phoneNumber,
+          startTime: new Date(),
+          type: "practice",
+        };
+        setCurrentCallData(newCallData);
+
+        console.log(
+          "Practice call setup complete, waiting for Bland AI to call"
+        );
+      } catch (error) {
+        console.error("Failed to setup practice call:", error);
+        setError(error.message || "Failed to setup practice call");
+        setCallStatus(CALL_STATUS.FAILED);
+      }
+    },
+    [device, setError, setCallStatus, setCurrentCallData]
+  );
   const handleAcceptCall = useCallback(() => {
     if (call && callStatus === CALL_STATUS.RINGING) {
       call.accept();
     }
   }, [call, callStatus]);
-
-
 
   const handleRejectCall = useCallback(() => {
     if (call && callStatus === CALL_STATUS.RINGING) {
@@ -314,7 +308,6 @@ const handlePracticeCall = useCallback(
     CALL_STATUS.ACTIVE,
   ].includes(callStatus);
 
-
   return {
     // Call state
     call,
@@ -345,6 +338,6 @@ const handlePracticeCall = useCallback(
     setError,
     setIsCallActive,
     setCallDuration,
-    setCallStatus
+    setCallStatus,
   };
 }

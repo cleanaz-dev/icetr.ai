@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import prisma from "@/lib/service/prisma";
-import { transcribeRecording } from "@/lib/service/assembly-ai"; // Import your transcription function
+import prisma from "@/lib/services/prisma";
+import { transcribeRecording } from "@/lib/services/assembly-ai"; // Import your transcription function
 import {
   checkIfLead,
   isTrainingCall,
@@ -11,7 +11,7 @@ import {
   createProspect,
   updateProspectWithRecording,
   updateCallWithRecording
-} from "@/lib/service/twilioCallService"; // Database functions
+} from "@/lib/services/twilioCallService"; // Database functions
 
 
 

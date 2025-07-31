@@ -8,54 +8,30 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2,  AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
 
-export default function DeleteTeamDialog({ onSuccess, team }) {
+
+
+export default function DeleteTeamDialog({ onDelete, team, orgId }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleDelete = async () => {
+
+ const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/teams/${team.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const { message } = await response.json();
-
-      if (!response.ok) {
-        // Show error toast with message from API
-        toast.error(message || "Failed to delete team");
-        return;
-      }
-
-      // Show success toast
-      toast.success(message || "Team deleted successfully!");
-
-      // Call success callback
-      if (typeof onSuccess === "function") {
-        onSuccess();
-      }
-
-      // // Close dialog
-      // setOpen(false);
+      const result = await onDelete(team.id, orgId);
+      toast.success(result.message || "Team deleted successfully!");
+      setOpen(false);
     } catch (error) {
-      console.error("Error deleting team:", error);
-      toast.error("An unexpected error occurred");
+      toast.error(error.message || "Failed to delete team");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleClose = () => {
-    setOpen(false);
   };
 
   return (
@@ -81,13 +57,13 @@ export default function DeleteTeamDialog({ onSuccess, team }) {
          <AlertCircle className="size-4"/> Campaigns, leads and members will be unassigned!
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button type="button" variant="outline" onClick={handleClose}>
+          <Button type="button" variant="outline" onClick={setOpen}>
             Cancel
           </Button>
           <Button
             type="button"
             variant="destructive"
-            onClick={handleDelete}
+            onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? "Deleting..." : "Delete Team"}

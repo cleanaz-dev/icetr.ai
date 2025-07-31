@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Phone, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
 
 export default function PurchasePhoneNumberDialog({
   orgId,
@@ -128,8 +129,8 @@ export default function PurchasePhoneNumberDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="text-xs">
-          Purchase Phone Number
+        <Button size="sm" variant="outline" className="text-xs" disabled>
+         <span className="flex items-center gap-2"><Lock /> Purchase Phone Number</span> 
         </Button>
       </DialogTrigger>
 

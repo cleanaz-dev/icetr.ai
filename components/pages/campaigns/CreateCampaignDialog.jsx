@@ -64,7 +64,7 @@ export default function CreateCampaignDialog({ onSuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/campaigns/add-campaign", {
+      const response = await fetch(`/api/org/${orgId}/campaigns/add-campaign`, {
         method: "POST",
         body: JSON.stringify({
           name,

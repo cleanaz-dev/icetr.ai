@@ -1,68 +1,40 @@
 "use client";
 import React, { useState } from "react";
-import {
-  Users,
-  Phone,
-  TrendingUp,
-  Calendar,
-  Clock,
-  Mail,
-  Plus,
-  MoreHorizontal,
-  UserCheck,
-  PhoneCall,
-  Target,
-  Activity,
-  Award,
-  Settings,
-  Filter,
-  Search,
-  ChevronDown,
-  Eye,
-  Edit,
-  Trash2,
-  UserPlus,
-} from "lucide-react";
+import { Users, TrendingUp, PhoneCall, Target, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TeamLeadsTable from "./table/TeamLeadsTable";
 import TeamReviewTab from "./TeamReviewTab";
 import { format } from "date-fns";
 import TeamCalls from "./TeamCalls";
+import { useTeamContext } from "@/context/TeamProvider";
 
 export default function SingleTeamPage({
-  leads,
-  team,
-  members,
-  campaigns,
+  teamId,
   trainingData,
 }) {
+  const {
+    teamLeads: leads,
+    getTeamByTeamId,
+    getTeamMembersByTeamId,
+    orgCampaigns,
+    filterLeadsByTeamId,
+    filterCampaignsByTeamId
+  } = useTeamContext();
+  const team = getTeamByTeamId(teamId)
+  const members = getTeamMembersByTeamId(teamId)
+  const teamCampaigns = filterCampaignsByTeamId(teamId)
   const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
 
   // Calculate team stats
   const teamStats = {
     totalMembers: members.length,
     totalLeads: leads?.length || 0,
-    activeCampaigns: campaigns.filter((c) => c.status === "active").length,
+    activeCampaigns: orgCampaigns.filter((c) => c.status === "active").length,
     completedCalls: 47, // Mock data
     avgCallDuration: 285, // Mock data in seconds
     conversionRate: 23.5, // Mock data
   };
-
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false ||
-      lead.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false ||
-      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false;
-    const matchesFilter =
-      filterStatus === "all" || lead.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
 
   const StatCard = ({
     title,
@@ -186,12 +158,12 @@ export default function SingleTeamPage({
               isActive={activeTab === "campaigns"}
               onClick={setActiveTab}
             />
-            <TabButton
+            {/* <TabButton
               id="analytics"
               label="Analytics"
               isActive={activeTab === "analytics"}
               onClick={setActiveTab}
-            />
+            /> */}
             <TabButton
               id="reviews"
               label="Training Reviews"
@@ -296,21 +268,18 @@ export default function SingleTeamPage({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Team Members</h2>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Member
-              </Button>
+            
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* {team.manager && <MemberCard member={team.manager} isManager={true} />} */}
-              {members.map((member) => (
-                <MemberCard key={member.id} member={member} />
+              {members.map(({ user }) => (
+                <MemberCard key={user.id} member={user} />
               ))}
             </div>
           </div>
         )}
 
-        {activeTab === "leads" && <TeamLeadsTable leads={leads} team={team} />}
+        {activeTab === "leads" && <TeamLeadsTable leads={filterLeadsByTeamId(leads,teamId)} team={team} />}
 
         {activeTab === "campaigns" && (
           <div className="space-y-6">
@@ -322,7 +291,7 @@ export default function SingleTeamPage({
               </Button> */}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {campaigns.map((campaign) => (
+              {teamCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
                   className="bg-card rounded-lg border p-6 shadow-sm"
@@ -372,7 +341,7 @@ export default function SingleTeamPage({
           </div>
         )}
 
-        {activeTab === "analytics" && (
+        {/* {activeTab === "analytics" && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Team Analytics</h2>
 
@@ -458,7 +427,7 @@ export default function SingleTeamPage({
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {activeTab === "reviews" && (
           <TeamReviewTab
@@ -468,7 +437,7 @@ export default function SingleTeamPage({
           />
         )}
 
-        {activeTab === "calls" && <TeamCalls team={team}/>}
+        {activeTab === "calls" && <TeamCalls team={team} />}
       </div>
     </div>
   );

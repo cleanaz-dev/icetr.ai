@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs-og";
 import {
  Card,
  CardHeader,
@@ -50,7 +50,7 @@ export default function AccountTab({ settings }) {
   try {
    setLoading(true);
 
-   const res = await fetch(`/api/users/${settings.id}`, {
+   const res = await fetch(`/api/org/${orgId}/users/${settings.id}`, {
     method: "PATCH",
     headers: {
      "Content-Type": "application/json",

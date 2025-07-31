@@ -54,7 +54,7 @@ if (!session) return (
     : 0
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 z-50 bg-background border-t">
+    <div className="sticky bottom-0 left-0 right-0 z-50 bg-background border-t border-muted">
       {/* Collapsed Bar with Stats */}
       <div className="px-4 py-3 bg-muted/50 h-14">
         <div className="flex items-center justify-between">

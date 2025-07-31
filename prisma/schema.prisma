@@ -15,25 +15,98 @@ datasource db {
 }
 
 model Organization {
-  id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  country         String
-  users           User[]
-  campaigns       Campaign[]
-  apiKeys         ApiKey[]
-  teams           Team[]
-  leads           Lead[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  createdBy       String          @unique
-  orgIntegrations OrgIntegration?
-  auditLogs       AuditLog[]
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  country            String
+  users              User[]
+  campaigns          Campaign[]
+  apiKeys            ApiKey[]
+  teams              Team[]
+  leads              Lead[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  createdBy          String              @unique
+  orgIntegrations    OrgIntegration?
+  auditLogs          AuditLog[]
+  customer           Customer?
+  customerId         String?             @unique @db.ObjectId
+  phoneConfiguration PhoneConfiguration?
+  call               Call[]              @relation("CallOrganization")
+}
+
+model Customer {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  organization Organization @relation(fields: [orgId], references: [id])
+  orgId        String       @unique @db.ObjectId
+  stripeCusId  String       @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  subscriptions Subscription[]
+  invoices      Invoice[]
+
+  billingEmail    String? // For receipts
+  taxId           String? // For tax compliance
+  paymentMethod   String? // Card, ACH, etc.
+  invoiceSettings Json? // Custom invoice settings
+}
+
+model Subscription {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  stripeSubId String   @unique
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String   @db.ObjectId
+
+  // Product/Price Info
+  priceId   String
+  productId String // Add product reference
+  quantity  Int?   @default(1)
+
+  // Status Management
+  status            SubscriptionStatus? // Use enum instead of String
+  currentPeriodEnd  DateTime
+  cancelAtPeriodEnd Boolean             @default(false)
+
+  // Trial support
+  trialStart DateTime?
+  trialEnd   DateTime?
+
+  // Metadata
+  metadata Json? // For additional Stripe data
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+}
+
+model Invoice {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  stripeInvId String    @unique
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  String    @db.ObjectId
+  amountDue   Int // in cents
+  amountPaid  Int // in cents
+  status      String // draft, open, paid, void, uncollectible
+  pdfUrl      String? // Link to downloadable invoice
+  hostedUrl   String? // Payable invoice URL
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
 }
 
 model OrgIntegration {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  organizationId String       @unique @db.ObjectId
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  orgId        String       @unique @db.ObjectId
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Shared across all
   webhookUrl String?
@@ -43,6 +116,7 @@ model OrgIntegration {
   calendly CalendlyIntegration?
   zoom     ZoomIntegration?
   make     MakeIntegration?
+  blandAi  BlandAiIntegration?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,8 +136,51 @@ model TwilioIntegration {
   voiceUrl         String?
   smsUrl           String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  publicFields PublicField[]
+}
+
+model BlandAiIntegration {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  orgIntegrationId String         @unique @db.ObjectId
+  orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
+  enabled          Boolean        @default(false)
+
+  // Core Bland AI credentials
+  apiKey     String?
+  webhookUrl String?
+
+  // Phone numbers for calls
+  phoneNumbers String[]
+
+  // Bland AI specific settings
+  voiceId         String[] // Default voice ID
+  maxCallDuration Int? // Max call length in seconds
+  recordCalls     Boolean  @default(true)
+  transferNumbers String[] @default([]) // Numbers to transfer to
+
+  // AI behavior settings
+  temperature Float?  @default(0.7) // AI creativity level
+  model       String? @default("enhanced") // Bland AI model type
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  publicFields PublicField[]
+}
+
+model PublicField {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  fieldName String
+
+  calendlyIntegrationId String?              @db.ObjectId
+  calendlyIntegration   CalendlyIntegration? @relation(fields: [calendlyIntegrationId], references: [id])
+
+  blandAiIntegrationId String?             @db.ObjectId
+  blandAiIntegration   BlandAiIntegration? @relation(fields: [blandAiIntegrationId], references: [id])
+
+  twilioIntegrationId String?            @db.ObjectId
+  twilioIntegration   TwilioIntegration? @relation(fields: [twilioIntegrationId], references: [id])
 }
 
 model CalendlyIntegration {
@@ -71,12 +188,13 @@ model CalendlyIntegration {
   orgIntegrationId String         @unique @db.ObjectId
   orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
   enabled          Boolean        @default(false)
-  apiKey           String
+  apiKey           String?
   orgUri           String?
   webhookUrl       String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  publicFields PublicField[]
 }
 
 model ZoomIntegration {
@@ -107,9 +225,9 @@ model MakeIntegration {
 }
 
 model AuditLog {
-  id             String  @id @default(auto()) @map("_id") @db.ObjectId
-  organizationId String  @db.ObjectId
-  userId         String? @db.ObjectId // Nullable for system actions
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  orgId  String  @db.ObjectId
+  userId String? @db.ObjectId // Nullable for system actions
 
   // Action details
   action     String // 'create', 'update', 'delete', 'test', 'view', 'export'
@@ -136,33 +254,33 @@ model AuditLog {
   updatedAt DateTime
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Indexes for performance
-  @@index([organizationId, createdAt])
-  @@index([organizationId, action, resource])
-  @@index([organizationId, userId])
+  @@index([orgId, createdAt])
+  @@index([orgId, action, resource])
+  @@index([orgId, userId])
   @@index([createdAt]) // For cleanup/archival
   @@map("auditLogs")
 }
 
 model ApiKey {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  key         String       @unique // hashed version
-  plainKey    String?
-  name        String
-  description String?
-  orgId       String       @db.ObjectId
-  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  campaignIds String[]     @default([]) @db.ObjectId
-  campaigns   Campaign[]   @relation("CampaignApiKeys", fields: [campaignIds], references: [id])
-  scopes      String[]     @default([]) // ["lead:create", "campaign:read", "analytics:view"]
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  key          String       @unique // hashed version
+  plainKey     String?
+  name         String
+  description  String?
+  orgId        String       @db.ObjectId
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaignIds  String[]     @default([]) @db.ObjectId
+  campaigns    Campaign[]   @relation("CampaignApiKeys", fields: [campaignIds], references: [id])
+  scopes       String[]     @default([]) // ["lead:create", "campaign:read", "analytics:view"]
+  lastUsedAt   DateTime?
+  expiresAt    DateTime?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@index([orgId])
   @@index([expiresAt])
@@ -194,7 +312,6 @@ model TeamMember {
 }
 
 enum TeamRole {
-  JUNIOR
   MEMBER
   SENIOR
   LEAD
@@ -206,7 +323,9 @@ model User {
   clerkId           String             @unique
   firstname         String
   lastname          String
-  role              Role               @default(Agent)
+  fullname          String?
+  role              Role?              @relation(fields: [roleId], references: [id])
+  roleId            String?            @db.ObjectId
   imageUrl          String
   orgId             String             @db.ObjectId
   organization      Organization       @relation(fields: [orgId], references: [id])
@@ -220,11 +339,29 @@ model User {
   Call              Call[]
   Training          Training[]
   Notification      Notification[]
-  reviewedTrainings ReviewTraining[]   @relation("TrainingReviewer")
+  reviews           CallReview[]
 
-  managedTeams    Team[]       @relation("TeamManager")
+  managedTeams    Team[]            @relation("TeamManager")
   teamMemberships TeamMember[]
   auditLogs       AuditLog[]
+  TrainingSession TrainingSession[]
+}
+
+model Role {
+  id    String   @id @default(auto()) @map("_id") @db.ObjectId
+  type  RoleType @default(Agent)
+  users User[]
+
+  permissionIDs String[]     @db.ObjectId
+  permissions   Permission[] @relation(fields: [permissionIDs], references: [id])
+}
+
+model Permission {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+
+  roleIDs String[] @db.ObjectId
+  roles   Role[]   @relation(fields: [roleIDs], references: [id])
 }
 
 model UserSettings {
@@ -254,6 +391,7 @@ model Campaign {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   callSessions       CallSession[]
+  training           CampaignTraining[]
 
   @@index([orgId])
   @@index([teamId])
@@ -264,6 +402,41 @@ enum CampaignType {
   CALLS
   FORMS
   INBOUND
+}
+
+model CampaignTraining {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String   @db.ObjectId
+
+  // Content
+  scenarios        TrainingScenario[]
+  webhookUrl       String? // For call events
+  trainingSessions TrainingSession[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model TrainingScenario {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  training   CampaignTraining @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  trainingId String           @db.ObjectId
+
+  scripts        Json?
+  title          String?
+  level          String?
+  description    String?
+  objectives     String?
+  targetAudience String?
+  keyPoints      Json?
+  imageUrl       String?
+
+  voiceId String?
+  prompt  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Lead {
@@ -289,8 +462,8 @@ model Lead {
   updatedAt      DateTime       @updatedAt
   Call           Call[]
   Prospect       Prospect[]
-  Organization   Organization?  @relation(fields: [organizationId], references: [id])
-  organizationId String?        @db.ObjectId
+  organization   Organization?  @relation(fields: [orgId], references: [id])
+  orgId          String?        @db.ObjectId
 }
 
 model LeadActivity {
@@ -316,12 +489,14 @@ model LeadActivity {
 }
 
 model Call {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  callSid       String      @unique // Twilio SID
-  leadId        String      @db.ObjectId
-  lead          Lead        @relation(fields: [leadId], references: [id])
-  callSessionId String      @db.ObjectId
-  callSession   CallSession @relation(fields: [callSessionId], references: [id])
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  callSid       String       @unique // Twilio SID
+  leadId        String       @db.ObjectId
+  lead          Lead         @relation(fields: [leadId], references: [id])
+  callSessionId String       @db.ObjectId
+  callSession   CallSession  @relation(fields: [callSessionId], references: [id])
+  organization  Organization @relation("CallOrganization", fields: [orgId], references: [id])
+  orgId         String       @db.ObjectId
 
   // Call details
   direction String? // "inbound" | "outbound"
@@ -349,6 +524,9 @@ model Call {
   // Relations
   activities LeadActivity[] // All activities related to this call
   followUps  FollowUp[] // Follow-ups created from this call
+  CallReview CallReview[]
+
+  @@index([orgId])
 }
 
 model CallSession {
@@ -366,9 +544,10 @@ model CallSession {
   // Relations
   activities LeadActivity[] // Link activities to sessions
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Call      Call[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Call       Call[]
+  CallReview CallReview[]
 }
 
 model FollowUp {
@@ -482,23 +661,66 @@ model Training {
   transcript        String?
   transcriptSummary String?
   improvements      String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  ReviewTraining    ReviewTraining[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  reviews           CallReview[]
 }
 
-model ReviewTraining {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  trainingId String   @db.ObjectId
-  training   Training @relation(fields: [trainingId], references: [id])
+model TrainingSession {
+  id                        String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId                    String       @db.ObjectId
+  user                      User         @relation(fields: [userId], references: [id])
+  type                      TrainingType @default(CALLS)
+  rapportBuilt              Boolean?
+  objectionHandled          Boolean?
+  bookedMeeting             Boolean?
+  valuePropositionDelivered Boolean?
+  // individual scores
+  introQualityScore         String?
+  discoveryScore            String?
+  rapportScore              String?
+  objectionScore            String?
+  closingScore              String?
+  closingCoach              String?
+  overallScore              Int?
+  overallGradeScore         String?
+  numericalGrade            Float?
 
+  scenario          String?
+  recordingUrl      String?
+  transcript        String?
+  transcriptSummary String?
+  improvements      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  reviews           CallReview[]
+
+  campaignTraining   CampaignTraining? @relation(fields: [campaignTrainingId], references: [id])
+  campaignTrainingId String?           @db.ObjectId
+}
+
+model CallReview {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  reviewer   User   @relation(fields: [reviewerId], references: [id])
   reviewerId String @db.ObjectId
-  reviewer   User   @relation("TrainingReviewer", fields: [reviewerId], references: [id])
 
-  score       Int // 1-100
-  reviewNotes String?
+  // Optional training session relationship
+  trainingSession   TrainingSession? @relation(fields: [trainingSessionId], references: [id])
+  trainingSessionId String?          @db.ObjectId
 
-  createdAt DateTime @default(now())
+  // Optional call relationships
+  call          Call?        @relation(fields: [callId], references: [id])
+  callId        String?      @db.ObjectId
+  callSession   CallSession? @relation(fields: [callSessionId], references: [id])
+  callSessionId String?      @db.ObjectId
+
+  rating     Int? // 1-5 stars
+  feedback   String? // Manager comments
+  approved   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Training   Training? @relation(fields: [trainingId], references: [id])
+  trainingId String?   @db.ObjectId
 }
 
 enum NotificationStatus {
@@ -521,6 +743,7 @@ enum ActivityType {
   MEETING
   FOLLOW_UP
   ASSIGNMENT
+  UNASSIGNMENT
   MISSED_CALL
   OUTBOUND_CALL
   CONTACT_ATTEMPTS
@@ -552,7 +775,7 @@ enum LeadStatus {
   Won
 }
 
-enum Role {
+enum RoleType {
   Admin
   Manager
   Agent
@@ -574,4 +797,37 @@ enum AssignmentStrategy {
   LEAST_LOADED
   ROLE_BASED
   MANUAL
+}
+
+model PhoneConfiguration {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  orgId String @unique @db.ObjectId
+
+  // Recording Settings
+  recordingEnabled    Boolean @default(true)
+  minOutboundDuration Int     @default(120) // seconds
+  recordInboundCalls  Boolean @default(true)
+  recordOutboundCalls Boolean @default(true)
+
+  // Transcription Settings
+  transcriptionProvider String  @default("assemblyai") // "assemblyai" | "twilio" | "none"
+  transcribeInbound     Boolean @default(true)
+  transcribeOutbound    Boolean @default(true)
+
+  // Call Flow Settings
+  inboundFlow      String  @default("voicemail") // "voicemail" | "forward" | "ivr"
+  voicemailMessage String? @default("")
+  forwardToNumber  String?
+
+  // Business Logic
+  autoCreateLeads     Boolean @default(true)
+  autoCreateFollowUps Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("phone_configurations")
 }

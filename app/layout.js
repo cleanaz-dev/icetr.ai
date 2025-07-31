@@ -2,7 +2,8 @@ import { Roboto } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -30,9 +31,11 @@ export default function RootLayout({ children }) {
       <html lang="en" suppressHydrationWarning>
         <body className={`${roboto.className} antialiased`}>
           <ThemeProvider>
-            {children}
-            <Toaster theme="dark" richColors/>
-            </ThemeProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster theme="dark" richColors />
+            </TooltipProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

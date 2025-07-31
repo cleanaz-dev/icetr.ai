@@ -19,7 +19,7 @@ export default function DeleteCampaignDialog({ campaign, open, onOpenChange, onS
     if (!campaign) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaign.id}`, {
+      const response = await fetch(`/api/org/${orgId}/campaigns/${campaign.id}`, {
         method: "DELETE"
       });
       if (!response.ok) {

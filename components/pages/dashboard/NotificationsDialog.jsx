@@ -40,7 +40,7 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
     
     setIsUpdating(true);
     try {
-      const response = await fetch(`/api/notifications/${notification.id}`, {
+      const response = await fetch(`/api/org/${orgId}/notifications/${notification.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +147,7 @@ export default function NotificationsDialog({
     try {
       // Update all pending notifications
       const updatePromises = localNotifications.map(notification =>
-        fetch(`/api/notifications/${notification.id}`, {
+        fetch(`/api/org/${orgId}/notifications/${notification.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -188,12 +188,12 @@ export default function NotificationsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <div
-          className={`mb-3 ${sidebarCollapsed ? "flex justify-center" : ""}`}
+          className={` ${sidebarCollapsed ? "flex justify-center" : ""}`}
         >
           <Button
             variant="ghost"
             size="sm"
-            className={`relative ${
+            className={`relative hover:bg-primary ${
               sidebarCollapsed ? "w-8 h-8 p-0" : "w-full justify-start"
             }`}
             title={sidebarCollapsed ? "Notifications" : undefined}

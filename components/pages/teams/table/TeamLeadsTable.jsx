@@ -47,10 +47,12 @@ const getStatusVariant = (status) => {
 };
 
 export default function TeamLeadsTable({ leads = [], team }) {
+  console.log("leads", leads);
+  console.log("team", team)
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterAssignment, setFilterAssignment] = useState("all");
+  const [filterTeamMember, setFilterTeamMember] = useState("all"); // Added this state
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -66,14 +68,14 @@ export default function TeamLeadsTable({ leads = [], team }) {
       const matchesStatus =
         filterStatus === "all" || lead.status === filterStatus;
 
-      const matchesAssignment =
-        filterAssignment === "all" ||
-        (filterAssignment === "assigned" && lead.assignedUser) ||
-        (filterAssignment === "unassigned" && !lead.assignedUser);
+      // Updated to filter by team member instead of assignment
+      const matchesTeamMember =
+        filterTeamMember === "all" || 
+        lead.assignedUserId === filterTeamMember;
 
-      return matchesSearch && matchesStatus && matchesAssignment;
+      return matchesSearch && matchesStatus && matchesTeamMember;
     });
-  }, [leads, searchTerm, filterStatus, filterAssignment]);
+  }, [leads, searchTerm, filterStatus, filterTeamMember]); // Updated dependencies
 
   const totalPages = Math.ceil(filteredLeads.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -114,6 +116,28 @@ export default function TeamLeadsTable({ leads = [], team }) {
   };
 
   const uniqueStatuses = [...new Set(leads.map((lead) => lead.status))];
+
+  // Added unique team members logic
+  const uniqueTeamMembers = useMemo(() => {
+    const members = new Map();
+    
+    leads.forEach(lead => {
+      if (lead.assignedUser) {
+        members.set(lead.assignedUser.id, {
+          id: lead.assignedUser.id,
+          firstname: lead.assignedUser.firstname,
+          lastname: lead.assignedUser.lastname,
+          fullname: lead.assignedUser.fullname
+        });
+      }
+    });
+    
+    return Array.from(members.values()).sort((a, b) => 
+      (a.fullname || `${a.firstname} ${a.lastname}`).localeCompare(
+        b.fullname || `${b.firstname} ${b.lastname}`
+      )
+    );
+  }, [leads]);
 
   return (
     <Card>
@@ -156,14 +180,17 @@ export default function TeamLeadsTable({ leads = [], team }) {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filterAssignment} onValueChange={setFilterAssignment}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Assignments" />
+          <Select value={filterTeamMember} onValueChange={setFilterTeamMember}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Team Members" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Assignments</SelectItem>
-              <SelectItem value="assigned">Assigned</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="all">All Team Members</SelectItem>
+              {uniqueTeamMembers.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.fullname || `${member.firstname} ${member.lastname}`}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -184,16 +211,13 @@ export default function TeamLeadsTable({ leads = [], team }) {
             {currentLeads.map((lead) => (
               <TableRow key={lead.id}>
                 <TableCell>
-                  <div className="flex flex-col ">               
-                      <div className="font-medium">
-                        {lead.name || "Unknown"}
+                  <div className="flex flex-col ">
+                    <div className="font-medium">{lead.name || "Unknown"}</div>
+                    {lead.source && (
+                      <div className="text-sm text-muted-foreground">
+                        Source: {lead.source}
                       </div>
-                      {lead.source && (
-                        <div className="text-sm text-muted-foreground">
-                          Source: {lead.source}
-                        </div>
-                      )}
-
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -250,8 +274,10 @@ export default function TeamLeadsTable({ leads = [], team }) {
                     <div className="flex items-center">
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mr-2">
                         <Avatar>
-                            <AvatarImage src={lead.assignedUser.imageUrl}/>
-                            <AvatarFallback>{lead.assignedUser.firstname.slice(0,1)}</AvatarFallback>
+                          <AvatarImage src={lead.assignedUser.imageUrl} />
+                          <AvatarFallback>
+                            {lead.assignedUser.firstname.slice(0, 1)}
+                          </AvatarFallback>
                         </Avatar>
                       </div>
                       <div>

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import prisma from "@/lib/service/prisma";
+import prisma from "@/lib/services/prisma";
 import { decryptIntegrationData } from "@/lib/encryption";
 
 // GET /api/org/[orgId]/integrations/twilio/available-numbers
@@ -62,7 +62,7 @@ export async function GET(request, { params }) {
 
     // 6. Build search parameters
     const searchOptions = {
-      limit: 25, // how many numbers to return
+      limit: 50, // how many numbers to return
     };
 
     if (areaCode) {
@@ -140,7 +140,7 @@ async function checkUserOrgAccess(userId, orgId) {
     select: { role: true },
   });
 
-  if (!orgAdmin || orgAdmin.role !== "Admin") {
+  if (!orgAdmin || orgAdmin.role.type !== "SuperAdmin") {
     return false;
   }
 
@@ -149,7 +149,7 @@ async function checkUserOrgAccess(userId, orgId) {
 
 async function getTwilioIntegration(orgId) {
   const integration = await prisma.orgIntegration.findFirst({
-    where: { organizationId: orgId },
+    where: { orgId: orgId },
     select: { twilio: true },
   });
 

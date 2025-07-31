@@ -1,6 +1,6 @@
 import SingleCampaignPage from "@/components/pages/campaigns/SingleCampaignPage";
 import React from "react";
-import { getCampaign, getCampaignUsers, getOrgUsers } from "@/lib/service/prismaQueries";
+import { getCampaign, getCampaignUsers, getOrgUsers } from "@/lib/services/prismaQueries";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function page({ params }) {

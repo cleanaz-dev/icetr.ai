@@ -1,6 +1,6 @@
 import InvitePage from '@/components/pages/invite/InvitePage'
 import React from 'react'
-import redis from '@/lib/service/redis'
+import redis from '@/lib/services/integrations/redis'
 import { Logo } from '@/lib/hooks/useLogo'
 import { notFound } from 'next/navigation'
 

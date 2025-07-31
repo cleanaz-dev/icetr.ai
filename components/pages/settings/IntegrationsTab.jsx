@@ -1,6 +1,6 @@
 "use client";
 
-import { TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs-og";
 import { useState, useEffect } from "react";
 import {
   Card,

@@ -3,7 +3,6 @@ import OrgTab from "./OrgTab";
 import AccountTab from "./AccountTab";
 import UsersTab from "./UsersTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import IntegrationsTab from "./IntegrationsTab";
 import SimpleIntegrationsTab from "./SimpleIntegrationsTab";
 
 export default function SettingsPage({ settings }) {
@@ -18,22 +17,22 @@ export default function SettingsPage({ settings }) {
       </header>
 
       <Tabs defaultValue="organization" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="organization" className="flex items-center gap-2">
             <Building className="w-4 h-4" />
-            <span>Organization</span>
+            <span className="cursor-pointer">Organization</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
-            <span>My Account</span>
+            <span className="cursor-pointer">My Account</span>
           </TabsTrigger>
           <TabsTrigger value="integrations" className="flex items-center gap-2">
             <Settings2 className="w-4 h-4" />
-            <span>Intregrations</span>
+            <span className="cursor-pointer">Intregrations</span>
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span>Users</span>
+            <span className="cursor-pointer">Users</span>
           </TabsTrigger>
         </TabsList>
 

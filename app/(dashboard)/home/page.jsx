@@ -1,47 +1,35 @@
 import AgentDashboard from "@/components/pages/dashboard/AgentDashboard";
 import Dashboard from "@/components/pages/dashboard/Dashboard";
-import { DashboardProvider } from "@/lib/context/DashboardProvider";
+import { DashboardProvider } from "@/context/DashboardProvider";
+import { getAllOrgLeadsAndStatus } from "@/lib/services/db/leads";
+import { getOrgDashboardStats, getOrgId } from "@/lib/services/db/org";
+import { getUserPersmissions } from "@/lib/services/db/user";
 import {
   getAllRecentActivity,
-  getAllLeadsAndStatus,
-  getDashboardStats,
-  getOrgId,
-  getUserRole,
-  getAgentDashboardStats,
-} from "@/lib/service/prismaQueries";
+  getOrgAgentDashboardStats,
+} from "@/lib/services/prismaQueries";
 import { auth } from "@clerk/nextjs/server";
+import { CloudHail } from "lucide-react";
 
 export default async function page() {
-  const { userId } = await auth()
-  const role = await getUserRole(userId)
-  const activities = await getAllRecentActivity();
-  const leadCounts = await getAllLeadsAndStatus();
-  const orgId = await getOrgId(userId)
-  const dashboardStats = await getDashboardStats(orgId)
-  const agentData = await getAgentDashboardStats(userId)
-  // console.log("agent data", agentData)
-  
-  // Prepare data for both dashboards
-  const dashboardData = { activities, leadCounts, dashboardStats };
+  const { userId } = await auth();
+  const orgId = await getOrgId(userId);
+  const { role } = await getUserPersmissions(userId);
+  const agentData = await getOrgAgentDashboardStats(userId, orgId);
 
-  if(!dashboardData) {
-    return null
-  }
-  
-  if (role === "admin") {
+
+
+  if (role === "Admin" || role === "SuperAdmin" || role === "Manager") {
+    // ← Fixed the comparison
     return (
       <div>
-        <DashboardProvider data={dashboardData}>
-          <Dashboard />
-        </DashboardProvider>
+        <Dashboard />
       </div>
     );
   } else {
     return (
       <div>
-        <DashboardProvider data={dashboardData}>
-          <AgentDashboard data={agentData} />
-        </DashboardProvider>
+        <AgentDashboard data={agentData} />
       </div>
     );
   }
