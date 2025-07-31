@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/services/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { filterPublicFields } from "@/lib/db/helpers";
 import { validateHasPermission } from "@/lib/services/db/validations";
+import { filterPublicFields } from "@/lib/utils";
 
 /**
  * GET public fields for an integration by type and org ID.
