@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Device, Logger,  } from "@twilio/voice-sdk";
+import { Device, Logger  } from "@twilio/voice-sdk";
 
 export function useTwilioDevice(orgId) {
   const [device, setDevice] = useState(null);

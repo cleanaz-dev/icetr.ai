@@ -54,15 +54,15 @@ export async function POST(req, { params }) {
       ...rest
     } = parsed.data;
 
-    console.log("Twilio config:", {
-      enabled,
-      accountSid,
-      authToken,
-      appSid,
-      voiceUrl,
-      smsUrl,
-      ...rest,
-    });
+    // console.log("Twilio config:", {
+    //   enabled,
+    //   accountSid,
+    //   authToken,
+    //   appSid,
+    //   voiceUrl,
+    //   smsUrl,
+    //   ...rest,
+    // });
   
     // 3. Upsert integration in DB (store the new values)
     const parent = await prisma.orgIntegration.upsert({

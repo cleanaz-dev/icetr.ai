@@ -34,15 +34,7 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
   const [errors, setErrors] = useState({});
   const [openTwilioDialog, setOpenTwilioDialog] = useState(null);
   const formRef = useRef(null);
-console.log({
-  enabled,
-  sid,
-  token,
-  appSid,
-  apiSecret,
-  apiKey,
-  voiceUrl,
-});
+
 
   function hasIntegrationValues() {
   return (

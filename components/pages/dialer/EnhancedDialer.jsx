@@ -15,6 +15,7 @@ import { useCallManagement, CALL_STATUS } from "@/lib/hooks/useCallManagement";
 import { useLeadManagement } from "@/lib/hooks/useLeadManagement";
 import CallSession from "./CallSession";
 import UnifiedStatusBar from "./UnifiedStatusBar";
+import { useCoreContext } from "@/context/CoreProvider";
 
 export default function EnhancedDialer({
   data,
@@ -23,7 +24,19 @@ export default function EnhancedDialer({
   orgId,
 }) {
   // Custom hooks for state management
-  const { device, status, error } = useTwilioDevice(orgId);
+  const {
+    initializeTwilioDevice,
+    twilioDevice: device,
+    twilioError: error,
+    twilioStatus: status,
+  } = useCoreContext();
+   useEffect(() => {
+    if (orgId) {
+      initializeTwilioDevice(orgId);
+    }
+  }, [orgId]);
+
+
   const {
     call,
     callStartTime,
@@ -72,6 +85,8 @@ export default function EnhancedDialer({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+
+
   // Initialize session on component mount
   useEffect(() => {
     const initializeSession = async () => {
@@ -102,14 +117,12 @@ export default function EnhancedDialer({
     ];
 
     if (callEndedStates.includes(callStatus)) {
-      
       setPostCallDialogOpen(true);
     }
   }, [callStatus]);
 
   useEffect(() => {
     if (currentCallData) {
-   
       setCallData(currentCallData);
     }
   }, [currentCallData]);
