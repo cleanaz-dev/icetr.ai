@@ -24,6 +24,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
+import { TierAwareButton } from "@/components/buttons/TierAwareButtons";
 
 export default function AddNewScenarioDialog({
   training,
@@ -127,7 +128,6 @@ export default function AddNewScenarioDialog({
       console.error("Error adding scenario:", error);
       toast.error("Failed to add scenario. Please try again.");
     } finally {
-      setIsAddingScenario(false);
       setLoading(false);
     }
   };
@@ -136,10 +136,10 @@ export default function AddNewScenarioDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Scenario
-          </Button>
+          <TierAwareButton
+            check="scenarios"
+            label={loading ? "Creating..." : "Create Training"}
+          />
         </DialogTrigger>
 
         <DialogContent className="min-w-3xl max-h-[90vh] overflow-y-auto">

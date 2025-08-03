@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import {
   validateHasPermission,
   validateOrgAccess,
 
-} from "@/lib/services/db/validations";
+} from "@/lib/db/validations";
 
 export async function DELETE(request, { params }) {
   const { orgId, leadId } = await params;

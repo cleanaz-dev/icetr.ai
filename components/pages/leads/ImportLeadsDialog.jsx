@@ -26,6 +26,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Region } from "@/lib/constants/frontend";
 import { Info } from "lucide-react";
+import { TierLimitBanner } from "@/components/tier/TierLimitBanner";
+import { TierAwareButton } from "@/components/buttons/TierAwareButtons";
 
 export default function ImportLeadsDialog({
   campaigns,
@@ -43,6 +45,7 @@ export default function ImportLeadsDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState("");
   const [selectedTeam, setSelectedTeam] = useState("");
+  const [limitStatus, setLimiteStatus] = useState("");
   const selectedCampaignObj = campaigns?.find((c) => c.id === selectedCampaign);
   const regionOptions =
     Region[0][country === "canada" ? "provinces" : "states"] || [];
@@ -98,8 +101,8 @@ export default function ImportLeadsDialog({
       const formData = buildLeadImportFormData();
       const result = await importLeads(formData, orgId);
 
-      if(!result.ok) {
-        throw new Error(result.error)
+      if (!result.ok) {
+        throw new Error(result.error);
       }
 
       toast.success(result.message);
@@ -109,10 +112,9 @@ export default function ImportLeadsDialog({
       toast.error("An error occurred while importing leads");
     } finally {
       setIsLoading(false);
-      setOpen(false)
+      setOpen(false);
     }
   };
-
 
   const removeFile = () => {
     setFile(null);
@@ -382,15 +384,20 @@ export default function ImportLeadsDialog({
           </div>
         </div>
 
+        <TierLimitBanner check="leads" onStatusChange={setLimiteStatus} />
+
         <DialogFooter className="flex justify-between">
           <DialogClose asChild>
             <Button variant="outline" disabled={isLoading}>
               Cancel
             </Button>
           </DialogClose>
-          <Button onClick={handleSubmit} disabled={!file || isLoading}>
-            {isLoading ? "Importing..." : "Import Leads"}
-          </Button>
+          <TierAwareButton
+            check="leads"
+            label={isLoading ? "Importing..." : "Import Leads"}
+            onClick={handleSubmit}
+            disabled={!file || isLoading} // <- extra condition
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -17,16 +17,24 @@ import {
   ContactRound,
   Phone,
 } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import CreateTeamDialog from "./CreateTeamDialog";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import AddTeamMemberDialog from "./AddTeamMemberDialog";
+import AddTeamMemberDialog from "./dialog/AddTeamMemberDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import AssignCampaignDialog from "./AssignCampaignDialog";
-import UnassignCampaignDialog from "./UnassignCampaignDialog";
-import EditTeamDialog from "./EditTeamDialog";
+import AssignCampaignDialog from "./dialog/AssignCampaignDialog";
+import UnassignCampaignDialog from "./dialog/UnassignCampaignDialog";
+import EditTeamDialog from "./dialog/EditTeamDialog";
 import Link from "next/link";
-import DeleteTeamDialog from "./DeleteTeamDialog";
+import DeleteTeamDialog from "./dialog/DeleteTeamDialog";
 import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
 import PermissionGate from "@/components/auth/PermissionGate";
 import { getRoleIcon, getCampaignType } from "@/lib/utils";
@@ -34,6 +42,9 @@ import { toast } from "sonner";
 // Context/Providers
 import { useTeamContext } from "@/context/TeamProvider";
 import { useLeads } from "@/context/LeadsProvider";
+
+import RemoveTeamMemberDialog from "./RemoveTeamMemberDialog";
+import EditMemberRoleDialog from "./dialog/EditMemberRoleDialog";
 
 export default function TeamsPage() {
   const {
@@ -47,13 +58,18 @@ export default function TeamsPage() {
     deleteTeam,
     createTeam,
     orgCampaigns,
+    removeMember,
+    addMemberToTeam,
+    editMemberRole,
+    getTeamRole,
+    assignLeadsToTeamMember
   } = useTeamContext();
-  const { leads } = useLeads();
+  const { leads, refreshLeads } = useLeads();
 
   const [expandedTeams, setExpandedTeams] = useState(new Set());
   const [selectedTeam, setSelectedTeam] = useState(null);
 
-  const { user } = useUser();
+  // console.log("teams", teams)
 
   const toggleTeamExpansion = (teamId) => {
     const newExpanded = new Set(expandedTeams);
@@ -65,21 +81,10 @@ export default function TeamsPage() {
     setExpandedTeams(newExpanded);
   };
 
-  const handleAssignLeads = async (leadIds, memberId, assignerId) => {
-    const response = await fetch(`/api/org/${orgId}/leads/assign`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadIds, memberId, assignerId }),
-    });
+  
 
-    if (!response.ok) {
-      throw new Error("Failed to assign leads");
-    }
 
-    return response.json();
-  };
-
-  const unassignedLeads = leads.filter((lead) => !lead.assignedUser);
+  const unassignedLeads = leads.filter((lead) => !lead.assignedUserId);
 
   return (
     <div className="min-h-screen p-6">
@@ -175,7 +180,10 @@ export default function TeamsPage() {
                           <BatchAssignTeamLeads
                             teamId={team.id}
                             leads={unassignedLeads}
-                            onAssign={handleAssignLeads}
+                            onAssignLeads={assignLeadsToTeamMember}
+                            orgId={orgId}
+                            onSuccess={refreshLeads}
+
                           />
                         </PermissionGate>
                         <PermissionGate permission="team.assign">
@@ -184,9 +192,7 @@ export default function TeamsPage() {
                             team={team}
                             members={orgMembers}
                             orgId={orgId}
-                            onAddMember={(newMembers) =>
-                              setOrgMembers((prev) => [...prev, ...newMembers])
-                            }
+                            onAddMember={addMemberToTeam}
                           />
                         </PermissionGate>
                         <PermissionGate permission="team.update">
@@ -212,9 +218,9 @@ export default function TeamsPage() {
                 {expandedTeams.has(team.id) && (
                   <div className="overflow-hidden transition-all duration-500 ease-in-out animate-in slide-in-from-top">
                     <div className="p-6 bg-muted">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
                         {/* Team Members */}
-                        <div>
+                        <div className="">
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
                               <Users className="w-5 h-5" />
@@ -224,36 +230,75 @@ export default function TeamsPage() {
 
                           <div className="space-y-2">
                             {team.members?.length > 0 ? (
-                              team.members.map(({ id, user }, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between p-3 bg-card rounded-lg border"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <Avatar>
-                                      <AvatarImage src={user?.imageUrl} />
-                                      <AvatarFallback>
-                                        {(user?.firstname?.[0] || "") +
-                                          (user?.lastname?.[0] || "") || "U"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <p className="flex gap-2 items-center text-sm font-medium text-foreground">
-                                        {`${user?.firstname || ""} ${
-                                          user?.lastname || ""
-                                        }`.trim() || user?.email}
-                                        {getRoleIcon(user?.role.type)}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {user?.email}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    Leads: {user?._count?.assignedLeads || 0}
-                                  </p>
-                                </div>
-                              ))
+                              <div className="p-4 bg-card rounded-lg border">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="w-[200px]">
+                                        Name
+                                      </TableHead>
+                                      <TableHead>Email</TableHead>
+                                      <TableHead>Team Role</TableHead>
+                                      <TableHead className={`text-center`}>
+                                        Assigned Leads
+                                      </TableHead>
+                                      <TableHead className={`text-center`}>
+                                        Actions
+                                      </TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {team.members?.map((member) => (
+                                      <TableRow key={member.id}>
+                                        <TableCell className="font-medium flex items-center gap-2">
+                                          <Avatar>
+                                            <AvatarImage
+                                              src={member.user?.imageUrl}
+                                            />
+                                            <AvatarFallback>
+                                              {(member.user?.firstname?.[0] ||
+                                                "") +
+                                                (member.user?.lastname?.[0] ||
+                                                  "") || "U"}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          {`${member.user?.firstname || ""} ${
+                                            member.user?.lastname || ""
+                                          }`.trim() || member.user?.fullname}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                          {member.user?.email}
+                                        </TableCell>
+                                        <TableCell>
+                                          <span className="flex gap-2 items-center">
+                                        {getTeamRole(member?.user,team?.id).toUpperCase()}
+                                          </span>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                          {member.user?._count?.assignedLeads ||
+                                            0}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                          <EditMemberRoleDialog 
+                                            member={member.user}
+                                            teamId={team.id}
+                                            memberId={member.id}
+                                            onEditMemberRole={editMemberRole}
+                                          
+                                          />
+                                          <RemoveTeamMemberDialog
+                                            member={member.user}
+                                            teamId={team.id}
+                                            memberId={member.id}
+                                            onRemoveMember={removeMember}
+                                           
+                                          />
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
                             ) : (
                               <div className="text-center py-8 rounded-lg border-2 border-dashed border-muted-foreground">
                                 <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />

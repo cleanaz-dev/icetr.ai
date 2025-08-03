@@ -10,7 +10,7 @@ export const Hero = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto max-w-3xl px-4 text-center mt-20">
+      <div className="container mx-auto max-w-3xl px-4 text-center mt-20 min-h-screen">
         <Badge
           variant="secondary"
           className="mb-4 text-primary border-primary rounded-full bg-transparent"
@@ -66,8 +66,6 @@ export const Hero = () => {
             />
           </div>
 
-          {/* Adjust overlay size accordingly */}
-          {/* <div className="absolute bottom-0 top-0 h-[150px] w-[150px] md:h-[300px] md:w-[300px] max-w-sm bg-black opacity-50 rotate-x-50 rotate-z-45 transform origin-center rounded-full z-30" /> */}
         </div>
       </div>
     </>

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { scenarioPrompts } from "@/lib/constants/training";
 import { decryptIntegrationData } from "@/lib/encryption";
-import prisma from "@/lib/services/prisma";
-import { getBlandAiEncryptedKey } from "@/lib/services/db/integrations";
-import { validateOrgAccess } from "@/lib/services/db/validations";
+import prisma from "@/lib/prisma";
+import { getBlandAiEncryptedKey } from "@/lib/db/integrations";
+import { validateOrgAccess } from "@/lib/db/validations";
 
 export async function POST(request, { params }) {
   const { userId: clerkId } = await auth();

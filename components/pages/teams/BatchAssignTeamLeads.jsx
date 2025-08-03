@@ -34,13 +34,19 @@ import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useTeamContext } from "@/context/TeamProvider";
 import Image from "next/image";
+import { useLeads } from "@/context/LeadsProvider";
 
-export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
-
+export function BatchAssignTeamLeads({
+  leads = [],
+  onAssignLeads,
+  teamId,
+  orgId,
+  onSuccess,
+}) {
   const { getTeamMembersByTeamId } = useTeamContext();
 
   const members = getTeamMembersByTeamId(teamId);
-  
+
   const [quantity, setQuantity] = useState(50);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,12 +67,8 @@ export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
     source: null,
   });
 
-  // Reset assignTo so placeholder shows on member load
-  useEffect(() => {
-    setAssignTo(null);
-  }, [members]);
 
-  // Build dropdown choices to match filter keys
+
   const filterOptions = {
     region: [
       "all",
@@ -144,17 +146,27 @@ export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
 
   const handleSpecificAssign = async () => {
     if (!specificAssignTo || selectedLeads.length === 0) return;
-
+    const action = "specific";
     setLoading(true);
+
     try {
-      await onAssign(selectedLeads, specificAssignTo.id, user.id);
-      toast.success(
-        `Assigned ${selectedLeads.length} leads to ${specificAssignTo?.firstname} ${specificAssignTo?.lastname}`
-      );
-      setSelectedLeads([]);
+      const result = await onAssignLeads({
+        leadIds: selectedLeads,
+        assignToId: specificAssignTo,
+        orgId: orgId,
+        teamId: teamId,
+        action: action,
+      });
+
+      if (typeof onSuccess !== "function") {
+        throw new Error("onSuccess is not a function");
+      }
+      onSuccess(orgId);
+      toast.success(result.message || " Leads Assigned!");
       setOpen(false);
       resetDialogState();
     } catch (error) {
+      console.error("Failed to assign leads:", error);
       toast.error("Failed to assign leads");
     } finally {
       setLoading(false);
@@ -166,14 +178,18 @@ export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
       .sort(() => Math.random() - 0.5)
       .slice(0, quantity)
       .map((l) => l.id);
-
+    const action = "batch";
     setLoading(true);
-
     try {
-      await onAssign(chosen, assignTo.id, user.id);
-      toast.success(
-        `Assigned ${chosen.length} leads to ${assignTo?.firstname} ${assignTo?.lastname}`
+      const result = await onAssignLeads(
+        chosen,
+        assignTo.id,
+        user.id,
+        orgId,
+        teamId,
+        action
       );
+      toast.success(result.message || "Leads assigned successfully!");
       setOpen(false);
       resetDialogState();
     } catch (error) {
@@ -214,9 +230,7 @@ export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
 
       <DialogContent className="min-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>
-            Assign Leads <span></span>
-          </DialogTitle>
+          <DialogTitle>Assign Leads</DialogTitle>
           <DialogDescription>Assign your team leads</DialogDescription>
         </DialogHeader>
 
@@ -499,18 +513,18 @@ export function BatchAssignTeamLeads({ leads = [], onAssign, teamId }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {members.map(({ user }) => {
+                    {members.map((member) => {
                       return (
-                        <SelectItem key={user.id} value={user.id}>
+                        <SelectItem key={member.id} value={member.id}>
                           <div className="flex items-center gap-2">
                             <Image
-                              src={user.imageUrl}
-                              alt={user.fullname}
+                              src={member.user?.imageUrl}
+                              alt={member.user?.fullname}
                               width={24}
                               height={24}
                               className="rounded-full object-cover"
                             />
-                            <span>{user.fullname}</span>
+                            <span>{member.user?.fullname}</span>
                           </div>
                         </SelectItem>
                       );

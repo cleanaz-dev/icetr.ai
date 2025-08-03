@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import Link from "next/link";
 import { CircleDot, Dot, Trash2 } from "lucide-react";
+import { TierAwareButton } from "@/components/buttons/TierAwareButtons";
 
 export default function CreateTrainingPage({ campaigns = [], orgId, blandAi }) {
   const router = useRouter();
@@ -206,6 +207,7 @@ const addScript = () => {
   const filtered = campaigns.filter((c) =>
     c.name.toLowerCase().includes(campaignSearch.toLowerCase())
   );
+  
 
   const renderCampaignPicker = () => (
     <Card>
@@ -236,9 +238,16 @@ const addScript = () => {
                       {trainings.length} training{trainings.length !== 1 && "s"}
                     </span>
                   </div>
-                  <Button size="sm" onClick={() => setSelectedCampaign(c)}>
+
+                  <TierAwareButton 
+                    onClick={() => setSelectedCampaign(c)}
+                    label={`Create Training`}
+                    check="scenarios"
+
+                  />
+                  {/* <Button size="sm" onClick={() => setSelectedCampaign(c)}>
                     Create Training
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {/* Trainings Table */}
@@ -652,10 +661,13 @@ const addScript = () => {
               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 duration-300 transition-all" />
               Change Campaign
             </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
-              <Save className="w-4 h-4 mr-2" />
-              {loading ? "Creating..." : "Create Training"}
-            </Button>
+            <TierAwareButton 
+              onClick={handleSubmit}
+              disabled={loading}
+              check="scenarios"
+              label={loading ? "Creating..." : "Create Training"}
+            />
+           
           </div>
         </div>
       </div>

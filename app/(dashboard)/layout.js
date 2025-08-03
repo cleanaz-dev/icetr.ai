@@ -6,22 +6,25 @@ import {
   getUserNotifications,
 } from "@/lib/services/prismaQueries";
 import RoleBasedDashboardLayout from "@/components/pages/dashboard/RoleBasedDashboardLayout";
-import { getUserProfile, getUserPersmissions } from "@/lib/services/db/user";
-import { getPhoneConfiguration, getPublicIntegrationsForOrg } from "@/lib/services/db/integrations";
+import { getUserProfile, getUserPersmissions } from "@/lib/db/user";
+import {
+  getPhoneConfiguration,
+  getPublicIntegrationsForOrg,
+} from "@/lib/db/integrations";
 
 import {
   getOrgTeamsMembersCampaings,
   getTeamId,
   getAssignedTeamsLeads,
-} from "@/lib/services/db/team";
-import { getAllOrgLeadsAndStatus } from "@/lib/services/db/leads";
+} from "@/lib/db/team";
+import { getAllOrgLeadsAndStatus } from "@/lib/db/leads";
 import {
   getAllOrgLeads,
   getOrgDashboardStats,
   getOrgId,
-} from "@/lib/services/db/org";
+  getUserOrganization,
+} from "@/lib/db/org";
 import Providers from "./providers";
-
 
 export default async function DashboardLayout({ children }) {
   const { userId } = await auth();
@@ -33,7 +36,7 @@ export default async function DashboardLayout({ children }) {
   const { imageUrl } = await getUserProfile(userId);
   const orgId = await getOrgId(userId);
   const { role, permissions } = await getUserPersmissions(userId);
-  const { teamId } = await getTeamId(userId, orgId);
+  // const { teamId } = await getTeamId(userId, orgId);
   const notifications = await getUserNotifications(userId);
   const publicIntegrations = await getPublicIntegrationsForOrg(orgId);
   const { teams, teamMembers, orgMembers, orgCampaigns } =
@@ -43,10 +46,11 @@ export default async function DashboardLayout({ children }) {
   const dashboardStats = await getOrgDashboardStats(orgId);
   const leads = await getAllOrgLeads(orgId);
   const teamLeads = await getAssignedTeamsLeads(orgId);
-  const phoneConfiguration = await getPhoneConfiguration(orgId)
+  const phoneConfiguration = await getPhoneConfiguration(orgId);
+  const organization = await getUserOrganization(userId, orgId);
 
-  // console.log("orgcampaign", orgCampaigns)
-  
+
+  console.log("LAYOUT_PAGE_OBJECT", teamMembers)
 
   return (
     <Providers
@@ -61,7 +65,7 @@ export default async function DashboardLayout({ children }) {
       }}
       dashboardValues={{ activities, leadCounts, dashboardStats }}
       leadsValues={{ leads }}
-      coreValues={{ phoneConfiguration }}
+      coreValues={{ phoneConfiguration, organization }}
     >
       <RoleBasedDashboardLayout
         imageUrl={imageUrl}

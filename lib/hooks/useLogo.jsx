@@ -1,4 +1,5 @@
 import { ThemeChanger } from "./useChangeTheme";
+import { Suspense } from "react";
 
 export const Logo = () => {
   return (
@@ -9,7 +10,11 @@ export const Logo = () => {
       <span className="text-2xl font-bold text-primary">
         icetr<span>.</span>ai
       </span>
-      <ThemeChanger />
+      <Suspense fallback={
+        <div className="w-8 h-8 rounded-md border border-border bg-background"></div>
+      }>
+        <ThemeChanger />
+      </Suspense>
     </div>
   );
 };

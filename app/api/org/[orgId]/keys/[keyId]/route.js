@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server"
+import { validateHasPermission } from "@/lib/db/validations";
 
 export async function GET(req, { params }) {
   try {
@@ -26,14 +27,7 @@ export async function GET(req, { params }) {
       );
     }
     
-    // Check if user has admin role
-    if (user.role !== "Admin") {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
-    }
-    
+   await validateHasPermission(clerkId,['api.key.read'])
     // Find the API key
     const record = await prisma.apiKey.findUnique({
       where: { id: keyId },
@@ -78,14 +72,7 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Check if user has admin role OR belongs to the same org
-    if (user.role !== "Admin" && user.orgId !== orgId) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
-    }
-
+   await validateHasPermission(clerkId,['api.key.delete'])
     // Find the API key to ensure it exists and belongs to the org
     const existingKey = await prisma.apiKey.findUnique({
       where: { id: keyId },

@@ -1,5 +1,5 @@
 // app/api/test-json/route.js
-import { getServerPublicIntegrationData } from "@/lib/services/db/integrations";
+import { getServerPublicIntegrationData } from "@/lib/db/integrations";
 import redis from "@/lib/services/integrations/redis";
 import { NextResponse } from "next/server";
 

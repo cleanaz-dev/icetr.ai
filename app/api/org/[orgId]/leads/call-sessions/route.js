@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { startOfDay, endOfDay } from "date-fns";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
-import { validateOrgAccess } from "@/lib/services/db/validations";
+import prisma from "@/lib/prisma";
+import { validateOrgAccess } from "@/lib/db/validations";
 
 export async function POST(request, { params }) {
   const { orgId } = await params;

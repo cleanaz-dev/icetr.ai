@@ -1,5 +1,5 @@
 import TeamsPage from "@/components/pages/teams/TeamsPage";
-import { getOrgId } from "@/lib/services/db/org";
+import { getOrgId } from "@/lib/db/org";
 import { getAllOrgLeads, getTeamData } from "@/lib/services/prismaQueries";
 import { auth } from "@clerk/nextjs/server";
 import React from "react";

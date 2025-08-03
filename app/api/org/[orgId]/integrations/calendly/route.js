@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import { validateHasPermission } from "@/lib/db/validations";
 import {
   calendlyIntegrationSchema,
   formatZodError,

@@ -1,7 +1,7 @@
 // api/leads/[id]/activities
 
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request, { params }) {

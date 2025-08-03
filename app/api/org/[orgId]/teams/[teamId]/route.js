@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import {
   validateHasPermission,
   validateOrgAccess,
   validateTeamOrgAccess,
-} from "@/lib/services/db/validations";
+} from "@/lib/db/validations";
 
 export async function PATCH(req, { params }) {
   const { teamId, orgId } = await params;
@@ -33,7 +33,7 @@ export async function PATCH(req, { params }) {
     }
 
     // Get the new team name from request body
-    const { teamName } = await req.json();
+    const { teamName, action = null } = await req.json();
 
     // Validate team name
     if (!teamName || teamName.trim() === "") {
@@ -109,5 +109,64 @@ export async function DELETE(req, { params }) {
       { message: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(req, { params }) {
+  const { teamId, orgId } = await params;
+  const { userId: clerkId } = await auth();
+  if (!teamId || !orgId) {
+    return NextResponse.json({ message: "Invalid Request" }, { status: 400 });
+  }
+  if (!clerkId) {
+    return NextResponse.json(
+      { message: "Authentication required" },
+      { status: 401 }
+    );
+  }
+  try {
+    await validateHasPermission(clerkId, ["team.read"]);
+
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                fullname: true,
+                imageUrl: true,
+                _count: { select: { assignedLeads: true } },
+                teamMemberships: {
+                  select: {
+                    teamRole: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        campaigns: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            type:true,
+            _count: {
+              select: {
+                leads: true,
+              },
+            },
+          },
+        }, // if you need them
+      },
+    });
+
+    return NextResponse.json(team);
+  } catch (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

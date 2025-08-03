@@ -1,8 +1,10 @@
 // api/leads/[id]/activities
 
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { unsuccessfulOutcomes, successfulOutcomes, OUTCOME_MAPPING } from "@/lib/config/phoneConfiguration";
+import { validateOrgAccess } from "@/lib/db/validations";
 
 export async function GET(request, { params }) {
   const { orgId, leadId } = await params;
@@ -56,60 +58,34 @@ export async function GET(request, { params }) {
   }
 }
 
-// Helper function to calculate follow-up date
-const getFollowUpDate = (timeframe) => {
-  const now = new Date();
-  switch (timeframe) {
-    case "1_hour":
-      return new Date(now.getTime() + 60 * 60 * 1000);
-    case "2_hours":
-      return new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    case "tomorrow":
-      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    case "3_days":
-      return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    case "1_week":
-      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    default:
-      return new Date(now.getTime() + 24 * 60 * 60 * 1000); // Default to tomorrow
-  }
-};
-
 export async function POST(request, { params }) {
   const { leadId, orgId } = await params;
+console.log('Params:', { leadId, orgId });
+  if (!leadId && !orgId) {
+    return NextResponse.json(
+      { error: "Missing leadId and orgId" },
+      { status: 400 }
+    );
+  }
+
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Authentication check
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await validateOrgAccess(clerkId, orgId) // Authentication check
 
     const data = await request.json();
     console.log("data from activity route", data);
 
     const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
+      where: { clerkId: clerkId },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     if (data.type === "call") {
       // Define the mapping between frontend values and database enum values
-      const OUTCOME_MAPPING = {
-        answered: "ANSWERED",
-        voicemail: "VOICEMAIL",
-        busy: "BUSY",
-        no_answer: "NO_ANSWER",
-        disconnected: "DISCONNECTED",
-        invalid_number: "INVALID_NUMBER",
-        do_not_call: "DO_NOT_CALL",
-        not_interested: "NOT_INTERESTED",
-        interested: "INTERESTED",
-        callback: "CALLBACK",
-        scheduled_callback: "SCHEDULED_CALLBACK",
-      };
 
       // Map the outcome to the database enum value
       const mappedOutcome = OUTCOME_MAPPING[data.outcome];
@@ -125,25 +101,7 @@ export async function POST(request, { params }) {
         );
       }
 
-      // Define which outcomes are considered "unsuccessful contact attempts"
-      const unsuccessfulOutcomes = [
-        "BUSY",
-        "NO_ANSWER",
-        "VOICEMAIL",
-        "DISCONNECTED",
-        "INVALID_NUMBER",
-      ];
-
-      // Define which outcomes are considered "successful contact"
-      const successfulOutcomes = [
-        "ANSWERED",
-        "INTERESTED",
-        "NOT_INTERESTED",
-        "CALLBACK",
-        "SCHEDULED_CALLBACK",
-        "DO_NOT_CALL",
-      ];
-
+ 
       const isUnsuccessfulAttempt =
         unsuccessfulOutcomes.includes(mappedOutcome);
       const isSuccessfulContact = successfulOutcomes.includes(mappedOutcome);
@@ -154,7 +112,6 @@ export async function POST(request, { params }) {
         const lead = await tx.lead.findUnique({
           where: {
             id: leadId,
-            orgId: orgId,
           },
           select: { campaignId: true },
         });
@@ -163,6 +120,7 @@ export async function POST(request, { params }) {
         const call = await tx.call.findFirst({
           where: {
             leadId: leadId,
+            orgId: orgId,
             callSessionId: data.sessionId,
             status: { not: "completed" }, // Find the active call
           },
@@ -204,9 +162,6 @@ export async function POST(request, { params }) {
           const existingAttempts = await tx.leadActivity.findFirst({
             where: {
               leadId: leadId,
-              lead: {
-                orgId: orgId,
-              },
               type: "CONTACT_ATTEMPTS",
             },
             orderBy: { updatedAt: "desc" },
@@ -374,3 +329,22 @@ export async function POST(request, { params }) {
     );
   }
 }
+
+// Helper function to calculate follow-up date
+const getFollowUpDate = (timeframe) => {
+  const now = new Date();
+  switch (timeframe) {
+    case "1_hour":
+      return new Date(now.getTime() + 60 * 60 * 1000);
+    case "2_hours":
+      return new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    case "tomorrow":
+      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    case "3_days":
+      return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    case "1_week":
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    default:
+      return new Date(now.getTime() + 24 * 60 * 60 * 1000); // Default to tomorrow
+  }
+};

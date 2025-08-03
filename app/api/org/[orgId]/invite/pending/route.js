@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getAllInvitees } from "@/lib/services/integrations/redis";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import { validateHasPermission } from "@/lib/db/validations";
 
 export async function GET(req, { params }) {
   const { orgId } = await params;

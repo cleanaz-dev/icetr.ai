@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
-import { sendWaitListEmail } from "@/lib/services/resend";
+import prisma from "@/lib/prisma";
+import { sendWaitListEmail } from "@/lib/services/integrations/resend";
 
 export async function POST(request) {
   try {

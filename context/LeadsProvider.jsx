@@ -13,12 +13,15 @@ const LeadsContext = createContext({
   unassignLeads: () => {},
   importLeads: () => {},
   deleteLead: () => {},
+  refreshLeads: () => {},
+  totalLeads: 0,
 });
 
 export function LeadsProvider({ initialData = {}, children }) {
   const { leads: initialLeads = [] } = initialData;
 
   const [leads, setLeads] = useState(initialLeads);
+  const [totalLeads, setTotalLeads] = useState(initialLeads.length);
 
   const addLead = (newLead) => {
     setLeads((prev) => [...prev, newLead]);
@@ -88,6 +91,14 @@ export function LeadsProvider({ initialData = {}, children }) {
     }
   };
 
+
+  const refreshLeads = async (orgId) => {
+    console.log("refreshing leads");
+    const leads = await fetch(`/api/org/${orgId}/leads`).then((r) => r.json());
+
+    setLeads(leads);
+  };
+
   const unassignLeads = async ({ leadIds, orgId }) => {
     try {
       const response = await fetch(`/api/org/${orgId}/leads/unassign`, {
@@ -154,6 +165,8 @@ export function LeadsProvider({ initialData = {}, children }) {
       unassignLeads,
       importLeads,
       deleteLead,
+      totalLeads,
+      refreshLeads,
     }),
     [leads]
   );

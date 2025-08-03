@@ -1,7 +1,7 @@
-import { sendInviteEmail } from "@/lib/services/resend";
+import { sendInviteEmail } from "@/lib/services/integrations/resend";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import redis from "@/lib/services/integrations/redis";
 
 

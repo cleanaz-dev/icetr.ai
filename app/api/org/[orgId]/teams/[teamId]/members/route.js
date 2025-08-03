@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import {
   validateHasPermission,
   validateOrgAccess,
   validateTeamOrgAccess,
-} from "@/lib/services/db/validations";
-import { getOrgMembers } from "@/lib/services/db/org";
+} from "@/lib/db/validations";
+import { getOrgMembers } from "@/lib/db/org";
+import { teamMemberSelect } from "@/lib/db/selects";
 
 export async function PATCH(req, { params }) {
   const { teamId, orgId } = await params;
@@ -26,6 +27,8 @@ export async function PATCH(req, { params }) {
 
     const { users } = await req.json();
 
+
+
     if (!Array.isArray(users)) {
       return NextResponse.json(
         { message: "Invalid request: users array required" },
@@ -44,14 +47,29 @@ export async function PATCH(req, { params }) {
         })
       )
     );
-    const addedUsers = users.length;
+    // Get updated team members
+    const teamMembers = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+      select: {
+        members: {
+          include: {
+            user: {
+              select: teamMemberSelect
+            },
+          },
+        },
+      },
+    });
 
-    const { members: newMembers } = await getOrgMembers(clerkId, orgId);
-    console.log("new members", newMembers);
+
+
+
 
     return NextResponse.json({
-      message: `${addedUsers} member(s) added successfully`,
-      members: newMembers,
+      message: `Member(s) added successfully`,
+      teamMembers: teamMembers?.members || [],
     });
   } catch (error) {
     console.error(error);

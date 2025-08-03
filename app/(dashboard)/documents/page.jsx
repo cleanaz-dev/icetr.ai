@@ -1,8 +1,8 @@
 
 import { auth } from '@clerk/nextjs/server'
-import { getOrgId } from '@/lib/services/db/org'
+import { getOrgId } from '@/lib/db/org'
 import DocumentsPage from '@/components/pages/documents/DocumentsPage'
-import { getOrgCampaignDocuments } from '@/lib/services/db/campaigns'
+import { getOrgCampaignDocuments } from '@/lib/db/campaigns'
 
 
 export default async function page() {

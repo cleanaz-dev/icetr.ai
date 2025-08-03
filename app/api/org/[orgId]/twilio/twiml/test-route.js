@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import prisma from "@/lib/services/prisma";
-import { transcribeRecording } from "@/lib/services/assembly-ai";
+import prisma from "@/lib/prisma";
+import { transcribeRecording } from "@/lib/services/integrations/assembly-ai";
 import {
   checkIfLead,
   isTrainingCall,

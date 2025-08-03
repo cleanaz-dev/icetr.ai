@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import {
   validateOrgAccess,
   validateTeamOrgAccess,
-} from "@/lib/services/db/validations";
+} from "@/lib/db/validations";
 
 export async function PATCH(req, { params }) {
   const { teamId, orgId } = await params;

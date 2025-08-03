@@ -1,8 +1,8 @@
 // app/api/org/[orgId]/phone-configuration/route.js
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import { validateHasPermission } from "@/lib/db/validations";
 
 // GET - Fetch phone configuration
 export async function GET(request, { params }) {

@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import csv from "csv-parser";
 import { Readable } from "stream";
 import { auth } from "@clerk/nextjs/server";
-import {
-  validateHasPermission,
-  validateOrgAccess,
-  
-} from "@/lib/services/db/validations";
-import {
-  roleBasedLeadsMulti,
-  roundRobinLeads,
-} from "@/lib/services/db/helpers";
+import { validateHasPermission, validateOrgAccess } from "@/lib/db/validations";
+import { roleBasedLeadsMulti, roundRobinLeads } from "@/lib/db/helpers";
 
 export async function POST(request, { params }) {
   const { orgId } = await params;
@@ -28,6 +21,32 @@ export async function POST(request, { params }) {
 
     await validateOrgAccess(clerkId, orgId);
     await validateHasPermission(clerkId, ["lead.create"]);
+
+    const tierSettings = await prisma.tierSettings.findUnique({
+      where: { orgId },
+      select: { tier: true, limits: true },
+    });
+    if (!tierSettings) {
+      return NextResponse.json(
+        { error: "Tier configuration missing" },
+        { status: 500 }
+      );
+    }
+
+    const maxLeads = tierSettings.limits?.maxLeads ?? 1000;
+
+    const existingCount = await prisma.lead.count({
+      where: { orgId },
+    });
+
+    const slotsLeft = Math.max(0, maxLeads - existingCount);
+
+    if (slotsLeft === 0) {
+      return NextResponse.json(
+        { error: "Lead limit reached", limit: maxLeads, imported: 0 },
+        { status: 422 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -85,7 +104,10 @@ export async function POST(request, { params }) {
               leads.push(leadData);
             }
 
-            const created = await prisma.lead.createMany({ data: leads });
+            const leadsToCreate = leads.slice(0, slotsLeft);
+            const created = await prisma.lead.createMany({
+              data: leadsToCreate,
+            });
 
             // Fetch the newly created leads to return them
             const newLeads = await prisma.lead.findMany({
@@ -93,13 +115,13 @@ export async function POST(request, { params }) {
                 campaignId,
                 orgId,
                 phoneNumber: {
-                  in: leads.map(lead => lead.phoneNumber)
-                }
+                  in: leads.map((lead) => lead.phoneNumber),
+                },
               },
               orderBy: {
-                createdAt: 'desc'
+                createdAt: "desc",
               },
-              take: created.count
+              take: created.count,
             });
 
             // ROLE BASED Assignment
@@ -135,7 +157,7 @@ export async function POST(request, { params }) {
                 success: true,
                 count: created.count,
                 message: `Successfully imported ${created.count} leads.`,
-                newLeads: newLeads
+                newLeads: newLeads,
               })
             );
           } catch (err) {

@@ -2,8 +2,8 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import prisma from "@/lib/prisma";
+import { validateHasPermission } from "@/lib/db/validations";
 
 export async function POST(request, { params }) {
   const { orgId } = await params;

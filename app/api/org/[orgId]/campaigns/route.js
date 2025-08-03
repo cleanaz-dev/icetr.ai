@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { validateOrgAccess } from "@/lib/services/db/validations";
+import { validateOrgAccess } from "@/lib/db/validations";
 
 export async function GET(request, { params }) {
   const { orgId } = await params;

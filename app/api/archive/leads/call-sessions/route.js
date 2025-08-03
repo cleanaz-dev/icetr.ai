@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { startOfDay, endOfDay } from "date-fns";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 
 export async function POST(request) {
   const { userId: clerkId } = await auth();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { validateHasPermission } from "@/lib/db/validations";
 
 export async function POST(req, { params }) {
   try {
@@ -69,7 +70,7 @@ export async function POST(req, { params }) {
 
 export async function PATCH(req, { params }) {
   try {
-    const { userId } = await auth();
+    const { userId:clerkId } = await auth();
     const { orgId } = await params;
 
     const {
@@ -83,10 +84,12 @@ export async function PATCH(req, { params }) {
       scenario,
       action,
     });
-    return NextResponse.json(
-      { message: `New Scenario created successfully!` },
-      { status: 200 }
-    );
+    // return NextResponse.json(
+    //   { message: `New Scenario created successfully!` },
+    //   { status: 200 }
+    // );
+
+    validateHasPermission(clerkId, ['training.create'])
     if (scenario && action === "addScenario") {
       const newScenario = await prisma.trainingScenario.create({
         data: {

@@ -214,13 +214,7 @@ export default function TwilioIntegrations({ integration = {}, orgId }) {
                 orgId={orgId}
                 orgIntegrationId={integration.id}
               />
-              {hasIntegrationValues() && (
-                <Button size="sm" asChild>
-                  <Link href="/settings/phone-configuration">
-                    Phone Configuration
-                  </Link>
-                </Button>
-              )}
+              
             </div>
 
             <div className="flex gap-2 items-center">

@@ -1,7 +1,7 @@
 //api/import/leads
 
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import csv from "csv-parser";
 import { Readable } from "stream";
 import { auth } from "@clerk/nextjs/server";

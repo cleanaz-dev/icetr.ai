@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { transcribePracticeCall } from "@/lib/services/assembly-ai";
-import { validateOrgAccess } from "@/lib/services/db/validations";
+import { transcribePracticeCall } from "@/lib/services/integrations/assembly-ai";
+import { validateOrgAccess } from "@/lib/db/validations";
 
 export async function POST(request, {params}) {
   const { orgId } = await params

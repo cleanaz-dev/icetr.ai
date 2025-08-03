@@ -4,10 +4,10 @@ import { auth } from "@clerk/nextjs/server";
 import {
   getTrainingData,
   getTrainingAvgAndCount,
-} from "@/lib/services/db/training";
-import { getUserProfile, isAdmin } from "@/lib/services/db/user";
-import { getOrgId } from "@/lib/services/db/org";
-import { getBlandAiSettings } from "@/lib/services/db/integrations";
+} from "@/lib/db/training";
+import { getUserProfile, isAdmin } from "@/lib/db/user";
+import { getOrgId } from "@/lib/db/org";
+import { getBlandAiSettings } from "@/lib/db/integrations";
 import UnifiedStatusBar from "@/components/pages/dialer/UnifiedStatusBar";
 
 export default async function TrainingRoute() {

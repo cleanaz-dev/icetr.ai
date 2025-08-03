@@ -2,18 +2,21 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import prisma from "@/lib/prisma";
+import { validateHasPermission } from "@/lib/db/validations";
 import { TrunkContextImpl } from "twilio/lib/rest/routes/v2/trunk";
 
 export async function POST(request, { params }) {
+
+  try {
   const { orgId } = await params;
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  try {
+    await validateHasPermission(clerkId, ["lead.assign"]);
+
     const { leadIds, assignedToId } = await request.json();
     console.log("Assignment data:", leadIds, assignedToId);
     // return NextResponse.json(
@@ -29,7 +32,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    await validateHasPermission(clerkId, ["lead.assign"]);
+
 
     // Verify the assigned user exists
     const caller = await prisma.user.findUnique({

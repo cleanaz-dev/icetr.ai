@@ -12,17 +12,21 @@ const TeamContext = createContext({
   teamLeads: [],
   setTeams: () => {},
   editTeam: () => {},
+  editMemberRole: () => {},
   addMemberToTeam: () => {},
   assignCampaign: () => {},
   unassignCampaign: () => {},
   updateTeam: () => {},
   deleteTeam: () => {},
   createTeam: () => {},
+  removeMember: () => {},
   getTeamByTeamId: () => [],
   getTeamMembersByTeamId: () => [],
   getLeadsByTeamId: () => [],
+  getTeamRole: () => [],
   filterLeadsByTeamId: () => [],
-  filterCampaignsByTeamId: () => []
+  filterCampaignsByTeamId: () => [],
+  assignLeadsToTeamMember: () => {},
 });
 
 // 2. Provider with memoized value
@@ -132,13 +136,28 @@ export const TeamProvider = ({ children, initialData = {} }) => {
     );
   };
 
-  const addMemberToTeam = (teamId, newMember) => {
+  const addMemberToTeam = async (orgId, teamId, selectedMembers) => {
+    const response = await fetch(`/api/org/${orgId}/teams/${teamId}/members`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        users: selectedMembers,
+        teamId: teamId,
+      }),
+    });
+
+    const { teamMembers } = await response.json();
+
+    // 1. update the global teamMembers array
+    setTeamMembers((prev) =>
+      prev.filter((m) => m.teamId !== teamId).concat(teamMembers)
+    );
+
+    // 2. (optional) also update the teams array so each team has the latest members
     setTeams((prev) =>
-      prev.map((team) =>
-        team.id === teamId
-          ? { ...team, members: [...team.members, newMember] }
-          : team
-      )
+      prev.map((t) => (t.id === teamId ? { ...t, members: teamMembers } : t))
     );
   };
 
@@ -202,7 +221,11 @@ export const TeamProvider = ({ children, initialData = {} }) => {
         body: JSON.stringify(teamData),
       });
 
-      const { message, newTeam, newTeamMembers } = await response.json();
+      const {
+        message,
+        team: newTeam,
+        members: newTeamMembers = [],
+      } = await response.json();
 
       if (!response.ok) {
         throw new Error(message || "Failed to create team");
@@ -217,31 +240,106 @@ export const TeamProvider = ({ children, initialData = {} }) => {
     }
   };
 
+  const editMemberRole = async (orgId, teamId, memberId, selectedRole) => {
+    const response = await fetch(
+      `/api/org/${orgId}/teams/${teamId}/members/${memberId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "editRole",
+          teamRole: selectedRole,
+        }),
+      }
+    );
+
+    const { teamMembers, message } = await response.json();
+
+    setTeamMembers((prev) =>
+      prev.filter((m) => m.teamId !== teamId).concat(teamMembers)
+    );
+
+    // 2. (optional) also update the teams array so each team has the latest members
+    setTeams((prev) =>
+      prev.map((t) => (t.id === teamId ? { ...t, members: teamMembers } : t))
+    );
+
+    return { message };
+  };
+
+  const assignLeadsToTeamMember = async ({
+    leadIds,
+    assignToId,
+    orgId,
+    teamId,
+    action,
+  }) => {
+    const res = await fetch(`/api/org/${orgId}/leads/teams/${teamId}/assign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadIds, assignToId, action }),
+    });
+    const { assignedMember, message } = await res.json();
+
+    const freshTeam = await fetch(`/api/org/${orgId}/teams/${teamId}`).then(
+      (r) => r.json()
+    );
+    setTeams((prev) => prev.map((t) => (t.id === teamId ? freshTeam : t)));
+
+    return { assignedMember, message };
+  };
+
+const getTeamRole = (member) =>
+  member?.teamMemberships?.[0]?.teamRole?.toLowerCase() || null;
+
+  // inside TeamProvider
+  const removeMember = async (orgId, teamId, memberId) => {
+    const res = await fetch(
+      `/api/org/${orgId}/teams/${teamId}/members/${memberId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    const { teamMembers } = await res.json();
+
+    // 1. update the global teamMembers array
+    setTeamMembers((prev) =>
+      prev.filter((m) => m.teamId !== teamId).concat(teamMembers)
+    );
+
+    // 2. (optional) also update the teams array so each team has the latest members
+    setTeams((prev) =>
+      prev.map((t) => (t.id === teamId ? { ...t, members: teamMembers } : t))
+    );
+  };
+
   const getTeamMembersByTeamId = (teamId) => {
     return teamMembers.filter((tm) => tm.teamId === teamId);
   };
 
   const getTeamByTeamId = (teamId) => {
-    return teams.find(t => t.id === teamId);
+    return teams.find((t) => t.id === teamId);
   };
 
-const filterLeadsByTeamId = (leads, teamId) => {
-  if (!teamId || !leads) return leads;
-  
-  return leads.filter(lead => {
-    // Check if the assigned user has team memberships
-    if (!lead.assignedUser?.teamMemberships) return false;
-    
-    // Check if any of the user's team memberships match the teamId
-    return lead.assignedUser.teamMemberships.some(
-      membership => membership.teamId === teamId
-    );
-  });
-}
-const filterCampaignsByTeamId = (teamId) => {
-  return orgCampaigns.filter(c => c.teamId === teamId)
-}
- 
+  const filterLeadsByTeamId = (leads, teamId) => {
+    if (!teamId || !leads) return leads;
+
+    return leads.filter((lead) => {
+      // Check if the assigned user has team memberships
+      if (!lead.assignedUser?.teamMemberships) return false;
+
+      // Check if any of the user's team memberships match the teamId
+      return lead.assignedUser.teamMemberships.some(
+        (membership) => membership.teamId === teamId
+      );
+    });
+  };
+  const filterCampaignsByTeamId = (teamId) => {
+    return orgCampaigns.filter((c) => c.teamId === teamId);
+  };
+
   const value = useMemo(
     () => ({
       teams,
@@ -250,18 +348,22 @@ const filterCampaignsByTeamId = (teamId) => {
       teamMembers,
       setTeams,
       editTeam,
+      assignLeadsToTeamMember,
       addMemberToTeam,
+      editMemberRole,
       assignCampaign,
       unassignCampaign,
       updateTeam,
       deleteTeam,
       createTeam,
+      removeMember,
       getTeamByTeamId,
       getTeamMembersByTeamId,
+      getTeamRole,
       orgCampaigns,
       teamLeads,
       filterLeadsByTeamId,
-      filterCampaignsByTeamId
+      filterCampaignsByTeamId,
     }),
     [teams, orgId, orgMembers, teamMembers, orgCampaigns, teamLeads]
   );

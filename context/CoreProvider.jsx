@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
 import { Device, Logger } from "@twilio/voice-sdk";
+import { TierService } from "@/lib/services/tier-service";
 
 const CoreContext = createContext({
   phoneConfiguration: null,
@@ -9,22 +10,138 @@ const CoreContext = createContext({
   twilioDevice: null,
   twilioStatus: "Disconnected",
   twilioError: "",
+  newKey: null,
   initializeTwilioDevice: async (orgId) => {},
   cleanupTwilioDevice: () => {},
+  organization: null,
+  generateApiKey: async () => {},
+  // Enhanced tier methods
+  tier: {
+    current: "BASIC",
+    checkLimit: async () => ({}),
+    checkFeature: async () => ({}),
+    checkUserLimit: async () => ({}),
+    checkCampaignLimit: async () => ({}),
+    canPerformAction: async () => ({}),
+    suggestUpgrade: async () => null,
+    isAtLimit: () => false
+  },
+  tierSettings: null,
+  
 });
 
 export function CoreProvider({ initialData = {}, children }) {
-  const { phoneConfiguration: initialPhoneConfiguration = null } = initialData;
-  
-  const [phoneConfiguration, setPhoneConfiguration] = useState(initialPhoneConfiguration);
-  
+  const {
+    phoneConfiguration: initialPhoneConfiguration = null,
+    organization: initialOrganization = null,
+  } = initialData;
+
+  const [phoneConfiguration, setPhoneConfiguration] = useState(
+    initialPhoneConfiguration
+  );
+  const [organization, setOrganization] = useState(initialOrganization);
+  const [newKey, setNewKey] = useState("");
+  const [tierSettings, setTierSettings] = useState(initialOrganization.tierSettings)
+
   // Twilio Device state
   const [twilioDevice, setTwilioDevice] = useState(null);
   const [twilioStatus, setTwilioStatus] = useState("Disconnected");
   const [twilioError, setTwilioError] = useState("");
 
-  // Initialize Twilio Device
-  async function initializeTwilioDevice(orgId) {
+  // Enhanced tier utilities using TierService
+  const tier = useMemo(() => {
+    const currentTier = TierService.getCurrentTier(organization);
+    
+    return {
+      current: currentTier,
+      
+      // Simple synchronous checks (for quick UI decisions)
+      isAtLeast: (requiredTier) => TierService.isAtLeast(currentTier, requiredTier),
+      limit: (key) => TierService.getTierConfig(currentTier)[key] ?? 0,
+      feature: (key) => TierService.getTierConfig(currentTier)[key] ?? false,
+      
+      // Advanced async checks with logging
+      checkLimit: (limitKey, currentValue, context) => 
+        TierService.checkLimit(tierSettings, limitKey, currentValue, context),
+      
+      checkFeature: (featureKey, context) => 
+        TierService.checkFeature(tierSettings, featureKey, context),
+      
+      checkUserLimit: (currentUserCount, context) => 
+        TierService.checkUserLimit(tierSettings, currentUserCount, context),
+      
+      checkCampaignLimit: (currentCampaignCount, context) => 
+        TierService.checkCampaignLimit(tierSettings, currentCampaignCount, context),
+      
+      canPerformAction: (action, currentCounts) => 
+        TierService.canPerformAction(tierSettings, action, currentCounts),
+      
+      suggestUpgrade: (blockedFeature, context) => 
+        TierService.suggestUpgrade(tierSettings, organization, blockedFeature, context),
+      
+      getUsageAnalytics: () => 
+        TierService.getUsageAnalytics(tierSettings),
+
+       isAtLimit: (limitKey) => {
+        const limitStatus = TierService.getLimit(tierSettings, limitKey);
+        return limitStatus.isAtLimit;
+      },
+      
+      
+      // Convenience properties
+      isBasic: currentTier === 'BASIC',
+      isProfessional: currentTier === 'PROFESSIONAL',
+      isEnterprise: currentTier === 'ENTERPRISE',
+      canAccessAdvancedFeatures: currentTier !== 'BASIC',
+      hasUnlimitedAccess: currentTier === 'ENTERPRISE',
+    };
+  }, [organization]);
+
+  const generateApiKey = async ({
+    name,
+    expiresAt = null,
+    campaignIds = [],
+  } = {}) => {
+    if (!organization?.id) throw new Error("No organization");
+
+    const res = await fetch(`/api/org/${organization.id}/keys`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, expiresAt, campaignIds }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Key creation failed");
+
+    // copy to clipboard
+    await navigator.clipboard.writeText(data.key);
+    setNewKey(data.key);
+    return data.key;
+  };
+
+  const savePhoneConfiguration = async (config) => {
+    if (!organization?.id) throw new Error("No organization");
+
+    try {
+      const res = await fetch(`/api/org/${organization.id}/phone-configuration`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to save phone configuration");
+
+      setPhoneConfiguration(config);
+      return data;
+    } catch (err) {
+      console.error("Failed to save phone configuration:", err);
+      throw err;
+    }
+  };
+
+  const initializeTwilioDevice = async (orgId) => {
     if (twilioDevice) {
       console.log("Device already exists, skipping initialization");
       return;
@@ -42,9 +159,9 @@ export function CoreProvider({ initialData = {}, children }) {
 
       // Fetch token with better error handling
       const response = await fetch(`/api/org/${orgId}/twilio/token`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -53,7 +170,8 @@ export function CoreProvider({ initialData = {}, children }) {
         let errorMessage;
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorData.message || 'Failed to fetch token';
+          errorMessage =
+            errorData.error || errorData.message || "Failed to fetch token";
         } catch {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
@@ -61,7 +179,7 @@ export function CoreProvider({ initialData = {}, children }) {
       }
 
       const data = await response.json();
-      
+
       if (!data.token) {
         throw new Error("No token received from server");
       }
@@ -117,16 +235,14 @@ export function CoreProvider({ initialData = {}, children }) {
         console.error("Registration error:", registerError);
         throw new Error(`Registration failed: ${registerError.message}`);
       }
-
     } catch (err) {
       console.error("Failed to initialize Twilio device:", err);
       setTwilioError(err.message);
       setTwilioStatus("Error");
     }
-  }
+  };
 
-  // Cleanup device
-  function cleanupTwilioDevice() {
+  const cleanupTwilioDevice = () => {
     if (twilioDevice) {
       try {
         console.log("Cleaning up Twilio device");
@@ -139,38 +255,42 @@ export function CoreProvider({ initialData = {}, children }) {
         console.error("Error during cleanup:", err);
       }
     }
-  }
+  };
 
-  // Cleanup on unmount
+  // Cleanup on unmount - moved after function definitions
   useEffect(() => {
     return () => {
       cleanupTwilioDevice();
     };
   }, []);
 
-  const savePhoneConfiguration = async (config, orgId) => {
-    // Your existing logic here
-    try {
-      // Implementation depends on your API
-      setPhoneConfiguration(config);
-    } catch (err) {
-      console.error("Failed to save phone configuration:", err);
-      throw err;
-    }
-  };
-
   const value = useMemo(
     () => ({
+      organization,
+      setOrganization,
       phoneConfiguration,
       setPhoneConfiguration,
       savePhoneConfiguration,
+      tierSettings,
+
       twilioDevice,
       twilioStatus,
       twilioError,
       initializeTwilioDevice,
       cleanupTwilioDevice,
+      generateApiKey,
+      newKey,
+      tier, // Enhanced tier utilities
     }),
-    [phoneConfiguration, twilioDevice, twilioStatus, twilioError]
+    [
+      phoneConfiguration,
+      twilioDevice,
+      twilioStatus,
+      twilioError,
+      organization,
+      newKey,
+      tier,
+    ]
   );
 
   return <CoreContext.Provider value={value}>{children}</CoreContext.Provider>;

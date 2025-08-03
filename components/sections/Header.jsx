@@ -34,9 +34,9 @@ export const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden xl:flex items-center space-x-4">
-          <Button variant="outlineHero" asChild>
+          {/* <Button variant="outlineHero" asChild>
             <Link href="/waitlist">Join Waitlist Today!</Link>
-          </Button>
+          </Button> */}
           <Button size="huge" asChild>
             <Link href="/sign-in">Sign In</Link>
           </Button>

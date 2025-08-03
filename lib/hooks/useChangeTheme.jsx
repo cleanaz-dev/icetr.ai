@@ -15,10 +15,6 @@ export const ThemeChanger = () => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
-
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
@@ -30,8 +26,12 @@ export const ThemeChanger = () => {
       <Button
         className="h-auto bg-transparent hover:bg-transparent group"
         onClick={toggleTheme}
+        disabled={!mounted}
       >
-        {theme === "light" ? (
+        {!mounted ? (
+          // Placeholder that matches the size of your icons
+          <div className="size-4" />
+        ) : theme === "light" ? (
           <Sun
             className={`${
               theme === "light" && "text-primary"

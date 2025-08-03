@@ -1,13 +1,13 @@
 // app/api/org/[orgId]/integrations/bland/route.js
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { encryptIntegrationData } from "@/lib/encryption";
 import {
   blandAiIntegrationSchema,
   formatZodError,
 } from "@/lib/validations/integrations";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import { validateHasPermission } from "@/lib/db/validations";
 
 export async function POST(req, { params }) {
   try {

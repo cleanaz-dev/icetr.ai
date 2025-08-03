@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
-import { uploadImageToS3 } from "@/lib/services/aws";
+import prisma from "@/lib/prisma";
+import { uploadImageToS3 } from "@/lib/services/integrations/aws";
 
 export async function POST(req, { params }) {
   const { userId } = await params;

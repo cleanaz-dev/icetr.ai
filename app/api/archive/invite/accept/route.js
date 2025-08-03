@@ -1,4 +1,4 @@
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import redis from "@/lib/services/integrations/redis";
 import { NextResponse } from "next/server";
 import { createClerkClient } from "@clerk/backend";

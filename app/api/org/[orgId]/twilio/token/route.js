@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { safeDecryptField } from "@/lib/encryption";
-import { getTwillioIntegrationData } from "@/lib/services/db/integrations";
+import { getTwillioIntegrationData } from "@/lib/db/integrations";
 
 export async function GET(req, { params }) {
   const { orgId } = await params;

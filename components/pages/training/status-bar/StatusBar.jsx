@@ -4,10 +4,15 @@ import SystemStatus from "./SystemStatus";
 import { useTwilioDevice } from "@/lib/hooks/useTwilioDevice";
 import TrainingStatsBar from "./TrainingStatsBar";
 import { useTeamContext } from "@/context/TeamProvider";
+import { useCoreContext } from "@/context/CoreProvider";
 
 export default function StatusBar({ trainingAvgAndCount }) {
   const { orgId } = useTeamContext();
-  const { device, status, error } = useTwilioDevice(orgId);
+  const {
+    twilioDevice: device,
+    twilioError: error,
+    twilioStatus: status,
+  } = useCoreContext();
   const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
 
   // Request audio permissions when device is ready

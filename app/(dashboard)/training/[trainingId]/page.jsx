@@ -5,7 +5,7 @@ import {
   getBlandAiData,
   getTrainingById,
 } from "@/lib/services/prismaQueries";
-import { getOrgId } from "@/lib/services/db/org";
+import { getOrgId } from "@/lib/db/org";
 
 export default async function page({ params }) {
   const { userId } = await auth();

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { decryptIntegrationData } from "@/lib/encryption";
 
 // GET /api/org/[orgId]/integrations/twilio/available-numbers

@@ -26,6 +26,7 @@ export default function AddTeamMemberTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
+
   const unassignedFilteredMembers = members
     .filter((member) => {
       // Check if user is NOT in this team (teamId comes from props)
@@ -58,49 +59,24 @@ export default function AddTeamMemberTable({
     );
   };
 
-  const handleAddMembers = async () => {
-    if (selectedMembers.length === 0) {
-      toast.error("Please select at least one member to add");
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `/api/org/${orgId}/teams/${teamId}/members`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            users: selectedMembers,
-            teamId: teamId,
-          }),
-        }
-      );
-      const { members = [], message } = await response.json();
-
-      if (!response.ok) {
-        toast.error(message || "Failed to add members");
-        return;
-      }
-
-      toast.success(message);
-
-      onAddMember?.(members);
-      setSelectedMembers([]);
-      setSearchTerm("");
-
-      // Call onClose to close the dialog
-      onClose();
-    } catch (error) {
-      console.error("Error adding members:", error);
-      toast.error(error.message || "Failed to add members. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleSubmit = async () => {
+  if (selectedMembers.length === 0) {
+    toast.error("Please select at least one member");
+    return;
+  }
+  setLoading(true);
+  try {
+    await onAddMember(orgId, teamId, selectedMembers); // context does fetch + state
+    toast.success("Member(s) added");
+    setSelectedMembers([]);
+    onClose();
+  } catch (e) {
+    toast.error(e.message || "Failed to add member(s)");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     onClose();
@@ -185,7 +161,7 @@ export default function AddTeamMemberTable({
           Cancel
         </Button>
         <Button
-          onClick={handleAddMembers}
+          onClick={handleSubmit}
           disabled={selectedMembers.length === 0 || loading}
         >
           {loading

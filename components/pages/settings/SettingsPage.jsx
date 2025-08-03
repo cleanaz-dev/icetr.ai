@@ -1,11 +1,15 @@
+"use client";
 import { Building, Users, Settings, Cog, Settings2 } from "lucide-react";
-import OrgTab from "./OrgTab";
-import AccountTab from "./AccountTab";
+import OrgTab from "./org-tab/OrgTab";
+
 import UsersTab from "./UsersTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SimpleIntegrationsTab from "./SimpleIntegrationsTab";
+import { useCoreContext } from "@/context/CoreProvider";
+import AccountTab from "./account-tab/AccountTab";
 
 export default function SettingsPage({ settings }) {
+  const { organization, generateApiKey, newKey } = useCoreContext();
 
   return (
     <div className=" max-w-7xl px-4 py-6">
@@ -37,7 +41,11 @@ export default function SettingsPage({ settings }) {
         </TabsList>
 
         {/* Organization Settings */}
-        <OrgTab organization={settings.organization} />
+        <OrgTab
+          organization={organization}
+          generateApiKey={generateApiKey}
+          newKey={newKey}
+        />
 
         {/* User Account Settings */}
         <AccountTab settings={settings} />

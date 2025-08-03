@@ -368,7 +368,7 @@ export default function TrainingPage({
           <PermissionGate permission="training.create">
             <Button asChild>
               <Link href="/training/create-training">
-              Create Training
+              Create Training Page
               </Link>
               </Button>
           </PermissionGate>

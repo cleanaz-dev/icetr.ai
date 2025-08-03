@@ -34,8 +34,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Cog } from "lucide-react";
-import ProfileImageUpload from "./ProfileImageUpload";
-
+import ProfileImageUpload from "./account-tab/ProfileImageUpload";
 // Language options
 const languageOptions = [
   { value: "en-US", label: "English (US)" },

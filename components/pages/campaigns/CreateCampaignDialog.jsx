@@ -24,6 +24,7 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import { TierLimitBanner } from "@/components/tier/TierLimitBanner";
 
 // Assignment strategy options
 const ASSIGNMENT_STRATEGIES = [
@@ -101,7 +102,7 @@ export default function CreateCampaignDialog({ onSuccess }) {
           <PlusCircle /> Create Campaign
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="min-w-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Campaign</DialogTitle>
           <DialogDescription>
@@ -172,6 +173,8 @@ export default function CreateCampaignDialog({ onSuccess }) {
             </p>
           </div>
         )}
+
+        <TierLimitBanner check="campaigns" />
 
         <DialogFooter className="mt-4">
           <Button onClick={handleSubmit}>

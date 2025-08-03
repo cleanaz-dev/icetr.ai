@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { PrismaClientRustPanicError } from "@/lib/generated/prisma/runtime/edge";
 
 export async function PATCH(req, { params }) {

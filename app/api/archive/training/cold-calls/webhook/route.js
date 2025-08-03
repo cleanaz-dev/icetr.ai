@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { transcribePracticeCall } from "@/lib/services/assembly-ai";
+import { transcribePracticeCall } from "@/lib/services/integrations/assembly-ai";
 
 export async function POST(request) {
   try {

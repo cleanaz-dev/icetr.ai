@@ -6,7 +6,7 @@ import {
   getLeadsForUser,
   getOrganization,
 } from "@/lib/services/prismaQueries";
-import { getOrgId } from "@/lib/services/db/org";
+import { getOrgId } from "@/lib/db/org";
 
 export default async function page() {
   const { userId } = await auth();

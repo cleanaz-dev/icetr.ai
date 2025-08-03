@@ -1,9 +1,9 @@
-import { sendInviteEmail } from "@/lib/services/resend";
+import { sendInviteEmail } from "@/lib/services/integrations/resend";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/services/prisma";
+import prisma from "@/lib/prisma";
 import redis from "@/lib/services/integrations/redis";
-import { validateHasPermission } from "@/lib/services/db/validations";
+import { validateHasPermission } from "@/lib/db/validations";
 import { auth } from "@clerk/nextjs/server";
 
 export async function POST(request, { params }) {

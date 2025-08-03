@@ -81,6 +81,8 @@ export default function UnifiedStatusBar({
       : 0;
   };
 
+  console.log("trainingDeviceStatus:", status)
+
   // Training Mode Render
   const renderTrainingMode = () => (
     <div className="py-2.5 bg-card shadow-md">

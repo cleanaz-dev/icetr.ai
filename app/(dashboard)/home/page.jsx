@@ -1,9 +1,9 @@
 import AgentDashboard from "@/components/pages/dashboard/AgentDashboard";
 import Dashboard from "@/components/pages/dashboard/Dashboard";
 import { DashboardProvider } from "@/context/DashboardProvider";
-import { getAllOrgLeadsAndStatus } from "@/lib/services/db/leads";
-import { getOrgDashboardStats, getOrgId } from "@/lib/services/db/org";
-import { getUserPersmissions } from "@/lib/services/db/user";
+import { getAllOrgLeadsAndStatus } from "@/lib/db/leads";
+import { getOrgDashboardStats, getOrgId } from "@/lib/db/org";
+import { getUserPersmissions } from "@/lib/db/user";
 import {
   getAllRecentActivity,
   getOrgAgentDashboardStats,

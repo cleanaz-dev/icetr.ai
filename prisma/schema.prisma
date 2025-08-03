@@ -31,7 +31,34 @@ model Organization {
   customer           Customer?
   customerId         String?             @unique @db.ObjectId
   phoneConfiguration PhoneConfiguration?
+  tierSettings       TierSettings?
   call               Call[]              @relation("CallOrganization")
+}
+
+// New tier-based organization settings
+model TierSettings {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  organization Organization @relation(fields: [orgId], references: [id])
+  orgId        String       @unique @db.ObjectId
+
+  tier     SubscriptionTier @default(BASIC)
+  limits   Json // All limits in one place
+  features Json // All feature flags in one place
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum DFYTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
 }
 
 model Customer {
@@ -49,6 +76,9 @@ model Customer {
   taxId           String? // For tax compliance
   paymentMethod   String? // Card, ACH, etc.
   invoiceSettings Json? // Custom invoice settings
+
+  // Billing cycle preferences
+  billingCycle BillingCycle @default(MONTHLY)
 }
 
 model Subscription {
@@ -59,20 +89,29 @@ model Subscription {
 
   // Product/Price Info
   priceId   String
-  productId String // Add product reference
+  productId String
   quantity  Int?   @default(1)
 
+  // Tier tracking
+  tier SubscriptionTier @default(BASIC)
+
+  // Add-ons (for DFY services)
+  addOns SubscriptionAddOn[]
+
   // Status Management
-  status            SubscriptionStatus? // Use enum instead of String
+  status            SubscriptionStatus
   currentPeriodEnd  DateTime
-  cancelAtPeriodEnd Boolean             @default(false)
+  cancelAtPeriodEnd Boolean            @default(false)
 
   // Trial support
   trialStart DateTime?
   trialEnd   DateTime?
 
+  // Usage tracking
+  usageRecords UsageRecord[]
+
   // Metadata
-  metadata Json? // For additional Stripe data
+  metadata Json?
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -87,6 +126,57 @@ enum SubscriptionStatus {
   UNPAID
   INCOMPLETE
   INCOMPLETE_EXPIRED
+}
+
+model SubscriptionAddOn {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String       @db.ObjectId
+
+  type     AddOnType
+  priceId  String
+  quantity Int                @default(1)
+  status   SubscriptionStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AddOnType {
+  DFY_STARTER
+  DFY_PROFESSIONAL
+  DFY_ENTERPRISE
+  EXTRA_USERS
+  EXTRA_TRANSCRIPTION_MINUTES
+  PREMIUM_SUPPORT
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model UsageRecord {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String       @db.ObjectId
+
+  usageType UsageType
+  quantity  Int
+  timestamp DateTime  @default(now())
+
+  // For aggregation
+  billingPeriod String // "2025-01" format
+
+  createdAt DateTime @default(now())
+}
+
+enum UsageType {
+  TRANSCRIPTION_MINUTES
+  WEBHOOK_CALLS
+  API_CALLS
+  LEADS_PROCESSED
+  TRAINING_SESSIONS
 }
 
 model Invoice {
@@ -313,6 +403,7 @@ model TeamMember {
 
 enum TeamRole {
   MEMBER
+  MANAGER
   SENIOR
   LEAD
 }
@@ -781,6 +872,7 @@ enum RoleType {
   Agent
   TeamAdmin
   OrgAdmin
+  OrgMananger
   SuperAdmin
 }
 
