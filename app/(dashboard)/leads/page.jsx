@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import {
   getOrgId,
   getOrgTeamsAndMembers,
-} from "@/lib/services/db/org";
+} from "@/lib/db/org";
 
 
 export default async function page() {
