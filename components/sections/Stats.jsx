@@ -32,7 +32,7 @@ export const Stats = () => {
     <section className="py-20 px-4 bg-slate-900/15">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <div className="inline-block  border border-primary rounded-full px-6 py-2 mb-6 bg-card">
+          <div className="inline-block  border border-primary rounded-full px-6 py-2 mb-6 bg-transparent">
             <span className="text-sky-400 text-sm md:text-base tracking-wide">
               THE COLD TRUTH
             </span>

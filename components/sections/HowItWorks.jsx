@@ -50,7 +50,7 @@ export const HowItWorks = () => {
     <section className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <div className="inline-block bg-card border border-sky-400 rounded-full px-6 py-2 mb-6">
+          <div className="inline-block bg-transparent border border-sky-400 rounded-full px-6 py-2 mb-6">
             <span className="text-sky-400 text-sm md:text-base tracking-wide">
               HOW IT WORKS
             </span>
@@ -126,7 +126,7 @@ export const HowItWorks = () => {
               and seamless integrations. Every lead in its perfect slot.
             </p>
             <button className="px-8 py-4 bg-gradient-to-r from-sky-400 to-blue-500 text-slate-900 rounded-lg font-semibold hover:from-sky-300 hover:to-blue-400 transition-all duration-300 flex items-center justify-center gap-2 mx-auto">
-              Start Your Free Trial
+              Book Demo Call
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
