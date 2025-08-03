@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import redis from "@/lib/services/integrations/redis";
 import { NextResponse } from "next/server";
 import { createClerkClient } from "@clerk/backend";
-import { getFullName } from "@/lib/db/helpers";
+import { getFullName } from "@/lib/utils";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
