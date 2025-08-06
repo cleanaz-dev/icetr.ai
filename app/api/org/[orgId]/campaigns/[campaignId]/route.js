@@ -1,21 +1,38 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { PrismaClientRustPanicError } from "@/lib/generated/prisma/runtime/edge";
+import { validateHasPermission, validateOrgAccess } from "@/lib/db/validations";
 
 export async function PATCH(req, { params }) {
-  const { id: campaignId } = await params;
+  const { campaignId, orgId } = await params;
+
+  if (!campaignId || !orgId) {
+    return NextResponse.json(
+      { message: "Missing required parameters" },
+      { status: 400 }
+    );
+  }
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return NextResponse.json({ message: "Unauthorized User" }, { status: 401 });
   }
   try {
-    const { name, type } = await req.json();
-    await prisma.campaign.update({
+    await validateHasPermission(clerkId, ["campaign.update"]);
+    await validateOrgAccess(clerkId, orgId);
+
+    const { name, type, assignmentStrategy } = await req.json();
+    const updatedCampaign = await prisma.campaign.update({
       where: { id: campaignId },
-      data: { name, assignmentStrategy: type },
+      data: { name, type, assignmentStrategy },
+      include: {
+        team: {
+          select: {
+            members: true,
+          },
+        },
+      },
     });
-    return NextResponse.json({ message: "Updated Campaign" }, { status: 200 });
+    return NextResponse.json(updatedCampaign);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -42,20 +59,20 @@ export async function GET(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const { id: campaignId } = await params;
-  const { userId: clerkId } = await auth();
-
-  // Authentication check
-  if (!clerkId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  // Input validation
-  if (!campaignId) {
-    return NextResponse.json({ message: "Campaign ID is required" }, { status: 400 });
-  }
-
   try {
+    const { campaignId, orgId } = await params;
+    const { userId: clerkId } = await auth();
+
+    // Authentication check
+    if (!clerkId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Input validation
+    if (!campaignId || !orgId) {
+      return NextResponse.json({ message: "Invalid Request" }, { status: 400 });
+    }
+
     // Check if campaign exists and user has permission (via org)
     const existingCampaign = await prisma.campaign.findFirst({
       where: {
@@ -63,21 +80,24 @@ export async function DELETE(req, { params }) {
         organization: {
           users: {
             some: {
-              clerkId: clerkId
-            }
-          }
-        }
+              clerkId: clerkId,
+            },
+          },
+        },
       },
       include: {
         leads: {
-          select: { id: true }
-        }
-      }
+          select: { id: true },
+        },
+      },
     });
 
     if (!existingCampaign) {
       return NextResponse.json(
-        { message: "Campaign not found or you don't have permission to delete it" },
+        {
+          message:
+            "Campaign not found or you don't have permission to delete it",
+        },
         { status: 404 }
       );
     }
@@ -88,74 +108,73 @@ export async function DELETE(req, { params }) {
       await prisma.leadActivity.deleteMany({
         where: {
           lead: {
-            campaignId: campaignId
-          }
-        }
+            campaignId: campaignId,
+          },
+        },
       });
 
       await prisma.followUp.deleteMany({
         where: {
           lead: {
-            campaignId: campaignId
-          }
-        }
+            campaignId: campaignId,
+          },
+        },
       });
 
       await prisma.call.deleteMany({
         where: {
           lead: {
-            campaignId: campaignId
-          }
-        }
+            campaignId: campaignId,
+          },
+        },
       });
 
       // Delete leads
       await prisma.lead.deleteMany({
-        where: { campaignId: campaignId }
+        where: { campaignId: campaignId },
       });
 
       // Delete campaign documents
       await prisma.campaignDocument.deleteMany({
-        where: { campaignId: campaignId }
+        where: { campaignId: campaignId },
       });
 
       // Delete call sessions
       await prisma.callSession.deleteMany({
-        where: { campaignId: campaignId }
+        where: { campaignId: campaignId },
       });
 
       // Finally delete the campaign
       const deletedCampaign = await prisma.campaign.delete({
-        where: { id: campaignId }
+        where: { id: campaignId },
       });
 
       return deletedCampaign;
     });
 
     return NextResponse.json(
-      { 
+      {
         message: `${result.name} and all related data have been deleted successfully`,
         deletedCampaign: {
           id: result.id,
           name: result.name,
-          leadsDeleted: existingCampaign.leads.length
-        }
+          leadsDeleted: existingCampaign.leads.length,
+        },
       },
       { status: 200 }
     );
-
   } catch (error) {
     console.error("Delete campaign error:", error);
-    
+
     // Handle specific Prisma errors
-    if (error.code === 'P2025') {
+    if (error.code === "P2025") {
       return NextResponse.json(
         { message: "Campaign not found" },
         { status: 404 }
       );
     }
-    
-    if (error.code === 'P2003') {
+
+    if (error.code === "P2003") {
       return NextResponse.json(
         { message: "Cannot delete campaign due to related records" },
         { status: 409 }

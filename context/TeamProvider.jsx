@@ -10,6 +10,7 @@ const TeamContext = createContext({
   teamMembers: [],
   orgCampaigns: [],
   teamLeads: [],
+  setOrgCampaigns: () => {},
   setTeams: () => {},
   editTeam: () => {},
   editMemberRole: () => {},
@@ -36,13 +37,12 @@ export const TeamProvider = ({ children, initialData = {} }) => {
     orgId = null,
     orgMembers = [],
     initialTeamMembers = [],
-    orgCampaigns = [],
     teamLeads = [],
   } = initialData;
 
   const [teams, setTeams] = useState(initialTeams);
   const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
-
+  const [orgCampaigns, setOrgCampaigns] = useState(initialData?.orgCampaigns ?? [])
   const unassignCampaign = async (teamId, campaignId, orgId) => {
     try {
       const result = await fetch(
@@ -226,10 +226,12 @@ export const TeamProvider = ({ children, initialData = {} }) => {
         team: newTeam,
         members: newTeamMembers = [],
       } = await response.json();
+    
 
       if (!response.ok) {
         throw new Error(message || "Failed to create team");
       }
+     
 
       setTeams((prevTeams) => [...prevTeams, newTeam]);
       setTeamMembers((prev) => [...prev, ...newTeamMembers]);
@@ -361,6 +363,7 @@ const getTeamRole = (member) =>
       getTeamMembersByTeamId,
       getTeamRole,
       orgCampaigns,
+      setOrgCampaigns,
       teamLeads,
       filterLeadsByTeamId,
       filterCampaignsByTeamId,

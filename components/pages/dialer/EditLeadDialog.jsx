@@ -17,7 +17,8 @@ export default function EditLeadDialog({
   open, 
   onOpenChange, 
   lead, 
-  onSave 
+  onSave,
+  orgId 
 }) {
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -68,7 +69,7 @@ export default function EditLeadDialog({
         email: email.trim()
       };
 
-      await onSave(lead.id, updatedData);
+      await onSave(lead.id, updatedData, orgId);
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to update lead:", error);

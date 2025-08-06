@@ -18,7 +18,8 @@ export default function CampaignStatusDialog({
   open, 
   onOpenChange, 
   status,
-  onSuccess 
+  onSuccess,
+  orgId 
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,11 +70,12 @@ const handleStatusUpdate = async () => {
     toast.success(`Campaign "${campaign.name}" has been ${successMessage}`);
     
     onOpenChange(false);
-    
-    // Wait a bit for dialog to close before revalidating
-    setTimeout(() => {
-      onSuccess();
-    }, 100);
+
+    const result = await response.json();
+    console.log("Campaign status updated successfully: ", result);
+
+    onSuccess(result);
+  
     
   } catch (error) {
     toast.error(error?.message || "Failed to update campaign status. Please try again.");

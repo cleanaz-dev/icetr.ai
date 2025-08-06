@@ -6,8 +6,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        fadeOut: {
+          "0%": { opacity: 1 },
+          "100%": { opacity: 0 },
+        },
+      },
       animation: {
-        'spin-slow': 'spin 2s linear infinite',
+        "fade-out": "fadeOut 0.5s ease-out forwards 4.5s",
+        "spin-slow": "spin 2s linear infinite",
       },
     },
   },

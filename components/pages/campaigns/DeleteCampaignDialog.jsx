@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-export default function DeleteCampaignDialog({ campaign, open, onOpenChange, onSuccess }) {
+export default function DeleteCampaignDialog({ campaign, open, onOpenChange, onSuccess, orgId, setCampaigns }) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -25,11 +25,14 @@ export default function DeleteCampaignDialog({ campaign, open, onOpenChange, onS
       if (!response.ok) {
         throw new Error("Failed to delete campaign");
       }
-      toast.success("Campaign deleted successfully!");
-      onOpenChange(false);
+      
+     
       if (typeof onSuccess === "function") {
-        onSuccess();
+        onSuccess(campaign.id);
       }
+      // setCampaigns(result.campaigns)
+       onOpenChange(false);
+      toast.success("Campaign deleted successfully!");
     } catch (error) {
       console.error("Error deleting campaign:", error);
       toast.error("Failed to delete campaign. Please try again.");

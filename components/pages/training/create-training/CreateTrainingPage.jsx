@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { CircleDot, Dot, Trash2 } from "lucide-react";
 import { TierAwareButton } from "@/components/buttons/TierAwareButtons";
+import ReadMeDialog from "../dialog/ReadMeDialog";
 
 export default function CreateTrainingPage({ campaigns = [], orgId, blandAi }) {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function CreateTrainingPage({ campaigns = [], orgId, blandAi }) {
       content: "Hi, my name is [NAME] and I'm calling from [COMPANY]...",
     },
   ]);
-  const [nextId, setNextId] = useState(3)
+  const [nextId, setNextId] = useState(3);
   const [formData, setFormData] = useState({
     name: "",
     scenario: {
@@ -122,13 +123,13 @@ export default function CreateTrainingPage({ campaigns = [], orgId, blandAi }) {
       },
     }));
 
-const addScript = () => {
-  setCustomScripts([
-    ...customScripts,
-    { id: nextId, label: "", content: "" },
-  ]);
-  setNextId(prev => prev + 1);
-};
+  const addScript = () => {
+    setCustomScripts([
+      ...customScripts,
+      { id: nextId, label: "", content: "" },
+    ]);
+    setNextId((prev) => prev + 1);
+  };
 
   const removeScript = (id) => {
     setCustomScripts(customScripts.filter((script) => script.id !== id));
@@ -207,7 +208,6 @@ const addScript = () => {
   const filtered = campaigns.filter((c) =>
     c.name.toLowerCase().includes(campaignSearch.toLowerCase())
   );
-  
 
   const renderCampaignPicker = () => (
     <Card>
@@ -239,11 +239,10 @@ const addScript = () => {
                     </span>
                   </div>
 
-                  <TierAwareButton 
+                  <TierAwareButton
                     onClick={() => setSelectedCampaign(c)}
                     label={`Create Training`}
                     check="scenarios"
-
                   />
                   {/* <Button size="sm" onClick={() => setSelectedCampaign(c)}>
                     Create Training
@@ -326,7 +325,12 @@ const addScript = () => {
   const renderBasicInfo = () => (
     <Card>
       <CardHeader>
-        <CardTitle>Basic Information</CardTitle>
+        <CardTitle>
+          <div className="flex justify-between">
+            <p>Basic Information</p>
+            <ReadMeDialog />
+          </div>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -661,13 +665,12 @@ const addScript = () => {
               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 duration-300 transition-all" />
               Change Campaign
             </Button>
-            <TierAwareButton 
+            <TierAwareButton
               onClick={handleSubmit}
               disabled={loading}
               check="scenarios"
               label={loading ? "Creating..." : "Create Training"}
             />
-           
           </div>
         </div>
       </div>

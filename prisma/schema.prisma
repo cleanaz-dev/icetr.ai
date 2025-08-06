@@ -15,100 +15,125 @@ datasource db {
 }
 
 model Organization {
-  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  name               String
-  country            String
-  users              User[]
-  campaigns          Campaign[]
-  apiKeys            ApiKey[]
-  teams              Team[]
-  leads              Lead[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  createdBy          String              @unique
-  orgIntegrations    OrgIntegration?
-  auditLogs          AuditLog[]
-  customer           Customer?
-  customerId         String?             @unique @db.ObjectId
-  phoneConfiguration PhoneConfiguration?
-  tierSettings       TierSettings?
-  call               Call[]              @relation("CallOrganization")
+  id                  String              @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  onboardingCompleted Boolean             @default(false)
+  country             String?
+  users               User[]              @relation("UserOrganization")
+  campaigns           Campaign[]
+  apiKeys             ApiKey[]
+  teams               Team[]
+  leads               Lead[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  ownerId             String?             @unique @db.ObjectId
+  owner               User?               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  orgIntegrations     OrgIntegration?
+  auditLogs           AuditLog[]
+  customer            Customer?
+  customerId          String?             @db.ObjectId
+  phoneConfiguration  PhoneConfiguration?
+  tierSettings        TierSettings?
+  call                Call[]              @relation("CallOrganization")
 }
 
 // New tier-based organization settings
-model TierSettings {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  organization Organization @relation(fields: [orgId], references: [id])
-  orgId        String       @unique @db.ObjectId
-
-  tier     SubscriptionTier @default(BASIC)
-  limits   Json // All limits in one place
-  features Json // All feature flags in one place
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum SubscriptionTier {
-  BASIC
-  PRO
-  ENTERPRISE
-}
-
-enum DFYTier {
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
-}
 
 model Customer {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  organization Organization @relation(fields: [orgId], references: [id])
-  orgId        String       @unique @db.ObjectId
-  stripeCusId  String       @unique
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  organization Organization? @relation(fields: [orgId], references: [id])
+  orgId        String?       @unique @db.ObjectId
+  stripeCusId  String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  subscriptions Subscription[]
-  invoices      Invoice[]
+  subscription Subscription?
+  invoices     Invoice[]
 
   billingEmail    String? // For receipts
   taxId           String? // For tax compliance
-  paymentMethod   String? // Card, ACH, etc.
+  paymentMethod   Json? // Card, ACH, etc.
   invoiceSettings Json? // Custom invoice settings
+}
 
-  // Billing cycle preferences
-  billingCycle BillingCycle @default(MONTHLY)
+model User {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  email             String             @unique
+  clerkId           String?            @unique
+  firstname         String?
+  lastname          String?
+  fullname          String
+  role              Role?              @relation(fields: [roleId], references: [id])
+  roleId            String?            @db.ObjectId
+  imageUrl          String?
+  orgId             String?            @db.ObjectId
+  organization      Organization?      @relation("UserOrganization", fields: [orgId], references: [id], onDelete: NoAction)
+  assignedLeads     Lead[]
+  activities        LeadActivity[]
+  userSettings      UserSettings?
+  uploadedDocuments CampaignDocument[] @relation("UploadedDocuments")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  callSessions      CallSession[]
+  Call              Call[]
+  Training          Training[]
+  Notification      Notification[]
+  reviews           CallReview[]
+  orgOwner          Organization?      @relation("OrgOwner")
+  managedTeams      Team[]             @relation("TeamManager")
+  teamMemberships   TeamMember[]
+  auditLogs         AuditLog[]
+  TrainingSession   TrainingSession[]
+}
+
+model TierSettings {
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  organization Organization?    @relation(fields: [orgId], references: [id])
+  orgId        String?          @unique @db.ObjectId
+  tier         SubscriptionTier @default(BASIC)
+  limits       Json // All limits in one place
+  features     Json // All feature flags in one place
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model UserSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  language  String   @default("en-US")
+  timezone  String   @default("America/New_York")
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Subscription {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   stripeSubId String   @unique
   customer    Customer @relation(fields: [customerId], references: [id])
-  customerId  String   @db.ObjectId
+  customerId  String   @unique @db.ObjectId
 
   // Product/Price Info
   priceId   String
   productId String
+  price     Float?
   quantity  Int?   @default(1)
 
   // Tier tracking
-  tier SubscriptionTier @default(BASIC)
-
-  // Add-ons (for DFY services)
-  addOns SubscriptionAddOn[]
-
-  // Status Management
+  tier              SubscriptionTier    @default(BASIC)
+  addOns            SubscriptionAddOn[]
   status            SubscriptionStatus
   currentPeriodEnd  DateTime
-  cancelAtPeriodEnd Boolean            @default(false)
+  cancelAtPeriodEnd Boolean             @default(false)
 
-  // Trial support
   trialStart DateTime?
   trialEnd   DateTime?
 
   // Usage tracking
   usageRecords UsageRecord[]
+
+  // Billing cycle preferences
+  billingCycle BillingCycle @default(MONTHLY)
 
   // Metadata
   metadata Json?
@@ -186,6 +211,7 @@ model Invoice {
   customerId  String    @db.ObjectId
   amountDue   Int // in cents
   amountPaid  Int // in cents
+  currency    String
   status      String // draft, open, paid, void, uncollectible
   pdfUrl      String? // Link to downloadable invoice
   hostedUrl   String? // Payable invoice URL
@@ -217,8 +243,8 @@ model TwilioIntegration {
   orgIntegrationId String         @unique @db.ObjectId
   orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
   enabled          Boolean        @default(false)
-  accountSid       String
-  authToken        String
+  accountSid       String?
+  authToken        String?
   apiKey           String?
   apiSecret        String?
   appSid           String?
@@ -292,8 +318,8 @@ model ZoomIntegration {
   orgIntegrationId String         @unique @db.ObjectId
   orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id])
   enabled          Boolean        @default(false)
-  clientId         String
-  clientSecretKms  String
+  clientId         String?
+  clientSecretKms  String?
   accountId        String?
   webhookSecretKms String?
 
@@ -306,7 +332,7 @@ model MakeIntegration {
   orgIntegrationId String         @unique @db.ObjectId
   orgIntegration   OrgIntegration @relation(fields: [orgIntegrationId], references: [id], onDelete: Cascade)
   enabled          Boolean        @default(false)
-  apiKeyKms        String
+  apiKeyKms        String?
   webhookUrl       String?
   scenarioId       String?
 
@@ -408,36 +434,6 @@ enum TeamRole {
   LEAD
 }
 
-model User {
-  id                String             @id @default(auto()) @map("_id") @db.ObjectId
-  email             String             @unique
-  clerkId           String             @unique
-  firstname         String
-  lastname          String
-  fullname          String?
-  role              Role?              @relation(fields: [roleId], references: [id])
-  roleId            String?            @db.ObjectId
-  imageUrl          String
-  orgId             String             @db.ObjectId
-  organization      Organization       @relation(fields: [orgId], references: [id])
-  assignedLeads     Lead[]
-  activities        LeadActivity[]
-  userSettings      UserSettings?
-  uploadedDocuments CampaignDocument[] @relation("UploadedDocuments")
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  callSessions      CallSession[]
-  Call              Call[]
-  Training          Training[]
-  Notification      Notification[]
-  reviews           CallReview[]
-
-  managedTeams    Team[]            @relation("TeamManager")
-  teamMemberships TeamMember[]
-  auditLogs       AuditLog[]
-  TrainingSession TrainingSession[]
-}
-
 model Role {
   id    String   @id @default(auto()) @map("_id") @db.ObjectId
   type  RoleType @default(Agent)
@@ -453,16 +449,6 @@ model Permission {
 
   roleIDs String[] @db.ObjectId
   roles   Role[]   @relation(fields: [roleIDs], references: [id])
-}
-
-model UserSettings {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @unique @db.ObjectId
-  language  String   @default("en-US")
-  timezone  String   @default("America/New_York")
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Campaign {
@@ -483,6 +469,7 @@ model Campaign {
   updatedAt          DateTime            @updatedAt
   callSessions       CallSession[]
   training           CampaignTraining[]
+  scripts            Json?
 
   @@index([orgId])
   @@index([teamId])
@@ -872,7 +859,7 @@ enum RoleType {
   Agent
   TeamAdmin
   OrgAdmin
-  OrgMananger
+  OrgManager
   SuperAdmin
 }
 
@@ -922,4 +909,17 @@ model PhoneConfiguration {
   organization Organization @relation(fields: [orgId], references: [id])
 
   @@map("phone_configurations")
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+  ENTERPRISE
+  GROWTH
+}
+
+enum DFYTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
 }

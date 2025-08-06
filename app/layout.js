@@ -30,10 +30,10 @@ export default function RootLayout({ children }) {
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${roboto.className} antialiased`}>
-          <ThemeProvider forcedTheme="dark">
+          <ThemeProvider >
             <TooltipProvider>
               {children}
-              <Toaster theme="dark" richColors />
+              <Toaster theme="system" richColors />
             </TooltipProvider>
           </ThemeProvider>
         </body>

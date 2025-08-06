@@ -29,12 +29,17 @@ import { usePermissionContext } from "@/context/PermissionProvider";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PermissionGate from "@/components/auth/PermissionGate";
+import PageHeader from "@/components/ui/layout/PageHeader";
+import { useCoreContext } from "@/context/CoreProvider";
 
 export default function TrainingPage({
   trainingData = [],
   userProfile,
   orgId,
   blandAiSettings,
+  device,
+  status,
+  error
 }) {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState("");
@@ -48,7 +53,7 @@ export default function TrainingPage({
 
   const timerRef = useRef(null);
   const { user } = useUser();
-  const { device, status, error } = useTwilioDevice(orgId);
+
   const {
     callDuration,
     sessionCalls,
@@ -356,23 +361,17 @@ export default function TrainingPage({
       {/* Container Div */}
       <div className="p-1 md:p-6">
         {/* Header */}
-        <div className="flex justify-between mb-6">
-          <div>
-            <h1 className="flex gap-2 text-4xl font-bold items-center">
-              <PiStudent className="text-primary" /> Training
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Practice your pitch with AI-powered feedback
-            </p>
-          </div>
+        <PageHeader
+          title="Training"
+          description="Practice your pitch with AI-powered feedback"
+          icon="PiStudent"
+        >
           <PermissionGate permission="training.create">
             <Button asChild>
-              <Link href="/training/create-training">
-              Create Training Page
-              </Link>
-              </Button>
+              <Link href="/training/create-training">Create Training Page</Link>
+            </Button>
           </PermissionGate>
-        </div>
+        </PageHeader>
 
         <Tabs defaultValue="practice" className="space-y-4">
           {/* Tab Switcher */}

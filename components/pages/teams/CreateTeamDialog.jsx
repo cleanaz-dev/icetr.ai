@@ -90,7 +90,7 @@ export default function CreateTeamDialog({ orgId, onCreate }) {
           {addSelf ? 
             "Added to team as Team Manager"
           : 
-            "Cannot assign leads until members are adde"
+            "Cannot assign leads until members are added"
           }
         </p>
         <DialogFooter className="mt-4">

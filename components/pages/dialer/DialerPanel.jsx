@@ -49,10 +49,10 @@ export default function DialerPanel({
         showDialer ? "block" : "hidden lg:block"
       )}
     >
-      <div className="p-5 flex justify-between items-center">
-        <h3 className="text-lg font-semibold capitalize  underline decoration-primary">
+      <div className="p-1 flex justify-between items-center">
+        {/* <h3 className="text-lg font-semibold capitalize  underline decoration-primary">
           {activeTab}
-        </h3>
+        </h3> */}
         <Button
           variant="ghost"
           size="sm"
@@ -66,9 +66,9 @@ export default function DialerPanel({
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex flex-col"
+        className="flex flex-col mt-4"
       >
-        <TabsList className=" flex justify-around w-full mt-2">
+        <TabsList className=" flex justify-around w-full">
           <TabsTrigger value="dialpad" className="text-xs cursor-pointer">
             <BiDialpad className="text-primary " />
           </TabsTrigger>

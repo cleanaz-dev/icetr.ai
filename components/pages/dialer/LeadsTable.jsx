@@ -58,7 +58,8 @@ export default function LeadsTable({
   onSort,
   onShowDialer,
   onUpdateLead,  // New prop
-  onSaveLead,    // New prop
+  onSaveLead, 
+  orgId   // New prop
 }) {
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -76,7 +77,7 @@ export default function LeadsTable({
     console.log("email sent to lead")
   }
 
-const handleSaveLead = async (leadId, updatedData) => {
+const handleSaveLead = async (leadId, updatedData, orgId) => {
     try {
       const response = await fetch(`/api/org/${orgId}/leads/${leadId}`, {
         method: "PATCH",
@@ -331,6 +332,7 @@ const handleSaveLead = async (leadId, updatedData) => {
           onOpenChange={setEditDialogOpen}
           lead={selectedLead}
           onSave={handleSaveLead}
+          orgId={orgId}
         />
 
           {/*  Email Dialog */}

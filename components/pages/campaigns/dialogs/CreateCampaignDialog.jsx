@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TierLimitBanner } from "@/components/tier/TierLimitBanner";
+import { useTeamContext } from "@/context/TeamProvider";
 
 // Assignment strategy options
 const ASSIGNMENT_STRATEGIES = [
@@ -52,9 +53,10 @@ const ASSIGNMENT_STRATEGIES = [
   },
 ];
 
-export default function CreateCampaignDialog({ onSuccess }) {
-  const [open, setOpen] = useState(false);
+export default function CreateCampaignDialog({ onSuccess, open, setOpen }) {
+  const { orgId, teams } = useTeamContext();
   const [name, setName] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(teams[0]);
   const [campaigntype, setCampaignType] = useState("");
   const [assignmentType, setAssignmentType] = useState("MANUAL");
   const [loading, setLoading] = useState(false);
@@ -69,8 +71,9 @@ export default function CreateCampaignDialog({ onSuccess }) {
         method: "POST",
         body: JSON.stringify({
           name,
-          campaignType: campaigntype, // Fix the key name
-          assignmentStrategy: assignmentType, // Fix the key name
+          campaignType: campaigntype,
+          assignmentStrategy: assignmentType,
+          selectedTeamId: selectedTeam,
         }),
         headers: { "Content-Type": "application/json" },
       });
@@ -80,13 +83,15 @@ export default function CreateCampaignDialog({ onSuccess }) {
         return;
       }
 
+      const result = await response.json();
+
+      onSuccess(result);
+
       toast.success("Campaign created successfully!");
       setName("");
       setCampaignType("");
-      setAssignmentType("");
+      setAssignmentType("MANUAL");
       setOpen(false);
-
-      onSuccess();
     } catch (err) {
       console.error("Failed to create campaign:", err);
       toast.error("An unexpected error occurred.");
@@ -97,11 +102,6 @@ export default function CreateCampaignDialog({ onSuccess }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default">
-          <PlusCircle /> Create Campaign
-        </Button>
-      </DialogTrigger>
       <DialogContent className="min-w-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Campaign</DialogTitle>
@@ -163,6 +163,25 @@ export default function CreateCampaignDialog({ onSuccess }) {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="team">Assign to Team</Label>
+          <Select
+            value={selectedTeam}
+            onValueChange={(value) => setSelectedTeam(value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {teams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {assignmentType && (
           <div className="p-2 bg-muted/50 rounded-md">
             <p className="text-sm text-muted-foreground">
@@ -177,12 +196,15 @@ export default function CreateCampaignDialog({ onSuccess }) {
         <TierLimitBanner check="campaigns" />
 
         <DialogFooter className="mt-4">
-          <Button onClick={handleSubmit}>
-            {loading ? "Creating..." : "Create"}
-          </Button>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
+          <Button
+            onClick={handleSubmit}
+            disabled={!name || !campaigntype || !assignmentType}
+          >
+            {loading ? "Creating..." : "Create Campaign"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

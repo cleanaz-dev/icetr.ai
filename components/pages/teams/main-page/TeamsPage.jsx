@@ -25,17 +25,17 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import CreateTeamDialog from "./CreateTeamDialog";
+import CreateTeamDialog from "../CreateTeamDialog";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import AddTeamMemberDialog from "./dialog/AddTeamMemberDialog";
+import AddTeamMemberDialog from "../dialog/AddTeamMemberDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import AssignCampaignDialog from "./dialog/AssignCampaignDialog";
-import UnassignCampaignDialog from "./dialog/UnassignCampaignDialog";
-import EditTeamDialog from "./dialog/EditTeamDialog";
+import AssignCampaignDialog from "../dialog/AssignCampaignDialog";
+import UnassignCampaignDialog from "../dialog/UnassignCampaignDialog";
+import EditTeamDialog from "../dialog/EditTeamDialog";
 import Link from "next/link";
-import DeleteTeamDialog from "./dialog/DeleteTeamDialog";
-import { BatchAssignTeamLeads } from "./BatchAssignTeamLeads";
+import DeleteTeamDialog from "../dialog/DeleteTeamDialog";
+import { BatchAssignTeamLeads } from "../BatchAssignTeamLeads";
 import PermissionGate from "@/components/auth/PermissionGate";
 import { getRoleIcon, getCampaignType } from "@/lib/utils";
 import { toast } from "sonner";
@@ -43,8 +43,9 @@ import { toast } from "sonner";
 import { useTeamContext } from "@/context/TeamProvider";
 import { useLeads } from "@/context/LeadsProvider";
 
-import RemoveTeamMemberDialog from "./RemoveTeamMemberDialog";
-import EditMemberRoleDialog from "./dialog/EditMemberRoleDialog";
+import RemoveTeamMemberDialog from "../RemoveTeamMemberDialog";
+import EditMemberRoleDialog from "../dialog/EditMemberRoleDialog";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function TeamsPage() {
   const {
@@ -62,14 +63,16 @@ export default function TeamsPage() {
     addMemberToTeam,
     editMemberRole,
     getTeamRole,
-    assignLeadsToTeamMember
+    assignLeadsToTeamMember,
+    setOrgCampaigns,
   } = useTeamContext();
   const { leads, refreshLeads } = useLeads();
 
   const [expandedTeams, setExpandedTeams] = useState(new Set());
-  const [selectedTeam, setSelectedTeam] = useState(null);
+ 
 
-  // console.log("teams", teams)
+
+  console.log("teams", teams)
 
   const toggleTeamExpansion = (teamId) => {
     const newExpanded = new Set(expandedTeams);
@@ -81,33 +84,21 @@ export default function TeamsPage() {
     setExpandedTeams(newExpanded);
   };
 
-  
-
-
   const unassignedLeads = leads.filter((lead) => !lead.assignedUserId);
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="flex items-center gap-2 text-xl md:text-3xl font-bold text-foreground">
-                <span>
-                  <Handshake className="text-primary" />
-                </span>
-                Teams
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your teams, members, and campaigns
-              </p>
-            </div>
-            {teams.length > 0 && (
-              <CreateTeamDialog orgId={orgId} onCreate={createTeam} />
-            )}
-          </div>
-        </div>
+        <PageHeader
+          title="Teams"
+          description="Manage your teams, members, and campaigns"
+          icon="Handshake"
+        >
+          {teams.length > 0 && (
+            <CreateTeamDialog orgId={orgId} onCreate={createTeam} />
+          )}
+        </PageHeader>
 
         {/* Teams List */}
         <div className="space-y-6">
@@ -153,7 +144,7 @@ export default function TeamsPage() {
                         </div>
                       </button>
                       <Link href={`/teams/${team.id}`}>
-                        <ExternalLink className="size-4 -mr-1 text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200" />
+                        <span className="text-xs hover:underline text-muted-foreground">View Team Details</span>
                       </Link>
                     </div>
 
@@ -183,7 +174,6 @@ export default function TeamsPage() {
                             onAssignLeads={assignLeadsToTeamMember}
                             orgId={orgId}
                             onSuccess={refreshLeads}
-
                           />
                         </PermissionGate>
                         <PermissionGate permission="team.assign">
@@ -200,6 +190,7 @@ export default function TeamsPage() {
                             onEdit={updateTeam}
                             team={team}
                             orgId={orgId}
+                            
                           />
                         </PermissionGate>
                         <PermissionGate permission="team.delete">
@@ -271,7 +262,10 @@ export default function TeamsPage() {
                                         </TableCell>
                                         <TableCell>
                                           <span className="flex gap-2 items-center">
-                                        {getTeamRole(member?.user,team?.id).toUpperCase()}
+                                            {getTeamRole(
+                                              member?.user,
+                                              team?.id
+                                            ).toUpperCase()}
                                           </span>
                                         </TableCell>
                                         <TableCell className="text-center">
@@ -279,19 +273,17 @@ export default function TeamsPage() {
                                             0}
                                         </TableCell>
                                         <TableCell className="text-center">
-                                          <EditMemberRoleDialog 
+                                          <EditMemberRoleDialog
                                             member={member.user}
                                             teamId={team.id}
                                             memberId={member.id}
                                             onEditMemberRole={editMemberRole}
-                                          
                                           />
                                           <RemoveTeamMemberDialog
                                             member={member.user}
                                             teamId={team.id}
                                             memberId={member.id}
                                             onRemoveMember={removeMember}
-                                           
                                           />
                                         </TableCell>
                                       </TableRow>

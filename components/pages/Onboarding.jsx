@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useSignUp, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,32 +29,57 @@ import {
   UserCheck,
   Sparkles,
   ArrowRight,
-  FileText
+  FileText,
 } from "lucide-react";
 
-export default function Onboarding() {
+export default function Onboarding({ onboardingData }) {
+  const {
+    fullname,
+    orgId,
+    email: billingEmail,
+    tierSettingsId,
+    customerId,
+  } = onboardingData;
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { signOut } = useAuth(); // Add useAuth hook
   const [currentStep, setCurrentStep] = useState("signup");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-
+  console.log("cache", onboardingData);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
-    email: "",
+    email: billingEmail || "",
     code: "",
     organizationName: "",
     teamName: "",
-    teamDescription: "",
     country: "",
     invites: [],
+    tierSettingsId: tierSettingsId,
+    customerId: customerId,
   });
 
   const [currentInvite, setCurrentInvite] = useState({
     email: "",
     role: "agent",
   });
+
+  useEffect(() => {
+    const clearExistingSessions = async () => {
+      try {
+        // Sign out any existing sessions
+        await signOut();
+        console.log("Cleared existing Clerk sessions");
+      } catch (error) {
+        console.log("No existing session to clear:", error);
+      }
+    };
+
+    if (isLoaded) {
+      clearExistingSessions();
+    }
+  }, [isLoaded, signOut]);
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -127,8 +152,6 @@ export default function Onboarding() {
         code: formData.code,
       });
       if (completeSignUp.status === "complete") {
-       
-
         await setActive({ session: completeSignUp.createdSessionId });
         setCurrentStep("organization");
       }
@@ -175,37 +198,59 @@ export default function Onboarding() {
   };
 
   // Enhanced Progress indicator
-const ProgressIndicator = () => {
-  const steps = [
-    { key: "signup", label: "Account", icon: User, title: "Welcome aboard!", text: "Please enter your account details." },
-    { key: "verify", label: "Verify", icon: Mail, title: "Check your email", text: "We’ve sent a verification code." },
-    { key: "organization", label: "Setup", icon: Building2, title: "Set up your organization", text: "Add your company details and invite others." },
-  ];
+  const ProgressIndicator = () => {
+    const steps = [
+      {
+        key: "signup",
+        label: "Account",
+        icon: User,
+        title: `Welcome aboard!`,
+        text: "Please confirm your account details.",
+      },
+      {
+        key: "verify",
+        label: "Verify",
+        icon: Mail,
+        title: "Check your email",
+        text: "We’ve sent a verification code.",
+      },
+      {
+        key: "organization",
+        label: "Setup",
+        icon: Building2,
+        title: "Set up your organization",
+        text: "Add your company details and invite others.",
+      },
+    ];
 
-  const currentIndex = steps.findIndex((s) => s.key === currentStep);
-  const currentStepData = steps[currentIndex];
+    const currentIndex = steps.findIndex((s) => s.key === currentStep);
+    const currentStepData = steps[currentIndex];
 
-  return (
-    <div className="w-full mb-10">
-      {/* Step title + text */}
-      <div className="text-center my-6">
-        <h1 className="text-2xl font-bold text-primary">{currentStepData.title}</h1>
-        <p className="text-muted-foreground text-sm">{currentStepData.text}</p>
-      </div>
+    return (
+      <div className="w-full mb-10">
+        {/* Step title + text */}
+        <div className="text-center my-6">
+          <h1 className="text-2xl font-bold text-primary">
+            {currentStepData.title}
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            {currentStepData.text}
+          </p>
+        </div>
 
-      {/* Step icons */}
-      <div className="flex items-center justify-center max-w-md mx-auto">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isActive = step.key === currentStep;
-          const isCompleted = currentIndex > index;
-          const isLast = index === steps.length - 1;
+        {/* Step icons */}
+        <div className="flex items-center justify-center max-w-md mx-auto">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = step.key === currentStep;
+            const isCompleted = currentIndex > index;
+            const isLast = index === steps.length - 1;
 
-          return (
-            <div key={step.key} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`
+            return (
+              <div key={step.key} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`
                     relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-500
                     ${
                       isCompleted
@@ -215,52 +260,49 @@ const ProgressIndicator = () => {
                         : "border-muted-foreground/30 text-muted-foreground bg-background"
                     }
                   `}
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="w-6 h-6" />
-                  ) : (
-                    <Icon className="w-5 h-5" />
-                  )}
-                  {isActive && (
-                    <div className="absolute -inset-1 bg-primary/20 rounded-full " />
-                  )}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="w-6 h-6" />
+                    ) : (
+                      <Icon className="w-5 h-5" />
+                    )}
+                    {isActive && (
+                      <div className="absolute -inset-1 bg-primary/20 rounded-full " />
+                    )}
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-medium ${
+                      isCompleted || isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
                 </div>
-                <span
-                  className={`mt-2 text-xs font-medium ${
-                    isCompleted || isActive
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {step.label}
-                </span>
+                {!isLast && (
+                  <div
+                    className={`mx-4 h-px w-16 ${
+                      isCompleted
+                        ? "bg-primary shadow-sm"
+                        : "bg-muted-foreground/30"
+                    }`}
+                  />
+                )}
               </div>
-              {!isLast && (
-                <div
-                  className={`mx-4 h-px w-16 ${
-                    isCompleted
-                      ? "bg-primary shadow-sm"
-                      : "bg-muted-foreground/30"
-                  }`}
-                />
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
-};
-
-
+    );
+  };
 
   // Step 1: Sign Up
   if (currentStep === "signup") {
     return (
-     <>
-   
-     <ProgressIndicator />
-     
+      <>
+        <ProgressIndicator />
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -275,7 +317,7 @@ const ProgressIndicator = () => {
                 id="firstname"
                 name="firstname"
                 value={formData.firstname}
-                 onChange={(e) => updateFormData("firstname", e.target.value)}
+                onChange={(e) => updateFormData("firstname", e.target.value)}
                 className="h-11 border-2 focus:border-primary transition-all duration-200"
                 placeholder="John"
                 required
@@ -352,7 +394,6 @@ const ProgressIndicator = () => {
             {isLoading ? "Sending verification..." : "Continue"}
           </Button>
         </form>
-        
       </>
     );
   }
@@ -360,8 +401,8 @@ const ProgressIndicator = () => {
   // Step 2: Verification
   if (currentStep === "verify") {
     return (
- <>
- <ProgressIndicator />
+      <>
+        <ProgressIndicator />
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -431,7 +472,7 @@ const ProgressIndicator = () => {
             {isLoading ? "Verifying..." : "Verify Email"}
           </Button>
         </form>
-</>
+      </>
     );
   }
 
@@ -439,7 +480,7 @@ const ProgressIndicator = () => {
   if (currentStep === "organization") {
     return (
       <>
-      <ProgressIndicator />
+        <ProgressIndicator />
         <form onSubmit={handleOrganizationSetup} className="space-y-6 pb-6">
           <div className="space-y-6">
             <div className="space-y-4">
@@ -490,48 +531,40 @@ const ProgressIndicator = () => {
             </div>
 
             {/* Team Section - NEW */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              <h4 className="font-semibold text-lg">Create Your First Team</h4>
-              <Badge variant="destructive" className="ml-auto">Required</Badge>
-            </div>
-            
-            <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-              <p className="text-sm text-blue-700">
-                Teams help organize your campaigns, users and leads. You can create more teams later.
-              </p>
-            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold text-lg">
+                  Create Your First Team
+                </h4>
+                
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="teamName" className="flex items-center gap-2 text-sm font-medium">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                Team Name *
-              </Label>
-              <Input
-                id="teamName"
-                value={formData.teamName}
-                onChange={(e) => updateFormData("teamName", e.target.value)}
-                placeholder="Sales Team, Marketing Team, etc."
-                className="h-11 border-2 focus:border-primary transition-all duration-200"
-                required
-              />
-            </div>
+              <div className="p-4 bg-card border-l-4 border-primary rounded-r-lg">
+                <p className="text-sm text-primary">
+                  Teams help organize your campaigns, users and leads. You can
+                  create more teams later.
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="teamDescription" className="flex items-center gap-2 text-sm font-medium">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                Team Description
-              </Label>
-              <Input
-                id="teamDescription"
-                value={formData.teamDescription}
-                onChange={(e) => updateFormData("teamDescription", e.target.value)}
-                placeholder="Brief description of this team's purpose"
-                className="h-11 border-2 focus:border-primary transition-all duration-200"
-              />
+              <div className="space-y-2">
+                <Label
+                  htmlFor="teamName"
+                  className="flex items-center gap-2 text-sm font-medium"
+                >
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  Team Name
+                </Label>
+                <Input
+                  id="teamName"
+                  value={formData.teamName}
+                  onChange={(e) => updateFormData("teamName", e.target.value)}
+                  placeholder="Sales Team, Marketing Team, etc."
+                  className="h-11 border-2 focus:border-primary transition-all duration-200"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -581,7 +614,7 @@ const ProgressIndicator = () => {
                             Agent
                           </div>
                         </SelectItem>
-                         <SelectItem value="manager">
+                        <SelectItem value="manager">
                           <div className="flex items-center gap-2">
                             <UserCheck className="w-4 h-4" />
                             Manager
@@ -682,7 +715,7 @@ const ProgressIndicator = () => {
             {isLoading ? "Setting up..." : "Complete Setup"}
           </Button>
         </form>
-   </>
+      </>
     );
   }
 

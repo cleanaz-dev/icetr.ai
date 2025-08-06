@@ -26,28 +26,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const getStatusIcon = (status) => {
-  switch (status) {
-    case "paid":
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case "open":
-      return <Clock className="h-4 w-4 text-yellow-500" />;
-    case "void":
-      return <XCircle className="h-4 w-4 text-gray-500" />;
-    case "uncollectible":
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
-    default:
-      return <Clock className="h-4 w-4 text-gray-500" />;
-  }
-};
-
 const getStatusVariant = (status) => {
   switch (status) {
-    case "paid":
+    case "PAID":
       return "default";
-    case "open":
+    case "OPEN":
       return "secondary";
-    case "void":
+    case "VOID":
       return "outline";
     case "uncollectible":
       return "destructive";
@@ -92,8 +77,7 @@ export function InvoiceHistory({ invoices }) {
                   ${(invoice.amountDue / 100).toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(invoice.status)}
+                  <div>
                     <Badge variant={getStatusVariant(invoice.status)}>
                       {invoice.status}
                     </Badge>
@@ -104,23 +88,35 @@ export function InvoiceHistory({ invoices }) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {invoice.pdfUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadPDF(invoice.pdfUrl)}
-                      >
+                    {invoice.pdfUrl ? (
+                      <Button variant="outline" size="sm">
                         <Download className="h-4 w-4 mr-1" />
                         PDF
                       </Button>
-                    )}
-                    {invoice.hostedUrl && (
+                    ) : (
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => handleViewInvoice(invoice.hostedUrl)}
+                        className="h-8 text-muted-foreground cursor-not-allowed opacity-50"
+                        disabled
                       >
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        PDF
+                      </Button>
+                    )}
+                    {invoice.hostedUrl ? (
+                      <Button variant="outline" size="sm">
                         <ExternalLink className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-muted-foreground cursor-not-allowed opacity-50"
+                        disabled
+                      >
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         View
                       </Button>
                     )}

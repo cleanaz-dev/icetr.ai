@@ -31,7 +31,7 @@ export default function RoleBasedDashboardLayout({
   const pathname = usePathname();
 
   const { role, permissions } = usePermissionContext();
-  console.log("Role from permission context:", role);
+
 
   // Handle client-side mounting to prevent hydration issues
   useEffect(() => {

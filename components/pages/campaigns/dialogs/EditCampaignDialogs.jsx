@@ -9,6 +9,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -50,16 +51,19 @@ export default function EditCampaignDialog({
   open,
   onOpenChange,
   onSuccess,
+  orgId,
 }) {
   const [name, setName] = useState("");
-  const [type, setType] = useState("");
+  const [type, setType] = useState(campaign?.type || "" );
+  const [assignmentType, setAssignmentType] = useState(campaign?.assignmentStrategy || "MANUAL");
   const [loading, setLoading] = useState(false);
 
   // Update form fields when campaign changes
   useEffect(() => {
     if (campaign) {
       setName(campaign.name || "");
-      setType(campaign.assignmentStrategy || "");
+      setType(campaign.type || "");
+      setAssignmentType(campaign.assignmentStrategy || "MANUAL");
     }
   }, [campaign]);
 
@@ -69,24 +73,28 @@ export default function EditCampaignDialog({
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/org/${orgId}/campaigns/${campaign.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name,
-          type: type,
-        }),
-      });
+      const response = await fetch(
+        `/api/org/${orgId}/campaigns/${campaign.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name,
+            type: type,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update campaign");
       }
+      const result = await response.json();
 
       onOpenChange(false);
       if (typeof onSuccess === "function") {
-        onSuccess();
+        onSuccess(result);
       }
     } catch (error) {
       console.error("Error updating campaign:", error);
@@ -114,8 +122,23 @@ export default function EditCampaignDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="type">Lead Assignment Strategy</Label>
+            <Label htmlFor="type">Type</Label>
             <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="CALLS">Calls</SelectItem>
+                  <SelectItem value="FORMS">Forms</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="type">Lead Assignment Strategy</Label>
+            <Select value={assignmentType} onValueChange={setAssignmentType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select assignment strategy" />
               </SelectTrigger>
@@ -131,7 +154,7 @@ export default function EditCampaignDialog({
               <div className="p-2 bg-muted/50 rounded-md">
                 <p className="text-sm text-muted-foreground">
                   {
-                    ASSIGNMENT_STRATEGIES.find((s) => s.value === type)
+                    ASSIGNMENT_STRATEGIES.find((s) => s.value === assignmentType)
                       ?.description
                   }
                 </p>

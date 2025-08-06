@@ -87,7 +87,7 @@ export async function DELETE(req, { params }) {
     await validateHasPermission(clerkId, ["team.delete"]);
     const existingTeam = await prisma.team.findUnique({
       where: { id: teamId },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!existingTeam) {
@@ -100,7 +100,7 @@ export async function DELETE(req, { params }) {
     });
 
     return NextResponse.json(
-      { message: `${existingTeam.name} has been successfully deleted` },
+      { message: `${existingTeam.name} team has been successfully deleted` },
       { status: 200 }
     );
   } catch (error) {

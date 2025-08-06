@@ -1,8 +1,15 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,93 +20,120 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Calendar, AlertCircle, CheckCircle, Clock, XCircle, Zap } from "lucide-react"
-
-
+} from "@/components/ui/alert-dialog";
+import {
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Zap,
+  DollarSign,
+} from "lucide-react";
 
 const getStatusIcon = (status) => {
   switch (status) {
     case "ACTIVE":
-      return <CheckCircle className="h-4 w-4 text-green-500" />
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
     case "TRIALING":
-      return <Zap className="h-4 w-4 text-blue-500" />
+      return <Zap className="h-4 w-4 text-blue-500" />;
     case "PAST_DUE":
-      return <AlertCircle className="h-4 w-4 text-yellow-500" />
+      return <AlertCircle className="h-4 w-4 text-yellow-500" />;
     case "CANCELED":
-      return <XCircle className="h-4 w-4 text-red-500" />
+      return <XCircle className="h-4 w-4 text-red-500" />;
     case "UNPAID":
-      return <XCircle className="h-4 w-4 text-red-500" />
+      return <XCircle className="h-4 w-4 text-red-500" />;
     default:
-      return <Clock className="h-4 w-4 text-gray-500" />
+      return <Clock className="h-4 w-4 text-gray-500" />;
   }
-}
+};
 
 const getStatusVariant = (status) => {
   switch (status) {
     case "ACTIVE":
-      return "default"
+      return "default";
     case "TRIALING":
-      return "secondary"
+      return "secondary";
     case "PAST_DUE":
     case "UNPAID":
-      return "destructive"
+      return "destructive";
     case "CANCELED":
-      return "outline"
+      return "outline";
     default:
-      return "secondary"
+      return "secondary";
   }
-}
+};
 
 export function SubscriptionCard({ subscription }) {
   const handleCancelSubscription = () => {
-    // Handle subscription cancellation
-    console.log("Canceling subscription:", subscription.id)
-  }
+    console.log("Canceling subscription:", subscription.id);
+  };
 
   const handleReactivateSubscription = () => {
-    // Handle subscription reactivation
-    console.log("Reactivating subscription:", subscription.id)
-  }
+    console.log("Reactivating subscription:", subscription.id);
+  };
 
-  const isTrialing = subscription.status === "TRIALING"
-  const isCanceled = subscription.status === "CANCELED"
-  const isActive = subscription.status === "ACTIVE"
+  const isTrialing = subscription.status === "TRIALING";
+  const isCanceled = subscription.status === "CANCELED";
+  const isActive = subscription.status === "ACTIVE";
+
+  const planPrice =
+    (subscription.price || subscription.metadata?.planPrice || 0) / 100;
+  const quantity = subscription.quantity || 1;
+  const totalMonthly = planPrice * quantity;
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Current Subscription</span>
           <div className="flex items-center gap-2">
-            {getStatusIcon(subscription.status)}
-            <Badge variant={getStatusVariant(subscription.status)}>{subscription.status.replace("_", " ")}</Badge>
+            <span>Subscription & Billing</span>
           </div>
         </CardTitle>
-        <CardDescription>{subscription.metadata?.planName || "Subscription Plan"}</CardDescription>
+        <CardDescription>
+          Billing information for your organization
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
+      <CardContent className="flex flex-col flex-grow space-y-4">
+        <div className="flex items-center gap-2">
+          <span>{subscription.status}</span>
+        </div>
+        <div className="space-y-3 flex-grow">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Plan</span>
-            <span className="font-medium">{subscription.metadata?.planName}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Price</span>
+            <span className="text-muted-foreground">Current Plan</span>
             <span className="font-medium">
-              ${((subscription.metadata?.planPrice || 0) / 100).toFixed(2)}/{subscription.metadata?.billingInterval}
+              {subscription.tier + " Plan" || "Pro Plan"}
             </span>
           </div>
+
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Quantity</span>
-            <span className="font-medium">{subscription.quantity} seats</span>
+            <span className="text-muted-foreground">Plan Price</span>
+            <span className="font-medium">${planPrice.toFixed(2)}/month</span>
           </div>
+
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{isTrialing ? "Trial Ends" : "Next Billing"}</span>
+            <span className="text-muted-foreground">Seats</span>
+            <span className="font-medium">{quantity}</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">
+              {isTrialing ? "Trial Ends" : "Next Billing"}
+            </span>
             <span className="font-medium flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {(isTrialing ? subscription.trialEnd : subscription.currentPeriodEnd)?.toLocaleDateString()}
+              {(isTrialing
+                ? subscription.trialEnd
+                : subscription.currentPeriodEnd
+              )?.toLocaleDateString()}
             </span>
+          </div>
+
+          <Separator />
+
+          <div className="flex justify-between font-semibold">
+            <span>Total Monthly</span>
+            <span>${totalMonthly.toFixed(2)}</span>
           </div>
         </div>
 
@@ -108,7 +142,8 @@ export function SubscriptionCard({ subscription }) {
             <div className="flex items-center gap-2 text-yellow-800">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm font-medium">
-                Subscription will cancel on {subscription.currentPeriodEnd.toLocaleDateString()}
+                Subscription will cancel on{" "}
+                {subscription.currentPeriodEnd.toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -126,20 +161,27 @@ export function SubscriptionCard({ subscription }) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to cancel your subscription? You'll continue to have access until{" "}
+                    Are you sure you want to cancel your subscription? You'll
+                    continue to have access until{" "}
                     {subscription.currentPeriodEnd.toLocaleDateString()}.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleCancelSubscription}>Cancel Subscription</AlertDialogAction>
+                  <AlertDialogAction onClick={handleCancelSubscription}>
+                    Cancel Subscription
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           )}
 
           {subscription.cancelAtPeriodEnd && (
-            <Button variant="outline" size="sm" onClick={handleReactivateSubscription}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReactivateSubscription}
+            >
               Reactivate Subscription
             </Button>
           )}
@@ -150,5 +192,5 @@ export function SubscriptionCard({ subscription }) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

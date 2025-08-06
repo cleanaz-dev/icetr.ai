@@ -1,6 +1,8 @@
 import { createClerkClient } from "@clerk/backend";
 import { NextResponse } from "next/server";
+import { RoleType, TeamRole } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
@@ -9,7 +11,7 @@ const clerkClient = createClerkClient({
 export async function POST(req) {
   try {
     const data = await req.json();
-
+    console.log("data:", data);
     const {
       firstname,
       lastname,
@@ -17,12 +19,11 @@ export async function POST(req) {
       organizationName,
       country,
       teamName,
-      teamDescription,
       invites = [],
+      tierSettingsId,
+      customerId,
     } = data;
 
-    console.log("data:",data)
-    return NextResponse.json(null,{status: 500})
     const response = await clerkClient.users.getUserList({
       emailAddress: [email],
     });
@@ -38,24 +39,59 @@ export async function POST(req) {
 
     // 🔁 Wrap everything in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create organization
-      const organization = await tx.organization.create({
-        data: {
-          name: organizationName,
-          country,
-          createdBy: clerkUser.id,
-        },
-      });
+      // 1. Create User
 
-      // 2. Create user
       const user = await tx.user.create({
         data: {
           firstname,
           lastname,
+          fullname: firstname + " " + lastname,
           email,
-          imageUrl: clerkUser.imageUrl,
           clerkId: clerkUser.id,
-          orgId: organization.id,
+          imageUrl: clerkUser.imageUrl,
+          role: RoleType.SuperAdmin,
+        },
+      });
+
+      const team = await tx.team.create({
+        data: {
+          name: teamName,
+          members: {
+            create: {
+              user: { connect: { id: user.id } },
+              teamRole: TeamRole.LEAD
+            },
+          },
+        },
+      });
+      // 2. Create organization
+      const organization = await tx.organization.create({
+        data: {
+          name: organizationName,
+          country,
+          users: { connect: { id: user.id } },
+          owner: { connect: { id: user.id } },
+          customer: { connect: { id: customerId } },
+          tierSettings: { connect: { id: tierSettingsId } },
+          orgIntegrations: {
+            create: {
+              calendly: {
+                create: {
+                  enabled: false,
+                },
+              },
+              blandAi: {
+                create: {
+                  enabled: false,
+                },
+              },
+              twilio: {
+                create: {
+                  enabled: false,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -65,12 +101,10 @@ export async function POST(req) {
           user: { connect: { id: user.id } },
         },
       });
-
       return { user, organization };
     });
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });
-
   } catch (error) {
     console.error("Onboarding error:", error);
 
@@ -86,4 +120,20 @@ export async function POST(req) {
       { status: 500 }
     );
   }
+}
+
+
+export async function PATCH(req) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { orgId } = await req.json();
+  if (!orgId) return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
+
+  await prisma.organization.update({
+    where: { id: orgId },
+    data: { onboardingCompleted: true},
+  });
+
+  return NextResponse.json({ ok: true });
 }

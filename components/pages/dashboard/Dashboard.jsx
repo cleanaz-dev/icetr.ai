@@ -11,40 +11,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  Circle,
-} from "lucide-react";
+import { Circle } from "lucide-react";
 import { LayoutDashboard } from "lucide-react";
 import LeadDistributionChart from "./LeadDistributionChart";
 import DashboardStatsCard from "./DashboardStatsCard";
 import { useDashboard } from "@/context/DashboardProvider";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function Dashboard() {
-  const { activities, leadCounts  } = useDashboard()
+  const { activities, leadCounts } = useDashboard();
 
   return (
     <div className="space-y-6 px-4 py-6">
       {/* Header */}
-      <header className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div className="border-2 border-primary p-2 rounded-full text-primary">
-              <LayoutDashboard />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Track and manage your leads and team performance
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Dashboard"
+        description="Track and manage your leads and team performance"
+        icon="LayoutDashboard"
+      />
+
       {/* Stats Cards */}
-     <DashboardStatsCard />
+      <DashboardStatsCard />
       {/* Main Content - Restructured Layout */}
       <div className="grid gap-6">
         {/* Pipeline and Recent Activities Side by Side */}
         <div className="grid gap-6 md:grid-cols-2">
-         <LeadDistributionChart  leadCounts={leadCounts}/>
+          <LeadDistributionChart leadCounts={leadCounts} />
           {/* Recent Activities */}
           <Card className="h-full">
             <CardHeader>
@@ -72,11 +64,9 @@ export default function Dashboard() {
                           <p className="text-xs text-muted-foreground">
                             {item.time}
                           </p>
-                          <div className="flex items-center gap-2">
-                            <Badge className="text-xs">
-                              {new Date(item.createdAt).toLocaleDateString()}
-                            </Badge>
-                          </div>
+                          <Badge className="text-xs" variant="ghost">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </Badge>
                         </div>
                       </div>
                     </div>

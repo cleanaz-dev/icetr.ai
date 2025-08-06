@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import React from "react";
-import CreateCampaignDialog from "./CreateCampaignDialog";
+import CreateCampaignDialog from "./dialogs/CreateCampaignDialog";
 import {
   Table,
   TableBody,
@@ -52,20 +52,23 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { usePermissionContext } from "@/context/PermissionProvider";
 import PermissionGate from "@/components/auth/PermissionGate";
+import { TierAwareButton } from "@/components/buttons/TierAwareButtons";
 
 export default function CampaignsTable({
   campaigns = [],
   onEdit,
   onStatus,
   onDelete,
+  onCreate,
   orgId,
+ 
 }) {
   const { refresh } = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+ 
 
   const statusOptions = [
     { value: "Draft", label: "Draft" },
@@ -97,9 +100,9 @@ export default function CampaignsTable({
   // Get type badge/icon
   const getTypeIcon = (type) => {
     const typeConfig = {
-      calls: { icon: Phone, color: "text-blue-600" },
-      emails: { icon: Mail, color: "text-green-600" },
-      sms: { icon: Users, color: "text-purple-600" },
+      calls: { icon: Phone, color: "text-primary" },
+      emails: { icon: Mail, color: "text-primary" },
+      sms: { icon: Users, color: "text-primary" },
     };
 
     const config = typeConfig[type] || typeConfig.calls;
@@ -122,16 +125,19 @@ export default function CampaignsTable({
   const updateCampaignStatus = async (campaignId, newStatus) => {
     setUpdatingStatus(true);
     try {
-      const response = await fetch(`/api/org/${orgId}/campaigns/${campaignId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          campaignId: campaignId,
-          newStatus: newStatus,
-        }),
-      });
+      const response = await fetch(
+        `/api/org/${orgId}/campaigns/${campaignId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            campaignId: campaignId,
+            newStatus: newStatus,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -152,12 +158,7 @@ export default function CampaignsTable({
     }
   };
 
-  // Delete campaign
-  const deleteCampaign = (campaignId) => {
-    // Implement your delete logic here
-    console.log(`Deleting campaign ${campaignId}`);
-    // You might want to call an API here and then refresh
-  };
+
 
   return (
     <div>
@@ -209,8 +210,16 @@ export default function CampaignsTable({
               </SelectContent>
             </Select>
             <PermissionGate permission="campaign.create">
-              <CreateCampaignDialog onSuccess={refresh} />
-            </PermissionGate>
+            <TierAwareButton 
+              count={campaigns.length}
+              check="campaigns" 
+              label="Create Campaign" 
+              icon="CirclePlus"
+              onClick={() => onCreate()}
+              />
+             </PermissionGate>
+             {/* Create Campaign Campaign */}
+  
           </div>
 
           {/* Campaigns Table */}
@@ -221,10 +230,8 @@ export default function CampaignsTable({
                   <TableHead>Campaign</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Organization</TableHead>
                   <TableHead>Users</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Updated</TableHead>
+                  <TableHead>Last Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -255,23 +262,14 @@ export default function CampaignsTable({
                       </div>
                     </TableCell>
                     <TableCell>{campaign.status}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {campaign.organization?.name || "N/A"}
-                        </p>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {campaign.organization?.country || "N/A"}
-                        </p>
-                      </div>
-                    </TableCell>
+                   
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>{campaign.team?.members.length || 0}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{formatDate(campaign.createdAt)}</TableCell>
+                   
                     <TableCell>{formatDate(campaign.updatedAt)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -323,7 +321,7 @@ export default function CampaignsTable({
                           <DropdownMenuSeparator />
                           <PermissionGate permission="campaign.delete">
                             <DropdownMenuItem
-                              onClick={() => onDelete(campaign)}
+                              onClick={() => onDelete(campaign, orgId)}
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

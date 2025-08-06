@@ -8,7 +8,7 @@ import {
   encryptIntegrationData,
   decryptIntegrationData,
 } from "@/lib/encryption";
-
+import { validateHasPermission, validateOrgAccess } from "@/lib/db/validations";
 
 export async function GET(req, { params }) {
   try {
@@ -85,11 +85,10 @@ export async function GET(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     const { orgId } = await params;
     if (!orgId) {
       return NextResponse.json(
@@ -98,29 +97,19 @@ export async function POST(req, { params }) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
-      include: { organization: true },
-    });
-
-    if (!user?.organization) {
-      return NextResponse.json(
-        { error: "User not associated with organization" },
-        { status: 400 }
-      );
-    }
-
-    if (user.orgId !== orgId) {
-      return NextResponse.json(
-        { error: "Access denied to this organization" },
-        { status: 403 }
-      );
-    }
+    // await validateHasPermission(clerkId, ["integration.create"]);
+    await validateOrgAccess(clerkId, orgId);
 
     const data = await req.json();
+    console.log("data", data);
 
     // Validate we have at least one service data
-    if (!data.twilioEnabled && !data.calendlyEnabled && !data.zoomEnabled && !data.makeEnabled) {
+    if (
+      !data.twilioEnabled &&
+      !data.calendlyEnabled &&
+      !data.zoomEnabled &&
+      !data.makeEnabled
+    ) {
       return NextResponse.json(
         { error: "At least one integration must be enabled" },
         { status: 400 }
@@ -134,7 +123,7 @@ export async function POST(req, { params }) {
     if (data.twilioEnabled) {
       const validation = validateTwilioData(data);
       if (!validation.isValid) {
-        errors.push(...validation.errors.map(e => `Twilio: ${e}`));
+        errors.push(...validation.errors.map((e) => `Twilio: ${e}`));
       } else {
         updates.twilioEnabled = true;
         updates.twilioAccountSid = data.twilioAccountSid;
@@ -154,7 +143,7 @@ export async function POST(req, { params }) {
     if (data.calendlyEnabled) {
       const validation = validateCalendlyData(data);
       if (!validation.isValid) {
-        errors.push(...validation.errors.map(e => `Calendly: ${e}`));
+        errors.push(...validation.errors.map((e) => `Calendly: ${e}`));
       } else {
         updates.calendlyEnabled = true;
         updates.calendlyApiKey = encryptIntegrationData(
@@ -171,7 +160,7 @@ export async function POST(req, { params }) {
     if (data.zoomEnabled) {
       const validation = validateZoomData(data);
       if (!validation.isValid) {
-        errors.push(...validation.errors.map(e => `Zoom: ${e}`));
+        errors.push(...validation.errors.map((e) => `Zoom: ${e}`));
       } else {
         updates.zoomEnabled = true;
         updates.zoomApiKey = encryptIntegrationData(
@@ -190,7 +179,7 @@ export async function POST(req, { params }) {
     if (data.makeEnabled) {
       const validation = validateMakeData(data);
       if (!validation.isValid) {
-        errors.push(...validation.errors.map(e => `Make: ${e}`));
+        errors.push(...validation.errors.map((e) => `Make: ${e}`));
       } else {
         updates.makeEnabled = true;
         updates.makeWebhookUrl = data.makeWebhookUrl || null;
@@ -271,9 +260,9 @@ export async function PATCH(req, { params }) {
 
     const integration = await prisma.orgIntegration.findUnique({
       where: {
-          orgId: orgId,
-          service,
-        },
+        orgId: orgId,
+        service,
+      },
     });
 
     if (!integration) {
@@ -357,8 +346,8 @@ export async function DELETE(req, { params }) {
 
     await prisma.orgIntegration.delete({
       where: {
-          orgId: orgId,
-          service,
+        orgId: orgId,
+        service,
       },
     });
 
@@ -400,14 +389,9 @@ function getConfiguredFields(integration) {
   Object.keys(integration).forEach((key) => {
     if (
       integration[key] &&
-      ![
-        "id",
-        "orgId",
-        "service",
-        "enabled",
-        "createdAt",
-        "updatedAt",
-      ].includes(key)
+      !["id", "orgId", "service", "enabled", "createdAt", "updatedAt"].includes(
+        key
+      )
     ) {
       fields.push(key);
     }

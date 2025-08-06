@@ -94,6 +94,65 @@ export default function PhoneConfiguration({ onSave }) {
       : "Basic configuration";
   };
 
+  if (!initialPhoneConfiguration || Object.keys(initialPhoneConfiguration).length === 0) {
+  return (
+    <Card className="hover:border-primary transition-all duration-300">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Phone className="w-5 h-5 text-gray-400" />
+            <div>
+              <CardTitle className="text-lg">Phone Configuration</CardTitle>
+              <CardDescription>No configuration available</CardDescription>
+            </div>
+          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+            <Activity className="w-3 h-3 mr-1" />
+            Not Configured
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="text-center py-8">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+            <Settings className="w-8 h-8 text-gray-400" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-medium text-muted-foreground">No Phone Configuration</h3>
+            <p className="text-sm text-gray-500 max-w-sm">
+              Set up your phone configuration to enable call recording, transcription, and automated workflows.
+            </p>
+          </div>
+          <Button 
+            onClick={() => {
+              // Initialize with default config or trigger setup flow
+              setConfig({
+                recordingEnabled: false,
+                recordInboundCalls: true,
+                recordOutboundCalls: false,
+                minOutboundDuration: 30,
+                transcriptionProvider: "none",
+                transcribeInbound: false,
+                transcribeOutbound: false,
+                inboundFlow: "voicemail",
+                voicemailMessage: "",
+                forwardToNumber: "",
+                autoCreateLeads: false,
+                autoCreateFollowUps: false
+              });
+              setIsExpanded(true);
+            }}
+            className="mt-2"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Configure Phone Settings
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
   return (
     <Card className="hover:border-primary transition-all duration-300">
       {/* Header */}

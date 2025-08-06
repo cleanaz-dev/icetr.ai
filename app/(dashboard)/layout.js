@@ -2,7 +2,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
-  getAllRecentActivity,
   getUserNotifications,
 } from "@/lib/services/prismaQueries";
 import RoleBasedDashboardLayout from "@/components/pages/dashboard/RoleBasedDashboardLayout";
@@ -22,9 +21,11 @@ import {
   getAllOrgLeads,
   getOrgDashboardStats,
   getOrgId,
+  getOrgRecentActivity,
   getUserOrganization,
 } from "@/lib/db/org";
 import Providers from "./providers";
+import UserOnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
 export default async function DashboardLayout({ children }) {
   const { userId } = await auth();
@@ -41,7 +42,7 @@ export default async function DashboardLayout({ children }) {
   const publicIntegrations = await getPublicIntegrationsForOrg(orgId);
   const { teams, teamMembers, orgMembers, orgCampaigns } =
     await getOrgTeamsMembersCampaings(userId, orgId);
-  const activities = await getAllRecentActivity();
+  const activities = await getOrgRecentActivity(orgId);
   const leadCounts = await getAllOrgLeadsAndStatus(orgId);
   const dashboardStats = await getOrgDashboardStats(orgId);
   const leads = await getAllOrgLeads(orgId);
@@ -49,8 +50,8 @@ export default async function DashboardLayout({ children }) {
   const phoneConfiguration = await getPhoneConfiguration(orgId);
   const organization = await getUserOrganization(userId, orgId);
 
+  // console.log("LAYOUT_PAGE_OBJECT", organization)
 
-  console.log("LAYOUT_PAGE_OBJECT", teamMembers)
 
   return (
     <Providers
@@ -72,6 +73,7 @@ export default async function DashboardLayout({ children }) {
         userId={userId}
         notifications={notifications}
       >
+        <UserOnboardingOverlay  />
         {children}
       </RoleBasedDashboardLayout>
     </Providers>

@@ -20,7 +20,7 @@ export const Header = () => {
   const [open, setOpen] = useState(false);
   return (
     <header className="md:sticky top-0 z-50 w-full pt-4 ">
-      <div className="container max-w-6xl mx-auto px-8 md:px-4  flex items-center justify-between">
+      <div className="container max-w-6xl mx-auto px-2 md:px-4  flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -29,7 +29,7 @@ export const Header = () => {
           <span className="text-2xl font-bold text-primary">
             icetr<span>.</span>ai
           </span>
-          <ThemeChanger />
+          {/* <ThemeChanger /> */}
         </div>
 
         {/* Desktop Buttons */}

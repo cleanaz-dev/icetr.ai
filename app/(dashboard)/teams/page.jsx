@@ -1,4 +1,4 @@
-import TeamsPage from "@/components/pages/teams/TeamsPage";
+import TeamsPage from "@/components/pages/teams/main-page/TeamsPage";
 import { getOrgId } from "@/lib/db/org";
 import { getAllOrgLeads, getTeamData } from "@/lib/services/prismaQueries";
 import { auth } from "@clerk/nextjs/server";

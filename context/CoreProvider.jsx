@@ -24,10 +24,10 @@ const CoreContext = createContext({
     checkCampaignLimit: async () => ({}),
     canPerformAction: async () => ({}),
     suggestUpgrade: async () => null,
-    isAtLimit: () => false
+    isAtLimit: () => false,
   },
   tierSettings: null,
-  
+  saveScript: () => {},
 });
 
 export function CoreProvider({ initialData = {}, children }) {
@@ -41,7 +41,9 @@ export function CoreProvider({ initialData = {}, children }) {
   );
   const [organization, setOrganization] = useState(initialOrganization);
   const [newKey, setNewKey] = useState("");
-  const [tierSettings, setTierSettings] = useState(initialOrganization.tierSettings)
+  const [tierSettings, setTierSettings] = useState(
+    initialOrganization.tierSettings
+  );
 
   // Twilio Device state
   const [twilioDevice, setTwilioDevice] = useState(null);
@@ -51,49 +53,57 @@ export function CoreProvider({ initialData = {}, children }) {
   // Enhanced tier utilities using TierService
   const tier = useMemo(() => {
     const currentTier = TierService.getCurrentTier(organization);
-    
+
     return {
       current: currentTier,
-      
+
       // Simple synchronous checks (for quick UI decisions)
-      isAtLeast: (requiredTier) => TierService.isAtLeast(currentTier, requiredTier),
+      isAtLeast: (requiredTier) =>
+        TierService.isAtLeast(currentTier, requiredTier),
       limit: (key) => TierService.getTierConfig(currentTier)[key] ?? 0,
       feature: (key) => TierService.getTierConfig(currentTier)[key] ?? false,
-      
-      // Advanced async checks with logging
-      checkLimit: (limitKey, currentValue, context) => 
-        TierService.checkLimit(tierSettings, limitKey, currentValue, context),
-      
-      checkFeature: (featureKey, context) => 
-        TierService.checkFeature(tierSettings, featureKey, context),
-      
-      checkUserLimit: (currentUserCount, context) => 
-        TierService.checkUserLimit(tierSettings, currentUserCount, context),
-      
-      checkCampaignLimit: (currentCampaignCount, context) => 
-        TierService.checkCampaignLimit(tierSettings, currentCampaignCount, context),
-      
-      canPerformAction: (action, currentCounts) => 
-        TierService.canPerformAction(tierSettings, action, currentCounts),
-      
-      suggestUpgrade: (blockedFeature, context) => 
-        TierService.suggestUpgrade(tierSettings, organization, blockedFeature, context),
-      
-      getUsageAnalytics: () => 
-        TierService.getUsageAnalytics(tierSettings),
 
-       isAtLimit: (limitKey) => {
+      // Advanced async checks with logging
+      checkLimit: (limitKey, currentValue, context) =>
+        TierService.checkLimit(tierSettings, limitKey, currentValue, context),
+
+      checkFeature: (featureKey, context) =>
+        TierService.checkFeature(tierSettings, featureKey, context),
+
+      checkUserLimit: (currentUserCount, context) =>
+        TierService.checkUserLimit(tierSettings, currentUserCount, context),
+
+      checkCampaignLimit: (currentCampaignCount, context) =>
+        TierService.checkCampaignLimit(
+          tierSettings,
+          currentCampaignCount,
+          context
+        ),
+
+      canPerformAction: (action, currentCounts) =>
+        TierService.canPerformAction(tierSettings, action, currentCounts),
+
+      suggestUpgrade: (blockedFeature, context) =>
+        TierService.suggestUpgrade(
+          tierSettings,
+          organization,
+          blockedFeature,
+          context
+        ),
+
+      getUsageAnalytics: () => TierService.getUsageAnalytics(tierSettings),
+
+      isAtLimit: (limitKey) => {
         const limitStatus = TierService.getLimit(tierSettings, limitKey);
         return limitStatus.isAtLimit;
       },
-      
-      
+
       // Convenience properties
-      isBasic: currentTier === 'BASIC',
-      isProfessional: currentTier === 'PROFESSIONAL',
-      isEnterprise: currentTier === 'ENTERPRISE',
-      canAccessAdvancedFeatures: currentTier !== 'BASIC',
-      hasUnlimitedAccess: currentTier === 'ENTERPRISE',
+      isBasic: currentTier === "BASIC",
+      isProfessional: currentTier === "PROFESSIONAL",
+      isEnterprise: currentTier === "ENTERPRISE",
+      canAccessAdvancedFeatures: currentTier !== "BASIC",
+      hasUnlimitedAccess: currentTier === "ENTERPRISE",
     };
   }, [organization]);
 
@@ -123,11 +133,14 @@ export function CoreProvider({ initialData = {}, children }) {
     if (!organization?.id) throw new Error("No organization");
 
     try {
-      const res = await fetch(`/api/org/${organization.id}/phone-configuration`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
+      const res = await fetch(
+        `/api/org/${organization.id}/phone-configuration`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok)
@@ -257,6 +270,23 @@ export function CoreProvider({ initialData = {}, children }) {
     }
   };
 
+  const saveScript = async (script, orgId, campaignId) => {
+    const response = await fetch(
+      `/api/org/${orgId}/campaigns/${campaignId}/call-scripts`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ script }),
+      }
+    );
+
+    const result = await response.json();
+
+    return result;
+  };
+
   // Cleanup on unmount - moved after function definitions
   useEffect(() => {
     return () => {
@@ -280,7 +310,8 @@ export function CoreProvider({ initialData = {}, children }) {
       cleanupTwilioDevice,
       generateApiKey,
       newKey,
-      tier, // Enhanced tier utilities
+      tier, 
+      saveScript// Enhanced tier utilities
     }),
     [
       phoneConfiguration,
@@ -290,6 +321,7 @@ export function CoreProvider({ initialData = {}, children }) {
       organization,
       newKey,
       tier,
+      saveScript,
     ]
   );
 

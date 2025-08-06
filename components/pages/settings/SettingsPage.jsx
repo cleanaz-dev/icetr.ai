@@ -7,18 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SimpleIntegrationsTab from "./SimpleIntegrationsTab";
 import { useCoreContext } from "@/context/CoreProvider";
 import AccountTab from "./account-tab/AccountTab";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function SettingsPage({ settings }) {
   const { organization, generateApiKey, newKey } = useCoreContext();
 
   return (
     <div className=" max-w-7xl px-4 py-6">
-      <header className="flex justify-between items-center px-4 mb-6">
-        <div className="flex items-center space-x-3">
-          <Cog className="w-6 h-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        </div>
-      </header>
+      <PageHeader 
+        title="Settings"
+        description="View and change settings"
+        icon="Cog"
+      
+      />
+      
 
       <Tabs defaultValue="organization" className="w-full">
         <TabsList className="grid w-full grid-cols-4 mb-4">

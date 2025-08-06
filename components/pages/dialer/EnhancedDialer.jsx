@@ -16,26 +16,23 @@ import { useLeadManagement } from "@/lib/hooks/useLeadManagement";
 import CallSession from "./CallSession";
 import UnifiedStatusBar from "./UnifiedStatusBar";
 import { useCoreContext } from "@/context/CoreProvider";
+import PageHeader from "@/components/ui/layout/PageHeader";
+import { useTeamContext } from "@/context/TeamProvider";
 
-export default function EnhancedDialer({
-  data,
-  callScriptData,
-  campaignId,
-  orgId,
-}) {
+export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   // Custom hooks for state management
+  const { orgId } = useTeamContext();
   const {
     initializeTwilioDevice,
     twilioDevice: device,
     twilioError: error,
     twilioStatus: status,
   } = useCoreContext();
-   useEffect(() => {
+  useEffect(() => {
     if (orgId) {
       initializeTwilioDevice(orgId);
     }
   }, [orgId]);
-
 
   const {
     call,
@@ -84,8 +81,6 @@ export default function EnhancedDialer({
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
-
-
 
   // Initialize session on component mount
   useEffect(() => {
@@ -194,14 +189,11 @@ export default function EnhancedDialer({
         >
           {/* Header */}
           <div className="flex-shrink-0 border-b p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="border p-2 border-primary rounded-full">
-                  <Phone className="w-6 h-6 text-transparent fill-primary" />
-                </div>
-                <h1 className="text-2xl font-bold">Dialer</h1>
-              </div>
-
+            <PageHeader
+              title="Dialer"
+              description="Call, book and track lead progress"
+              icon="Phone"
+            >
               <div className="flex items-center gap-4">
                 <Badge variant={status === "Ready" ? "default" : "secondary"}>
                   {status}
@@ -220,11 +212,13 @@ export default function EnhancedDialer({
                   <Phone className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
+            </PageHeader>
           </div>
+
           <div className="flex-1 overflow-y-auto min-h-0">
             <LeadsTable
               leads={filteredLeads}
+              orgId={orgId}
               selectedLead={selectedLead}
               calledLeadIds={calledLeadIds}
               onSelectLead={selectLead}
@@ -248,7 +242,7 @@ export default function EnhancedDialer({
             />
           </div>
           {/* Bottom Status Bar */}
-          <div className="sticky bottom-0 left-0 right-0 z-50 bg-background ">
+          <div className="sticky bottom-0 left-0 right-0 z-30 bg-background ">
             <UnifiedStatusBar
               mode="main"
               session={currentSession}
@@ -260,6 +254,7 @@ export default function EnhancedDialer({
 
         {/* Right Side - Dialer */}
         <DialerPanel
+          orgId={orgId}
           showDialer={showDialer}
           onHideDialer={() => setShowDialer(false)}
           selectedLead={selectedLead}
@@ -280,6 +275,7 @@ export default function EnhancedDialer({
         />
       </div>
       <PostCallDialog
+        orgId={orgId}
         open={postCallDialogOpen}
         onOpenChange={setPostCallDialogOpen}
         currentCallData={callData}

@@ -7,8 +7,9 @@ import {
   X,
   Keyboard,
   PhoneCall,
-  MapPin
+  MapPin,
 } from "lucide-react";
+import { MdCallToAction } from "react-icons/md";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,8 @@ import {
 import { LEAD_STATUSES, FROM_NUMBERS } from "@/lib/constants/frontend";
 import Dialpad from "@/components/pages/dialer/tabs/DialPad";
 import { useUser } from "@clerk/nextjs";
+import CallDisplay from "../CallDisplay";
+import { BiDialpad } from "react-icons/bi";
 
 export default function DialerTab({
   selectedLead,
@@ -159,14 +162,21 @@ export default function DialerTab({
       </div>
 
       {/* Dialpad Toggle */}
-      {/* <Button
+      <Button
         variant="outline"
         className="w-full"
         onClick={() => setShowDialpad(!showDialpad)}
       >
-        <Keyboard className="w-4 h-4 mr-2" />
-        {showDialpad ? "Hide" : "Show"} Dialpad
-      </Button> */}
+        {showDialpad ? (
+          <div className="flex gap-2 items-center">
+            <MdCallToAction className="w-4 h-4 mr-2" /> Show Call Display
+          </div>
+        ) : (
+          <div className="flex gap-2 items-center">
+            <BiDialpad /> <p>Show Dialpad</p>
+          </div>
+        )}
+      </Button>
 
       {/* Dialpad */}
       {showDialpad && (
@@ -176,6 +186,7 @@ export default function DialerTab({
           disabled={!phoneNumber}
         />
       )}
+      {!showDialpad && <CallDisplay />}
     </>
   );
 }

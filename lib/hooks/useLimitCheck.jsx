@@ -4,7 +4,6 @@ import { useLeads } from "@/context/LeadsProvider";
 import { getLimitStatus } from "../services/tier-service";
 import { getFeatureStatus } from "../services/tier-service";
 
-
 export function useLimitCheck(check) {
   const { tierSettings } = useCoreContext();
   const { totalLeads } = useLeads();
@@ -21,7 +20,6 @@ export function useLimitCheck(check) {
         .flatMap((t) => t.scenarios ?? []).length ?? 0,
   };
 
-
   // 2.  Which bucket? --------------------------------------------------------
   // const isFeatureKey = ["scenarios"].includes(check);
 
@@ -32,8 +30,6 @@ export function useLimitCheck(check) {
     leads: "maxLeads",
     scenarios: "maxTrainingScenarios",
   };
-
-
 
   // 4.  Pick the right helper -------------------------------------------------
   const keyMap = limitKeyMap;

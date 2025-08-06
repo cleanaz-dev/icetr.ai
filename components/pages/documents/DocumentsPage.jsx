@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DocumentsTable } from "./DocumentsTable";
 import { UploadDialog } from "./UploadDocumentsDialog";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function DocumentsPage({ campaigns: initialCampaigns, orgId }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,15 +45,12 @@ export default function DocumentsPage({ campaigns: initialCampaigns, orgId }) {
   return (
     <div className="container mx-auto max-w-7xl py-8 space-y-6 px-4">
       {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-3xl font-bold mb-2">
-          <Folder className="text-primary size-6" /> Document Management
-        </h1>
-        <p className="text-muted-foreground">
-          Manage documents for your campaigns - scripts, training materials,
-          compliance docs, and more.
-        </p>
-      </div>
+      <PageHeader
+        title="Documents"
+        description="Manage documents for your campaigns - scripts, training materials,
+          compliance docs, and more."
+        icon="Folder"
+      />
 
       {/* Campaign Selection & Actions */}
       <Card>
@@ -125,9 +123,6 @@ export default function DocumentsPage({ campaigns: initialCampaigns, orgId }) {
             </div>
           </CardHeader>
           <CardContent>
-
-            
-
             {/* Documents Table */}
             <DocumentsTable documents={documents} searchTerm={searchTerm} />
           </CardContent>

@@ -1,17 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, ExternalLink, DollarSign, CheckCircle, Clock, XCircle } from "lucide-react"
-import { SubscriptionCard } from "./SubscriptionCard"
-import { InvoiceHistory } from "./InvoiceHistory"
-import { PaymentMethod } from "./PaymentMethod"
-import { BillingSettings } from "./BillingSettings"
-
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Download,
+  ExternalLink,
+  DollarSign,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from "lucide-react";
+import { SubscriptionCard } from "./SubscriptionCard";
+import { InvoiceHistory } from "./InvoiceHistory";
+import { PaymentMethod } from "./PaymentMethod";
+import { BillingSettings } from "./BillingSettings";
+import PageHeader from "@/components/ui/layout/PageHeader";
+import RecentInvoices from "./RecentInvoices";
+import SubscriptionFeatures from "./SubscriptionFeatures";
 
 // Mock data based on your Prisma models
 const mockCustomer = {
@@ -27,7 +42,7 @@ const mockCustomer = {
   },
   createdAt: new Date("2024-01-15"),
   updatedAt: new Date("2024-12-26"),
-}
+};
 
 const mockSubscription = {
   id: "sub_123",
@@ -48,7 +63,7 @@ const mockSubscription = {
   },
   createdAt: new Date("2024-12-26"),
   updatedAt: new Date("2024-12-26"),
-}
+};
 
 const mockInvoices = [
   {
@@ -87,19 +102,24 @@ const mockInvoices = [
     createdAt: new Date("2024-10-26"),
     paidAt: null,
   },
-]
+];
 
-export default function BillingPage() {
-  const [activeTab, setActiveTab] = useState("overview")
+export default function BillingPage({ customerData, subscription, invoices }) {
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Billing & Subscription</h1>
-        <p className="text-muted-foreground mt-2">Manage your subscription, payment methods, and billing history</p>
-      </div>
+      <PageHeader
+        title="Billing & Subscription"
+        description="Manage your subscription, payment methods, and billing history"
+        icon="CreditCard"
+      />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
@@ -109,95 +129,16 @@ export default function BillingPage() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <SubscriptionCard subscription={mockSubscription} />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Billing Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Current Plan</span>
-                  <span className="font-medium">Pro Plan</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Monthly Cost</span>
-                  <span className="font-medium">${((mockSubscription.metadata?.planPrice || 0) / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Seats</span>
-                  <span className="font-medium">{mockSubscription.quantity}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Next Billing</span>
-                  <span className="font-medium">{mockSubscription.currentPeriodEnd.toLocaleDateString()}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-semibold">
-                  <span>Total Monthly</span>
-                  <span>
-                    ${(((mockSubscription.metadata?.planPrice || 0) * mockSubscription.quantity) / 100).toFixed(2)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <SubscriptionCard subscription={subscription} />
+            <RecentInvoices invoices={invoices} setActiveTab={setActiveTab}/>
+            <div className="col-span-2">
+              <SubscriptionFeatures tier={subscription.tier}/>
+            </div>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Invoices</CardTitle>
-              <CardDescription>Your latest billing history</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockInvoices.slice(0, 3).map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        {invoice.status === "paid" ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : invoice.status === "open" ? (
-                          <Clock className="h-4 w-4 text-yellow-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>{invoice.status}</Badge>
-                      </div>
-                      <div>
-                        <p className="font-medium">${(invoice.amountDue / 100).toFixed(2)}</p>
-                        <p className="text-sm text-muted-foreground">{invoice.createdAt.toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {invoice.pdfUrl && (
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          PDF
-                        </Button>
-                      )}
-                      {invoice.hostedUrl && (
-                        <Button variant="outline" size="sm">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4">
-                <Button variant="outline" onClick={() => setActiveTab("invoices")}>
-                  View All Invoices
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="invoices">
-          <InvoiceHistory invoices={mockInvoices} />
+          <InvoiceHistory invoices={invoices} />
         </TabsContent>
 
         <TabsContent value="payment">
@@ -209,5 +150,5 @@ export default function BillingPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

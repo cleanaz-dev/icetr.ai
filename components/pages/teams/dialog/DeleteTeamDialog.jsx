@@ -7,19 +7,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
-import { Trash2,  AlertCircle } from "lucide-react";
+import { Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-
 
 export default function DeleteTeamDialog({ onDelete, team, orgId }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -50,16 +48,20 @@ export default function DeleteTeamDialog({ onDelete, team, orgId }) {
             </span>
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <span className="font-bold text-foreground">{team.name}</span>? 
+            Are you sure you want to delete{" "}
+            <span className="font-bold text-foreground">{team.name}</span>?
           </DialogDescription>
         </DialogHeader>
         <div className="decoration-rose-500 underline flex gap-2 items-center text-sm wrap-normal">
-         <AlertCircle className="size-4"/> Campaigns, leads and members will be unassigned!
+          <AlertCircle className="size-4" /> Campaigns, leads and members will
+          be unassigned!
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button type="button" variant="outline" onClick={setOpen}>
-            Cancel
-          </Button>
+          <DialogClose>
+            <Button type="button" variant="outline" >
+              Cancel
+            </Button>
+          </DialogClose>
           <Button
             type="button"
             variant="destructive"

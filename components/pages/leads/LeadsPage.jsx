@@ -8,6 +8,7 @@ import LeadsStatCards from "./LeadsStatCards";
 // Provider
 import { useLeads } from "@/context/LeadsProvider";
 import { useTeamContext } from "@/context/TeamProvider";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function LeadsPage({
   members = [],
@@ -26,17 +27,12 @@ export default function LeadsPage({
   return (
     <div className="space-y-6 px-4 py-6 overflow-hidden">
       {/* Header */}
-      <header className="">
-        <div className="flex items-center gap-2">
-          <div className="border-2 p-2 border-primary rounded-full">
-            <Users2 className="text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Manage and track your sales leads
-        </p>
-      </header>
+      <PageHeader 
+        title="Leads"
+        description="Manage, import and track your sales leads"
+        icon="Users2"
+      />
+     
 
       {/* Stats Cards */}
       <LeadsStatCards leads={leads} />

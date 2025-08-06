@@ -11,12 +11,13 @@ import {
   formatZodError,
 } from "@/lib/validations/integrations";
 import twilio from "twilio";
+import { validateHasPermission, validateOrgAccess } from "@/lib/db/validations";
 
 export async function POST(req, { params }) {
   try {
     // 1. Auth & org checks
-    const { userId } = await auth();
-    if (!userId)
+    const { userId: clerkId } = await auth();
+    if (!clerkId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { orgId } = await params;
@@ -26,14 +27,8 @@ export async function POST(req, { params }) {
         { status: 400 }
       );
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
-      select: { orgId: true, role: true },
-    });
-    if (!user || user.orgId !== orgId || user.role.type !== "SuperAdmin") {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
+    await validateHasPermission(clerkId, ["integration.create"]);
+    await validateOrgAccess(clerkId, orgId);
     // 2. Validate body (expect appSid, voiceUrl, smsUrl, etc.)
     const body = await req.json();
     const parsed = twilioIntegrationSchema.safeParse(body);
@@ -48,22 +43,24 @@ export async function POST(req, { params }) {
       enabled,
       accountSid,
       authToken,
-      appSid, // TwiML App SID to update
+      apiKey,
+      apiSecret,
+      appSid,
       voiceUrl,
       smsUrl,
-      ...rest
     } = parsed.data;
 
-    // console.log("Twilio config:", {
-    //   enabled,
-    //   accountSid,
-    //   authToken,
-    //   appSid,
-    //   voiceUrl,
-    //   smsUrl,
-    //   ...rest,
-    // });
-  
+    console.log("Twilio config:", {
+      enabled,
+      accountSid,
+      authToken,
+      appSid,
+      voiceUrl,
+      smsUrl,
+      apiKey,
+      apiSecret,
+    });
+
     // 3. Upsert integration in DB (store the new values)
     const parent = await prisma.orgIntegration.upsert({
       where: { orgId },
@@ -71,7 +68,7 @@ export async function POST(req, { params }) {
       create: { orgId },
     });
 
-    const result = await prisma.twilioIntegration.upsert({
+  const result =  await prisma.twilioIntegration.upsert({
       where: { orgIntegrationId: parent.id },
       update: {
         enabled,
@@ -81,10 +78,19 @@ export async function POST(req, { params }) {
             ? authToken
             : encryptIntegrationData({ authToken }, orgId)
           : null,
-        voiceUrl: voiceUrl ?? null,
-        smsUrl: smsUrl ?? null,
-        appSid: appSid ?? null,
-        // Keep other fields unchanged or add as needed
+        apiKey: enabled
+          ? isEncrypted(apiKey)
+            ? apiKey
+            : encryptIntegrationData({ apiKey }, orgId)
+          : null,
+        apiSecret: enabled
+          ? isEncrypted(apiSecret)
+            ? apiSecret
+            : encryptIntegrationData({ apiSecret }, orgId)
+          : null,
+        voiceUrl,
+        smsUrl,
+        appSid,
       },
       create: {
         orgIntegration: { connect: { orgId } },
@@ -93,9 +99,13 @@ export async function POST(req, { params }) {
         authToken: enabled
           ? encryptIntegrationData({ authToken }, orgId)
           : null,
-        voiceUrl: voiceUrl ?? null,
-        smsUrl: smsUrl ?? null,
-        appSid: appSid ?? null,
+        apiKey: enabled ? encryptIntegrationData({ apiKey }, orgId) : null,
+        apiSecret: enabled
+          ? encryptIntegrationData({ apiSecret }, orgId)
+          : null,
+        voiceUrl,
+        smsUrl,
+        appSid,
       },
     });
 
