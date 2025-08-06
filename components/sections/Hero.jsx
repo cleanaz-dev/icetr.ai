@@ -10,7 +10,7 @@ export const Hero = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       {/* Mobile Version (sm and below) */}
       <div className="sm:hidden container mx-auto max-w-3xl px-4 flex-grow flex flex-col justify-center pt-4">
         <div className="text-center">
@@ -40,16 +40,25 @@ export const Hero = () => {
           </h1>
 
           <p className="text-sm text-sky-400 mb-6 mx-auto leading-relaxed">
-            Transform your{" "}
-            <span className="font-semibold">cold outreach</span> with
-            intelligent emails and{" "}
+            Transform your <span className="font-semibold">cold outreach</span>{" "}
+            with intelligent emails and{" "}
             <span className="font-semibold">AI-driven cold calls</span> — all
             powered by built-in calling tools.
           </p>
 
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center items-center mt-8">
+            <Image
+              src={heroImg}
+              alt="AI-powered outreach platform"
+              className="object-contain w-52 h-52 mx-auto"
+              priority
+              sizes="50vw"
+            />
+          </div>
+
+          <div className="flex justify-center my-6">
             <Button size="lg" className="px-6 py-4 text-sm" asChild>
-              <Link href="/waitlist">
+              <Link href="#features">
                 Learn More!
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
@@ -88,9 +97,8 @@ export const Hero = () => {
           </h1>
 
           <p className="text-base md:text-lg text-sky-400 mb-8 max-w-xl mx-auto leading-relaxed">
-            Transform your{" "}
-            <span className="font-semibold">cold outreach</span> with
-            intelligent emails and{" "}
+            Transform your <span className="font-semibold">cold outreach</span>{" "}
+            with intelligent emails and{" "}
             <span className="font-semibold">AI-driven cold calls</span> — all
             powered by built-in calling tools that help you{" "}
             <span className="font-semibold">reach leads faster</span> and close
@@ -102,14 +110,14 @@ export const Hero = () => {
             </span>
           </p>
 
-          <div className="flex justify-center mb-10">
+          {/* <div className="flex justify-center mb-10">
             <Button size="lg" className="px-8 py-6 text-base" asChild>
               <Link href="/waitlist">
                 Learn More!
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
             </Button>
-          </div>
+          </div> */}
 
           <div className="flex justify-center items-center mt-8">
             <div className="relative w-full max-w-md">
