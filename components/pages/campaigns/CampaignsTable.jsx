@@ -45,6 +45,7 @@ import {
   Users,
   Pause,
   Play,
+  ClipboardList,
   Calendar,
   Trash2,
   Trophy,
@@ -64,11 +65,11 @@ export default function CampaignsTable({
   orgId,
  
 }) {
-  const { refresh } = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
- 
+ console.log("campaigns", campaigns);
 
   const statusOptions = [
     { value: "Draft", label: "Draft" },
@@ -100,12 +101,12 @@ export default function CampaignsTable({
   // Get type badge/icon
   const getTypeIcon = (type) => {
     const typeConfig = {
-      calls: { icon: Phone, color: "text-primary" },
-      emails: { icon: Mail, color: "text-primary" },
-      sms: { icon: Users, color: "text-primary" },
+      CALLS: { icon: Phone, color: "text-primary" },
+      FORMS: { icon: ClipboardList, color: "text-primary" },
+      SMS: { icon: Users, color: "text-primary" },
     };
 
-    const config = typeConfig[type] || typeConfig.calls;
+    const config = typeConfig[type] || typeConfig.CALLS;
     const IconComponent = config.icon;
 
     return <IconComponent className={`h-4 w-4 ${config.color}`} />;

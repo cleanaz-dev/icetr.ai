@@ -8,19 +8,20 @@ import SimpleIntegrationsTab from "./SimpleIntegrationsTab";
 import { useCoreContext } from "@/context/CoreProvider";
 import AccountTab from "./account-tab/AccountTab";
 import PageHeader from "@/components/ui/layout/PageHeader";
+import { useTeamContext } from "@/context/TeamProvider";
 
 export default function SettingsPage({ settings }) {
-  const { organization, generateApiKey, newKey } = useCoreContext();
+  const { generateApiKey, newKey } = useCoreContext();
+  const { orgId } = useTeamContext();
 
+console.log("settings", settings);
   return (
     <div className=" max-w-7xl px-4 py-6">
-      <PageHeader 
+      <PageHeader
         title="Settings"
         description="View and change settings"
         icon="Cog"
-      
       />
-      
 
       <Tabs defaultValue="organization" className="w-full">
         <TabsList className="grid w-full grid-cols-4 mb-4">
@@ -44,22 +45,22 @@ export default function SettingsPage({ settings }) {
 
         {/* Organization Settings */}
         <OrgTab
-          organization={organization}
+          organization={settings}
           generateApiKey={generateApiKey}
           newKey={newKey}
         />
 
         {/* User Account Settings */}
-        <AccountTab settings={settings} />
+        <AccountTab settings={settings.currentUser} />
 
         {/* Org Integrations Page */}
         <SimpleIntegrationsTab
-          orgId={settings.organization.id}
-          integrationData={settings.organization.orgIntegrations}
+          orgId={settings.id}
+          integrationData={settings.orgIntegrations}
         />
 
         {/* Users Management */}
-        <UsersTab settings={settings} />
+        <UsersTab settings={settings} orgId={orgId} />
       </Tabs>
     </div>
   );

@@ -26,6 +26,7 @@ import {
 } from "@/lib/db/org";
 import Providers from "./providers";
 import UserOnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
+import { getOrgCallFlowConfig } from "@/lib/db/call-flow";
 
 export default async function DashboardLayout({ children }) {
   const { userId } = await auth();
@@ -47,10 +48,10 @@ export default async function DashboardLayout({ children }) {
   const dashboardStats = await getOrgDashboardStats(orgId);
   const leads = await getAllOrgLeads(orgId);
   const teamLeads = await getAssignedTeamsLeads(orgId);
-  const phoneConfiguration = await getPhoneConfiguration(orgId);
+  const callFlowConfiguration = await getOrgCallFlowConfig(orgId);
   const organization = await getUserOrganization(userId, orgId);
 
-  // console.log("LAYOUT_PAGE_OBJECT", organization)
+  console.log("LAYOUT_PAGE_OBJECT", callFlowConfiguration)
 
 
   return (
@@ -66,7 +67,7 @@ export default async function DashboardLayout({ children }) {
       }}
       dashboardValues={{ activities, leadCounts, dashboardStats }}
       leadsValues={{ leads }}
-      coreValues={{ phoneConfiguration, organization }}
+      coreValues={{ callFlowConfiguration, organization }}
     >
       <RoleBasedDashboardLayout
         imageUrl={imageUrl}

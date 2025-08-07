@@ -53,7 +53,7 @@ export const Testimonials = () => {
   ];
 
   return (
-    <section className="py-20 px-4 bg-slate-900/30">
+    <section id="testimonials" className="py-20 px-4 bg-slate-900/30">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
           <div className="inline-block bg-transparent border border-sky-400 rounded-full px-6 py-2 mb-6">

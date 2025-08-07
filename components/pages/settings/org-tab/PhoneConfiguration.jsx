@@ -36,14 +36,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useCoreContext } from "@/context/CoreProvider";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function PhoneConfiguration({ onSave }) {
   const {
-    phoneConfiguration: initialPhoneConfiguration,
+    callFlowConfiguration: initialCallFlowConfiguration,
     savePhoneConfiguration,
   } = useCoreContext();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [config, setConfig] = useState(initialPhoneConfiguration);
+  const [config, setConfig] = useState(initialCallFlowConfiguration);
   const [saving, setSaving] = useState(false);
 
   const updateConfig = (key, value) => {
@@ -94,64 +95,55 @@ export default function PhoneConfiguration({ onSave }) {
       : "Basic configuration";
   };
 
-  if (!initialPhoneConfiguration || Object.keys(initialPhoneConfiguration).length === 0) {
-  return (
-    <Card className="hover:border-primary transition-all duration-300">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-gray-400" />
-            <div>
-              <CardTitle className="text-lg">Phone Configuration</CardTitle>
-              <CardDescription>No configuration available</CardDescription>
+  if (
+    !initialCallFlowConfiguration ||
+    Object.keys(initialCallFlowConfiguration).length === 0
+  ) {
+    return (
+      <Card className="hover:border-primary transition-all duration-300">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5 text-gray-400" />
+              <div>
+                <CardTitle className="text-lg">
+                  Call Flow Configuration
+                </CardTitle>
+                <CardDescription>No configuration available</CardDescription>
+              </div>
             </div>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+              <Activity className="w-3 h-3 mr-1" />
+              Not Configured
+            </span>
           </div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-            <Activity className="w-3 h-3 mr-1" />
-            Not Configured
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="text-center py-8">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-            <Settings className="w-8 h-8 text-gray-400" />
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full border border-muted flex items-center justify-center">
+              <Settings className="w-8 h-8 text-gray-400" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium text-white">No Phone Configuration</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Set up your phone configuration to enable call recording,
+                transcription, and automated workflows.
+              </p>
+            </div>
+            <Button
+              className="mt-2"
+              asChild
+            >
+              <Link href="/settings/call-flow-builder">
+                <Settings className="w-4 h-4 mr-2" />
+                Configure Call Flow
+              </Link>
+            </Button>
           </div>
-          <div className="space-y-2">
-            <h3 className="font-medium text-muted-foreground">No Phone Configuration</h3>
-            <p className="text-sm text-gray-500 max-w-sm">
-              Set up your phone configuration to enable call recording, transcription, and automated workflows.
-            </p>
-          </div>
-          <Button 
-            onClick={() => {
-              // Initialize with default config or trigger setup flow
-              setConfig({
-                recordingEnabled: false,
-                recordInboundCalls: true,
-                recordOutboundCalls: false,
-                minOutboundDuration: 30,
-                transcriptionProvider: "none",
-                transcribeInbound: false,
-                transcribeOutbound: false,
-                inboundFlow: "voicemail",
-                voicemailMessage: "",
-                forwardToNumber: "",
-                autoCreateLeads: false,
-                autoCreateFollowUps: false
-              });
-              setIsExpanded(true);
-            }}
-            className="mt-2"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Configure Phone Settings
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="hover:border-primary transition-all duration-300">

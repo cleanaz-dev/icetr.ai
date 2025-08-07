@@ -4,8 +4,8 @@ import { Device, Logger } from "@twilio/voice-sdk";
 import { TierService } from "@/lib/services/tier-service";
 
 const CoreContext = createContext({
-  phoneConfiguration: null,
-  setPhoneConfiguration: () => {},
+  callFlowConfiguration: null,
+  setCallFlowConfiguration: () => {},
   savePhoneConfiguration: async () => {},
   twilioDevice: null,
   twilioStatus: "Disconnected",
@@ -32,12 +32,12 @@ const CoreContext = createContext({
 
 export function CoreProvider({ initialData = {}, children }) {
   const {
-    phoneConfiguration: initialPhoneConfiguration = null,
+    callFlowConfiguration: initialCallFlowConfiguration = null,
     organization: initialOrganization = null,
   } = initialData;
 
-  const [phoneConfiguration, setPhoneConfiguration] = useState(
-    initialPhoneConfiguration
+  const [callFlowConfiguration, setCallFlowConfiguration] = useState(
+    initialCallFlowConfiguration
   );
   const [organization, setOrganization] = useState(initialOrganization);
   const [newKey, setNewKey] = useState("");
@@ -298,8 +298,8 @@ export function CoreProvider({ initialData = {}, children }) {
     () => ({
       organization,
       setOrganization,
-      phoneConfiguration,
-      setPhoneConfiguration,
+      callFlowConfiguration,
+      setCallFlowConfiguration,
       savePhoneConfiguration,
       tierSettings,
 
@@ -314,7 +314,7 @@ export function CoreProvider({ initialData = {}, children }) {
       saveScript// Enhanced tier utilities
     }),
     [
-      phoneConfiguration,
+      callFlowConfiguration,
       twilioDevice,
       twilioStatus,
       twilioError,

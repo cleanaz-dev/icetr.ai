@@ -35,12 +35,12 @@ const ASSIGNMENT_STRATEGIES = [
     description:
       "Assigns leads to agents in a rotating order to ensure equal distribution.",
   },
-  {
-    value: "LEAST_LOADED",
-    label: "Least Loaded",
-    description:
-      "Assigns leads to the agent with the fewest active assignments.",
-  },
+  // {
+  //   value: "LEAST_LOADED",
+  //   label: "Least Loaded",
+  //   description:
+  //     "Assigns leads to the agent with the fewest active assignments.",
+  // },
   {
     value: "ROLE_BASED",
     label: "Role Based",
@@ -56,7 +56,7 @@ const ASSIGNMENT_STRATEGIES = [
 export default function CreateCampaignDialog({ onSuccess, open, setOpen }) {
   const { orgId, teams } = useTeamContext();
   const [name, setName] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState(teams[0]);
+  const [selectedTeam, setSelectedTeam] = useState(teams[0]?.id);
   const [campaigntype, setCampaignType] = useState("");
   const [assignmentType, setAssignmentType] = useState("MANUAL");
   const [loading, setLoading] = useState(false);

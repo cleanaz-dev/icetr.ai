@@ -1,15 +1,8 @@
 import { useState } from "react";
 import {
   Building2,
-  Crown,
-  Star,
   Sparkles,
-  Brain,
-  Globe,
-  Webhook,
-  Calendar,
   MessageSquare,
-  Mic,
   ChevronDown,
   ChevronRight,
   Save,
@@ -19,9 +12,7 @@ import {
   Phone,
   FileText,
   Activity,
-  Shield,
-  Zap,
-  TrendingUp,
+
 } from "lucide-react";
 import {
   Card,
@@ -61,7 +52,7 @@ export default function OrganizationPlan({
   const tierInfo = TIER_INFO[currentTier];
   const TierIcon = tierInfo?.icon || Building2;
 
-  console.log("tierInfo", tierInfo);
+  console.log("campaigns", campaigns);
 
   // Format numbers for display
   const formatNumber = (num) =>
@@ -92,9 +83,13 @@ export default function OrganizationPlan({
       current: totalLeads,
       max: tierSettings.limits?.maxLeads || 5000,
     },
-    trainingScenarios: {
+    TrainingScenarios: {
       current: campaignStats.scenarios,
       max: tierSettings.limits?.maxTrainingScenarios
+    },
+    aiCredits: {
+      current: tierSettings.usage?.aiCredits || 0,
+      max: tierSettings.limits?.maxAiCredits || 5,
     }
   };
 

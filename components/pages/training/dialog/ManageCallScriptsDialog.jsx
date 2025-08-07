@@ -15,6 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { useTeamContext } from "@/context/TeamProvider";
 import { useCoreContext } from "@/context/CoreProvider";
+import { BrainCircuit } from "lucide-react";
+import { Atom } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ManageCallScriptsDialog({
   scripts = [],
@@ -27,13 +30,27 @@ export default function ManageCallScriptsDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [formScripts, setFormScripts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [generateWithAI, setGenerateWitAI] = useState(false);
+  const [aiConfig, setAIConfig] = useState({
+    numberOfScripts: 3,
+    scriptParams: "",
+    includeOpening: false,
+  });
   const [expandedScripts, setExpandedScripts] = useState(new Set());
 
   useEffect(() => {
     if (isOpen) {
       setFormScripts(scripts.length > 0 ? [...scripts] : []);
       // Auto-expand new empty scripts
-      setExpandedScripts(new Set(scripts.map((_, index) => scripts.length === 0 || !scripts[index].label ? index : null).filter(i => i !== null)));
+      setExpandedScripts(
+        new Set(
+          scripts
+            .map((_, index) =>
+              scripts.length === 0 || !scripts[index].label ? index : null
+            )
+            .filter((i) => i !== null)
+        )
+      );
     }
   }, [isOpen, scripts]);
 
@@ -41,7 +58,7 @@ export default function ManageCallScriptsDialog({
     const newIndex = formScripts.length;
     setFormScripts([...formScripts, { label: "", content: "" }]);
     // Auto-expand new script
-    setExpandedScripts(prev => new Set([...prev, newIndex]));
+    setExpandedScripts((prev) => new Set([...prev, newIndex]));
   };
 
   const updateScript = (index, field, value) => {
@@ -52,9 +69,9 @@ export default function ManageCallScriptsDialog({
 
   const removeScript = (index) => {
     setFormScripts(formScripts.filter((_, i) => i !== index));
-    setExpandedScripts(prev => {
+    setExpandedScripts((prev) => {
       const newSet = new Set();
-      prev.forEach(i => {
+      prev.forEach((i) => {
         if (i < index) newSet.add(i);
         else if (i > index) newSet.add(i - 1);
       });
@@ -63,7 +80,7 @@ export default function ManageCallScriptsDialog({
   };
 
   const toggleScript = (index) => {
-    setExpandedScripts(prev => {
+    setExpandedScripts((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(index)) {
         newSet.delete(index);
@@ -75,7 +92,9 @@ export default function ManageCallScriptsDialog({
   };
 
   const handleSubmit = async () => {
-    const hasEmpty = formScripts.some(s => !s.label.trim() || !s.content.trim());
+    const hasEmpty = formScripts.some(
+      (s) => !s.label.trim() || !s.content.trim()
+    );
     if (hasEmpty || !orgId || !campaignId) return;
 
     setIsLoading(true);
@@ -100,6 +119,48 @@ export default function ManageCallScriptsDialog({
           <DialogTitle>Manage Call Scripts</DialogTitle>
         </DialogHeader>
 
+        <div className="flex items-center gap-2">
+          <Label>Generate with AI:</Label>
+          <Checkbox
+            checked={generateWithAI}
+            onCheckedChange={setGenerateWitAI}
+          />
+        </div>
+        {generateWithAI && (
+          <>
+            <div className="flex-col items-center space-y-2">
+              <Label>Number of Scripts</Label>
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={aiConfig.numberOfScripts}
+                onChange={(e) =>
+                  setAIConfig({ ...aiConfig, numberOfScripts: e.target.value })
+                }
+              />
+            </div>
+            <div className="flex-col items-center space-y-2">
+              <Label>Script Parameters</Label>
+              <Textarea
+                value={aiConfig.scriptParams}
+                onChange={(e) =>
+                  setAIConfig({ ...aiConfig, scriptParams: e.target.value })
+                }
+                placeholder="Enter script parameters (e.g., type of calls, campaign details, etc.)"
+              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <Label>Include Opening Script:</Label>
+              <Checkbox
+                checked={aiConfig.includeOpening}
+                onCheckedChange={(e) =>
+                  setAIConfig({...aiConfig, includeOpening: e.target.checked })
+                }
+              />
+            </div>
+          </>
+        )}
         <div className="flex-1 overflow-y-auto space-y-2">
           {formScripts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -109,7 +170,7 @@ export default function ManageCallScriptsDialog({
             formScripts.map((script, index) => (
               <div key={index} className="border rounded-lg overflow-hidden">
                 {/* Header - Always Visible */}
-                <div 
+                <div
                   className="flex items-center justify-between p-3 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleScript(index)}
                 >
@@ -142,32 +203,44 @@ export default function ManageCallScriptsDialog({
                 </div>
 
                 {/* Expandable Content */}
-                <div className={`transition-all duration-200 ease-in-out ${
-                  expandedScripts.has(index) 
-                    ? 'max-h-96 opacity-100' 
-                    : 'max-h-0 opacity-0'
-                } overflow-hidden`}>
+                <div
+                  className={`transition-all duration-200 ease-in-out ${
+                    expandedScripts.has(index)
+                      ? "max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                  } overflow-hidden`}
+                >
                   <div className="p-4 space-y-3 bg-background">
                     <div>
-                      <Label htmlFor={`label-${index}`} className="text-xs font-medium">
+                      <Label
+                        htmlFor={`label-${index}`}
+                        className="text-xs font-medium"
+                      >
                         Script Label
                       </Label>
                       <Input
                         id={`label-${index}`}
                         value={script.label}
-                        onChange={(e) => updateScript(index, "label", e.target.value)}
+                        onChange={(e) =>
+                          updateScript(index, "label", e.target.value)
+                        }
                         placeholder="Opening, Closing, Objection Handling..."
                         className="mt-1 h-8"
                       />
                     </div>
                     <div>
-                      <Label htmlFor={`content-${index}`} className="text-xs font-medium">
+                      <Label
+                        htmlFor={`content-${index}`}
+                        className="text-xs font-medium"
+                      >
                         Script Content
                       </Label>
                       <Textarea
                         id={`content-${index}`}
                         value={script.content}
-                        onChange={(e) => updateScript(index, "content", e.target.value)}
+                        onChange={(e) =>
+                          updateScript(index, "content", e.target.value)
+                        }
                         placeholder="Hi, I'm [Name] from [Company]. I know you're busy, so I'll keep this quick..."
                         rows={5}
                         className="mt-1 resize-none"
@@ -190,6 +263,17 @@ export default function ManageCallScriptsDialog({
         </div>
 
         <DialogFooter className="gap-2 pt-4">
+          {generateWithAI && (
+            <Button 
+              variant="outline" 
+              onClick={() => setIsOpen(false)}
+              disabled={!aiConfig.numberOfScripts ||!aiConfig.scriptParams}
+              
+              >
+              <Atom className="h-4 w-4 mr-2" />
+              Generate with AI
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancel
           </Button>

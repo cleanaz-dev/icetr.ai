@@ -18,6 +18,11 @@ import { navItems } from "@/lib/constants/frontend";
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
+
+  const handleLinkClick = () => {
+    setOpen(false);
+  };
+
   return (
     <header className="md:sticky top-0 z-50 w-full pt-4 ">
       <div className="container max-w-6xl mx-auto px-2 md:px-4  flex items-center justify-between">
@@ -79,6 +84,7 @@ export const Header = () => {
                   key={index}
                   href={i.href}
                   className="capitalize group mt-4"
+                  onClick={handleLinkClick}
                 >
                   <span className="group-hover:text-primary text-white transition-all duration-300 text-lg  tracking-wide group-hover:tracking-widest">
                     {i.label}
@@ -88,7 +94,7 @@ export const Header = () => {
 
               <div className="flex flex-col space-y-2 py-12 w-full max-w-xs gap-4">
                 <Button size="huge" asChild>
-                  <Link href="/sign-in">Sign In</Link>
+                  <Link href="/sign-in" onClick={handleLinkClick}>Sign In</Link>
                 </Button>
                 {/* <Button size="hugeTransparent">Try for free</Button> */}
               </div>

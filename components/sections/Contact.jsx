@@ -1,27 +1,67 @@
 "use client";
+
 import { useState } from "react";
-import { ArrowRight, Mail, MessageSquare, Phone } from "lucide-react";
-import { Box } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Mail, MessageSquare, Phone, Box } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export const Contact = () => {
+  const [loading, setLoading] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
     company: "",
-    message: "",
+    interest: "",
+    phone: "",
+    message: "", // optional if you want message + select
   });
+  const { push } = useRouter();
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
-    console.log("Contact form submitted:", contactForm);
-    // Handle form submission
-    alert("Thank you for your interest! We'll be in touch soon.");
-    setContactForm({ name: "", email: "", company: "", message: "" });
+    setLoading(true);
+    try {
+      const resp = await fetch("/api/public/contact-form", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "X-API-KEY": "your-api-key-here", 
+        },
+        body: JSON.stringify(contactForm),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      await resp.json();
+      setContactForm({
+        name: "",
+        email: "",
+        company: "",
+        interest: "",
+        phone: "",
+        message: "",
+      });
+      push("/thank-you");
+    } catch {
+      alert("Failed to send contact form. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <section id="contact" className="py-20 px-4 bg-slate-700/80">
       <div className="container mx-auto max-w-4xl">
+        {/* header */}
         <div className="text-center mb-16">
           <div className="inline-block bg-transparent border border-sky-400 rounded-full px-6 py-2 mb-6">
             <span className="text-sky-400 text-sm md:text-base tracking-wide">
@@ -42,86 +82,155 @@ export const Contact = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-12">
-          {/* Contact Form */}
-          <div className="bg-slate-800/30 backdrop-blur-sm border border-sky-400/20 rounded-xl p-8">
-            <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
-              <MessageSquare className="w-6 h-6 text-sky-400" />
-              Send us a message
-            </h3>
-
-            <div className="space-y-6">
+          {/* form */}
+          <div className="bg-slate-800/30 backdrop-blur-sm border border-sky-400/20 rounded-xl p-8 h-full flex flex-col">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 bg-sky-400/20 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-sky-400" />
+              </div>
+              <div className="mb-4" >
+                <h3 className="text-2xl font-semibold text-white  flex items-center gap-3">
+                  Send us a message
+                </h3>
+                <p className="text-sky-400/80">We are happy to help you!
+                </p>
+              </div>
+            </div>
+            <form
+              onSubmit={handleContactSubmit}
+              className="h-full flex flex-col justify-between space-y-6"
+            >
+              {/* Name */}
               <div>
-                <label className="block text-sky-400/90 text-sm font-medium mb-2">
+                <Label
+                  htmlFor="name"
+                  className="text-sky-400/90 text-sm font-medium mb-2 block"
+                >
                   Name *
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="name"
                   type="text"
                   required
                   value={contactForm.name}
                   onChange={(e) =>
                     setContactForm({ ...contactForm, name: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 focus:outline-none transition-colors"
                   placeholder="Your full name"
+                  className="w-full h-10 px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 transition-colors"
                 />
               </div>
 
+              {/* Email */}
               <div>
-                <label className="block text-sky-400/90 text-sm font-medium mb-2">
+                <Label
+                  htmlFor="email"
+                  className="text-sky-400/90 text-sm font-medium mb-2 block"
+                >
                   Email *
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="email"
                   type="email"
                   required
                   value={contactForm.email}
                   onChange={(e) =>
                     setContactForm({ ...contactForm, email: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 focus:outline-none transition-colors"
-                  placeholder="your@email.com"
+                  placeholder="you@example.com"
+                  className="w-full  h-10 px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 transition-colors"
                 />
               </div>
 
+              {/* Phone */}
               <div>
-                <label className="block text-sky-400/90 text-sm font-medium mb-2">
+                <Label
+                  htmlFor="phone"
+                  className="text-sky-400/90 text-sm font-medium mb-2 block"
+                >
+                  Phone *
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={contactForm.phone}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, phone: e.target.value })
+                  }
+                  placeholder="555‑555‑5555"
+                  className="w-full  h-10 px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 transition-colors"
+                />
+              </div>
+
+              {/* Company */}
+              <div>
+                <Label
+                  htmlFor="company"
+                  className="text-sky-400/90 text-sm font-medium mb-2 block"
+                >
                   Company
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="company"
                   type="text"
                   value={contactForm.company}
                   onChange={(e) =>
                     setContactForm({ ...contactForm, company: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 focus:outline-none transition-colors"
                   placeholder="Your company name"
+                  className="w-full h-10 px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 transition-colors"
                 />
               </div>
 
+              {/* Interest */}
               <div>
-                <label className="block text-sky-400/90 text-sm font-medium mb-2">
-                  Message *
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  value={contactForm.message}
-                  onChange={(e) =>
-                    setContactForm({ ...contactForm, message: e.target.value })
+                <Label
+                  htmlFor="interest"
+                  className="text-sky-400/90 text-sm font-medium mb-2 block"
+                >
+                  Interest *
+                </Label>
+                <Select
+                  value={contactForm.interest}
+                  onValueChange={(val) =>
+                    setContactForm({ ...contactForm, interest: val })
                   }
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-sky-400/20 rounded-lg text-white placeholder-sky-400/50 focus:border-sky-400 focus:outline-none transition-colors resize-none"
-                  placeholder="Tell us about your needs..."
-                />
+                >
+                  <SelectTrigger
+                    id="interest"
+                    className="w-full h-[40px] px-4 py-3  bg-slate-700/50 border border-sky-400/20 rounded-lg text-white focus:border-sky-400 transition-colors data-[size=default]:h-10"
+                  >
+                    <SelectValue placeholder="Select option" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 text-white border border-sky-400/20 rounded-md shadow-md">
+                    <SelectItem value="Plans">Plans</SelectItem>
+                    <SelectItem value="AI Training">AI Training</SelectItem>
+                    <SelectItem value="Anything">Anything</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <button
-                type="button"
-                onClick={handleContactSubmit}
-                className="w-full bg-gradient-to-r from-sky-400 to-blue-500 text-slate-900 py-3 rounded-lg font-semibold hover:from-sky-300 hover:to-blue-400 transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                Send Message
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
+              {/* Submit */}
+              <div className="mt-auto pt-6">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 relative overflow-hidden bg-gradient-to-r from-sky-400 to-blue-500 text-slate-900 rounded-lg font-semibold flex items-center justify-center gap-2 before:absolute before:inset-0 before:bg-gradient-to-r before:from-sky-300 before:to-blue-400 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500 group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="relative z-10 text-base">
+                    {loading ? (
+                      <p>Sending Message…</p>
+                    ) : (
+                      <p className="flex items-center gap-2">
+                        Send Message{" "}
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 duration-300 transition-all" />
+                      </p>
+                    )}
+                  </span>
+                </Button>
+              </div>
+            </form>
           </div>
 
           {/* Contact Info */}
@@ -162,15 +271,13 @@ export const Contact = () => {
               </button>
             </div>
 
-            <div className="bg-slate-800/30 backdrop-blur-sm border border-sky-400/20 rounded-xl p-6 flex flex-col justify-between">
+            <div className="bg-slate-800/30 backdrop-blur-sm border border-sky-400/20 rounded-xl px-6 pt-6 pb-7 flex flex-col justify-between">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-10 h-10 bg-sky-400/20 rounded-lg flex items-center justify-center">
                   <Box className="w-6 h-6 text-sky-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold ">
-                    DFY Starter
-                  </h4>
+                  <h4 className="text-white font-semibold ">DFY Starter</h4>
                   <p className="text-sky-400/70 ">
                     Focus on sales, we handle everything else!
                   </p>
@@ -180,9 +287,9 @@ export const Contact = () => {
                 Form & chatbot setup, basic funnel configuration, up to 500
                 leads/month processing, monthly performance reporting.
               </p>
-              <button className="w-full bg-gradient-to-r from-sky-400 to-blue-500 text-slate-900 py-3 rounded-lg font-semibold hover:from-sky-300 hover:to-blue-400 transition-all duration-300">
-               Special Offer!
-              </button>
+              <Button className="w-full h-12 relative overflow-hidden bg-gradient-to-r from-sky-400 to-blue-500 text-slate-900 rounded-lg font-semibold flex items-center justify-center gap-2 before:absolute before:inset-0 before:bg-gradient-to-r before:from-sky-300 before:to-blue-400 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500 group disabled:opacity-50 disabled:cursor-not-allowed">
+                <span className="text-base z-10">Special Offer!</span>
+              </Button>
             </div>
           </div>
         </div>

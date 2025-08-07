@@ -99,15 +99,15 @@ export default function UsersTab({ settings, orgId }) {
  };
 
  const uniqueRoles = [
-  ...new Set(settings.organization.users.map((user) => user.role.type)),
+  ...new Set(settings.users.map((user) => user.role.type)),
  ];
  const uniqueTeams = [
   ...new Set(
-   settings.organization.users.map((user) => user.team?.name).filter(Boolean)
+   settings.users.map((user) => user.team?.name).filter(Boolean)
   ),
  ];
 
- const filteredUsers = settings.organization.users.filter((user) => {
+ const filteredUsers = settings.users.filter((user) => {
   const matchesSearch =
    `${user.firstname} ${user.lastname}`
     .toLowerCase()
@@ -156,7 +156,7 @@ export default function UsersTab({ settings, orgId }) {
           <Users className="w-5 h-5" />
           Organization Users
           <Badge variant="secondary" className="ml-2">
-           {settings.organization.users.length}
+           {settings.users.length}
           </Badge>
          </CardTitle>
          <CardDescription>Manage users in your organization</CardDescription>

@@ -15,26 +15,26 @@ datasource db {
 }
 
 model Organization {
-  id                  String              @id @default(auto()) @map("_id") @db.ObjectId
-  name                String
-  onboardingCompleted Boolean             @default(false)
-  country             String?
-  users               User[]              @relation("UserOrganization")
-  campaigns           Campaign[]
-  apiKeys             ApiKey[]
-  teams               Team[]
-  leads               Lead[]
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  ownerId             String?             @unique @db.ObjectId
-  owner               User?               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  orgIntegrations     OrgIntegration?
-  auditLogs           AuditLog[]
-  customer            Customer?
-  customerId          String?             @db.ObjectId
-  phoneConfiguration  PhoneConfiguration?
-  tierSettings        TierSettings?
-  call                Call[]              @relation("CallOrganization")
+  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+  name                  String
+  onboardingCompleted   Boolean                @default(false)
+  country               String?
+  users                 User[]                 @relation("UserOrganization")
+  campaigns             Campaign[]
+  apiKeys               ApiKey[]
+  teams                 Team[]
+  leads                 Lead[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  ownerId               String?                @unique @db.ObjectId
+  owner                 User?                  @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  orgIntegrations       OrgIntegration?
+  auditLogs             AuditLog[]
+  customer              Customer?
+  customerId            String?                @db.ObjectId
+  callFlowConfiguration CallFlowConfiguration?
+  tierSettings          TierSettings?
+  call                  Call[]                 @relation("CallOrganization")
 }
 
 // New tier-based organization settings
@@ -878,37 +878,66 @@ enum AssignmentStrategy {
   MANUAL
 }
 
-model PhoneConfiguration {
+model CallFlowConfiguration {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   orgId String @unique @db.ObjectId
 
-  // Recording Settings
+  // === RECORDING SETTINGS (from PhoneConfiguration) ===
   recordingEnabled    Boolean @default(true)
-  minOutboundDuration Int     @default(120) // seconds
+  minOutboundDuration Int     @default(120) // seconds  
   recordInboundCalls  Boolean @default(true)
   recordOutboundCalls Boolean @default(true)
 
-  // Transcription Settings
+  // === TRANSCRIPTION SETTINGS ===
   transcriptionProvider String  @default("assemblyai") // "assemblyai" | "twilio" | "none"
   transcribeInbound     Boolean @default(true)
   transcribeOutbound    Boolean @default(true)
 
-  // Call Flow Settings
-  inboundFlow      String  @default("voicemail") // "voicemail" | "forward" | "ivr"
+  // === INBOUND CALL FLOW SETTINGS ===
+  inboundFlow      String  @default("voicemail") // "voicemail" | "forward" | "ivr" | "custom"
   voicemailMessage String? @default("")
   forwardToNumber  String?
 
-  // Business Logic
+  // === BUSINESS LOGIC SETTINGS ===
   autoCreateLeads     Boolean @default(true)
   autoCreateFollowUps Boolean @default(true)
+
+  // === FLOW ENGINE SETTINGS (new) ===
+  flowSteps Json @default("[{\"id\": \"call-start\", \"enabled\": true, \"order\": 1}, {\"id\": \"call-active\", \"enabled\": true, \"order\": 2}, {\"id\": \"call-complete\", \"enabled\": true, \"order\": 3}, {\"id\": \"recording-check\", \"enabled\": true, \"order\": 4}, {\"id\": \"lead-update\", \"enabled\": true, \"order\": 5}]")
+
+  // === CONDITIONAL LOGIC ===
+  minCallDurationForRecording Int     @default(30) // Different from minOutboundDuration
+  enableFlowLogging           Boolean @default(true)
+
+  // === ADVANCED FEATURES (future) ===
+  customFlowRules  Json? // For complex branching logic
+  webhookEndpoints Json? // Custom webhook integrations
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation
-  organization Organization @relation(fields: [orgId], references: [id])
+  // Relations
+  organization Organization    @relation(fields: [orgId], references: [id])
+  executions   FlowExecution[] // Track flow runs
 
-  @@map("phone_configurations")
+  @@map("call_flow_configurations")
+}
+
+model FlowExecution {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  orgId         String   @db.ObjectId
+  callSid       String
+  configId      String   @db.ObjectId // Reference to the config used
+  stepId        String
+  stepResult    Json
+  executedAt    DateTime @default(now())
+  success       Boolean  @default(true)
+  errorMessage  String?
+  executionTime Int? // milliseconds
+
+  configuration CallFlowConfiguration @relation(fields: [configId], references: [id])
+
+  @@map("flow_executions")
 }
 
 enum SubscriptionTier {

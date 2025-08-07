@@ -26,7 +26,7 @@ import { CoreProvider } from "@/context/CoreProvider";
  * @param {Object} [props.leadsValues]
  * @param {Array} [props.leadsValues.leads]
  * @param {Object} [props.coreValues]
- * @param {Object} [props.coreValues.phoneConfiguration]
+ * @param {Object} [props.coreValues.callFlowConfiguration]
  * @param {String} [props.coreValues.orgId]
  * @param {Object} [props.coreValues.organization]
  */
@@ -56,7 +56,7 @@ export default function Providers({
 
   const { leads = [] } = leadsValues;
 
-  const { phoneConfiguration = null, organization = null } = coreValues;
+  const { callFlowConfiguration = null, organization = null } = coreValues;
 
   return (
     <DashboardProvider initialData={dashboardValues}>
@@ -74,7 +74,7 @@ export default function Providers({
           }}
         >
           <LeadsProvider initialData={{ leads }}>
-            <CoreProvider initialData={{ phoneConfiguration, organization }}>
+            <CoreProvider initialData={{ callFlowConfiguration, organization }}>
               {children}
             </CoreProvider>
           </LeadsProvider>
