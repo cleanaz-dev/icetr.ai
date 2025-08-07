@@ -24,7 +24,8 @@ import { Switch } from "@/components/ui/switch";
 import { FlowSteps } from "@/lib/config/call-flow-config";
 import { Atom } from "lucide-react";
 
-export default function CallFlowBuilder() {
+export default function CallFlowConfiguration() {
+  const[callRecording, setCallRecording] = useState(false);
   const [flowConfig, setFlowConfig] = useState({
     minCallDuration: 30,
     recordingEnabled: true,
@@ -171,7 +172,7 @@ export default function CallFlowBuilder() {
                 <div className="space-y-4">
                   <Label className="text-muted-foreground flex items-center">
                     <Users size={16} className="inline" />
-                    Features
+                   Your Features
                   </Label>
                   {[
                     {
@@ -196,7 +197,7 @@ export default function CallFlowBuilder() {
                     },
                     {
                       key: "aiCallGrading",
-                      label: "Grades Call with AI",
+                      label: "AI Call Grading",
                       icon: Atom,
                     }
                   ].map(({ key, label, icon: FeatureIcon }) => (
@@ -210,7 +211,6 @@ export default function CallFlowBuilder() {
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <Switch
-                          type="checkbox"
                           checked={flowConfig[key]}
                           onChange={(e) =>
                             handleConfigChange(key, e.target.checked)

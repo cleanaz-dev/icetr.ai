@@ -237,7 +237,7 @@ export default function ApiKeysConfiguration({
               </Button>
 
               {newKey && (
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-green-200 bg-card">
                   <CardContent className="p-4 flex items-start gap-3">
                     <Key className="h-5 w-5 text-green-600 mt-0.5" />
                     <div className="flex-1">

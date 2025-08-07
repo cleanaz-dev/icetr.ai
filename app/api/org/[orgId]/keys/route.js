@@ -118,7 +118,7 @@ export async function POST(req, { params }) {
         key: hashed,
         name: name.trim(),
         orgId,
-        campaignIds,
+        campaigns: { connect: { id: campaignIds  } },
         scopes: ["lead:create"],
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },

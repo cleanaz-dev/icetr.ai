@@ -24,7 +24,7 @@ export const Contact = () => {
     company: "",
     interest: "",
     phone: "",
-    message: "", // optional if you want message + select
+    campaignId: "689388be080f04ff7a637789" // optional if you want message + select
   });
   const { push } = useRouter();
 
@@ -36,7 +36,7 @@ export const Contact = () => {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "X-API-KEY": "your-api-key-here", 
+          "x-api-key": process.env.NEXT_PUBLIC_CONTACT_FORM_API_KEY, 
         },
         body: JSON.stringify(contactForm),
       });
@@ -206,7 +206,9 @@ export const Contact = () => {
                   <SelectContent className="bg-slate-700 text-white border border-sky-400/20 rounded-md shadow-md">
                     <SelectItem value="Plans">Plans</SelectItem>
                     <SelectItem value="AI Training">AI Training</SelectItem>
-                    <SelectItem value="Anything">Anything</SelectItem>
+                    <SelectItem value="Enterprise">Enterprise</SelectItem>
+                    <SelectItem value="Custom Development">Custom Development</SelectItem>
+                    <SelectItem value="DFY">DFY</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

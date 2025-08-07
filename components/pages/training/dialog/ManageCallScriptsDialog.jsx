@@ -31,10 +31,11 @@ export default function ManageCallScriptsDialog({
   const [formScripts, setFormScripts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [generateWithAI, setGenerateWitAI] = useState(false);
+  const [includeOpening, setIncludeOpening] = useState(false);
   const [aiConfig, setAIConfig] = useState({
     numberOfScripts: 3,
     scriptParams: "",
-    includeOpening: false,
+    includeOpening,
   });
   const [expandedScripts, setExpandedScripts] = useState(new Set());
 
@@ -153,10 +154,8 @@ export default function ManageCallScriptsDialog({
             <div className="flex gap-2 items-center">
               <Label>Include Opening Script:</Label>
               <Checkbox
-                checked={aiConfig.includeOpening}
-                onCheckedChange={(e) =>
-                  setAIConfig({...aiConfig, includeOpening: e.target.checked })
-                }
+                checked={includeOpening}
+                onCheckedChange={setIncludeOpening}
               />
             </div>
           </>

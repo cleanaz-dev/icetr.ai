@@ -8,49 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Save, X, FileText } from "lucide-react";
 
 export default function CallScriptTab({ selectedLead, callScriptData }) {
-  console.log("organization", callScriptData);
-  const [scripts, setScripts] = useState([
-    {
-      id: 1,
-      name: "Cold Call Introduction",
-      category: "Opening",
-      content:
-        "Hi [Name], this is [Your Name] from [Organization]. I hope I'm not catching you at a bad time. I'm calling because we help [Industry] companies like yours [Value Proposition]. Do you have a quick minute to chat?",
-      tags: ["cold-call", "introduction"],
-    },
-    {
-      id: 2,
-      name: "Follow-up Script",
-      category: "Follow-up",
-      content:
-        "Hi [Name], it's [Your Name] from [Organization]. We spoke last week about [Previous Discussion]. I wanted to follow up on [Specific Topic] and see if you had any questions about what we discussed.",
-      tags: ["follow-up", "warm-call"],
-    },
-    {
-      id: 3,
-      name: "Objection Handler - Price",
-      category: "Objections",
-      content:
-        "I understand price is always a consideration. Let me ask you this - what's the cost of not solving this problem? Many of our clients found that the investment pays for itself within [Timeframe] through [Specific Benefits].",
-      tags: ["objection", "pricing"],
-    },
-    {
-      id: 4,
-      name: "Closing Script",
-      category: "Closing",
-      content:
-        "Based on our conversation today, it sounds like [Solution] would be a great fit for [Company]. The next step would be to [Next Action]. Are you available for a quick call tomorrow to discuss the details?",
-      tags: ["closing", "next-steps"],
-    },
-    {
-      id: 5,
-      name: "Referral Request",
-      category: "Referrals",
-      content:
-        "I'm glad we could help [Company] with [Solution]. Do you know of any other [Industry] companies that might benefit from similar results? I'd appreciate any introductions you could make.",
-      tags: ["referral", "networking"],
-    },
-  ]);
+  console.log("selectedLead", selectedLead);
+  const [scripts, setScripts] = useState(selectedLead.campaign?.scripts || []);
 
   const [isCreating, setIsCreating] = useState(false);
 
@@ -108,45 +67,23 @@ export default function CallScriptTab({ selectedLead, callScriptData }) {
 
       {/* Scrollable Scripts List */}
       <div className="flex-1 min-h-0 my-4 pb-4">
-        <ScrollArea className="h-[calc(100vh-280px)] w-full">
+        <ScrollArea className="h-[calc(100vh-220px)] w-full">
           <div className="space-y-3 pb-4">
-            {scripts.map((script) => (
-              <Card
-                key={script.id}
-                className="hover:shadow-sm transition-shadow"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        {script.name}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {script.category}
-                        </Badge>
-                        {script.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="bg-muted rounded-md p-3 text-sm">
+            {scripts.map((script, index) => (
+              <div key={index} className="flex-col gap-4 sapce-y-4">
+                <div className="flex gap-2 items-center mb-2 ">
+                  <FileText className="w-4 h-4 text-primary" />
+                  {script.label}
+                </div>
+
+                <div className="">
+                  <div className="bg-muted rounded-md px-2 py-1 text-sm">
                     <pre className="whitespace-pre-wrap">
                       {replaceVariables(script.content)}
                     </pre>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </ScrollArea>

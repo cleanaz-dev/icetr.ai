@@ -5,9 +5,9 @@ import { handleInboundCall } from "@/lib/handlers/inbound-handler";
 import { handleOutboundCall } from "@/lib/handlers/outbound-handler";
 import { handleClientCall } from "@/lib/handlers/client-handler";
 import { createOrUpdateCall, parseTwilioWebhook } from "@/lib/services/twilioCallService";
-
+import { shouldTranscribeCall } from "@/lib/services/integrations/assembly-ai";
 import prisma from "@/lib/prisma";
-
+import { getOrgCallFlowConfig } from "@/lib/db/call-flow";
 
 export async function POST(request, { params }) {
   const { orgId } = await params;
@@ -23,8 +23,9 @@ export async function POST(request, { params }) {
     const formData = await request.formData();
     const webhookData = parseTwilioWebhook(formData);
     
-    // Get phone configuration MUST NOW USE CALLFLOWCONFIGURATION
-    // const phoneConfig = await getPhoneConfiguration(orgId);
+    // Get call flow configuration (replaced phoneConfig)
+    const callFlowConfig = await getOrgCallFlowConfig(orgId);
+    console.log("callFlowConfig:", callFlowConfig);
     
     console.log("Webhook processed:", {
       callSid: webhookData.callSid,
@@ -36,7 +37,7 @@ export async function POST(request, { params }) {
 
     // Handle recording callbacks first
     if (webhookData.hasRecording()) {
-      return await handleRecordingCallback(webhookData, phoneConfig, orgId);
+      return await handleRecordingCallback(webhookData, callFlowConfig, orgId);
     }
 
     // Create/update call record for outbound calls
@@ -47,16 +48,16 @@ export async function POST(request, { params }) {
     
     switch (callType) {
       case 'training':
-        return handleTrainingCall(twiml, webhookData, phoneConfig, orgId);
+        return handleTrainingCall(twiml, webhookData, callFlowConfig, orgId);
         
       case 'client_outbound':
-        return handleClientCall(twiml, webhookData, phoneConfig, orgId);
+        return handleClientCall(twiml, webhookData, callFlowConfig, orgId);
         
       case 'inbound':
-        return handleInboundCall(twiml, webhookData, phoneConfig, orgId);
+        return handleInboundCall(twiml, webhookData, callFlowConfig, orgId);
         
       case 'outbound_api':
-        return handleOutboundCall(twiml, webhookData, phoneConfig, orgId);
+        return handleOutboundCall(twiml, webhookData, callFlowConfig, orgId);
         
       default:
         return handleFallback(twiml, orgId);
@@ -72,7 +73,27 @@ export async function POST(request, { params }) {
   }
 }
 
-// Helper functions
+
+// NEW: Add media streams for live transcription
+function addLiveTranscription(twiml, callSid, orgId, direction, callFlowConfig) {
+  // Check if transcription is enabled for this call direction
+  const shouldTranscribe = (direction === 'inbound' && callFlowConfig.transcribeInbound) ||
+                          (direction === 'outbound-api' && callFlowConfig.transcribeOutbound) ||
+                          (direction === 'outbound' && callFlowConfig.transcribeOutbound);
+
+  if (shouldTranscribe) {
+    // Start media stream to your WebSocket server
+    const start = twiml.start();
+    const stream = start.stream({
+      name: 'transcription_stream',
+      url: `wss://${process.env.DOMAIN}/api/org/${orgId}/transcription/stream?callSid=${callSid}`
+    });
+    
+    console.log(`Live transcription started for call ${callSid}`);
+  }
+}
+
+// Helper functions (updated to use callFlowConfig)
 function determineCallType(webhookData) {
   const { from, direction, leadId, callSessionId } = webhookData;
   
@@ -118,7 +139,11 @@ async function createCallRecord(webhookData) {
   }
 }
 
+// UPDATED: Include transcription in fallback
 function handleFallback(twiml, orgId) {
+  // Add live transcription for unknown calls too
+  addLiveTranscription(twiml, 'fallback', orgId, 'inbound', { transcribeInbound: true });
+  
   twiml.say("Thank you for calling. How can we help you today?");
   
   const gather = twiml.gather({
@@ -144,92 +169,4 @@ export async function GET(request) {
     status: 200,
     headers: { "Content-Type": "application/xml" },
   });
-}
-
-// Helper function to get phone configuration
-async function getPhoneConfig(orgId) {
-  try {
-    const phoneConfig = await prisma.phoneConfiguration.findUnique({
-      where: { orgId },
-    });
-
-    // Return defaults if no config exists
-    if (!phoneConfig) {
-      return {
-        recordingEnabled: true,
-        minOutboundDuration: 120,
-        recordInboundCalls: true,
-        recordOutboundCalls: true,
-        transcriptionProvider: "assemblyai",
-        transcribeInbound: true,
-        transcribeOutbound: true,
-        inboundFlow: "voicemail",
-        voicemailMessage: null,
-        forwardToNumber: null,
-        autoCreateLeads: true,
-        autoCreateFollowUps: true,
-      };
-    }
-
-    return phoneConfig;
-  } catch (error) {
-    console.error("Error fetching phone config:", error);
-    // Return safe defaults on error
-    return {
-      recordingEnabled: true,
-      minOutboundDuration: 120,
-      recordInboundCalls: true,
-      recordOutboundCalls: true,
-      transcriptionProvider: "assemblyai",
-      transcribeInbound: true,
-      transcribeOutbound: true,
-      inboundFlow: "voicemail",
-      voicemailMessage: null,
-      forwardToNumber: null,
-      autoCreateLeads: true,
-      autoCreateFollowUps: true,
-    };
-  }
-}
-
-// Helper function to handle transcription based on config
-async function handleTranscription(
-  recordingUrl,
-  transcriptionText,
-  phoneConfig,
-  callType
-) {
-  // Check if transcription is enabled for this call type
-  const shouldTranscribe =
-    callType === "inbound"
-      ? phoneConfig.transcribeInbound
-      : phoneConfig.transcribeOutbound;
-
-  if (!shouldTranscribe || phoneConfig.transcriptionProvider === "none") {
-    return transcriptionText || null;
-  }
-
-  let transcription = null;
-  try {
-    if (phoneConfig.transcriptionProvider === "assemblyai") {
-      console.log(`Transcribing ${callType} call with Assembly AI...`);
-      transcription = await transcribeRecording(recordingUrl);
-      console.log(
-        "Assembly AI transcription completed:",
-        transcription ? "Success" : "Failed"
-      );
-    } else {
-      // Use Twilio transcription
-      transcription = { text: transcriptionText };
-    }
-  } catch (transcriptionError) {
-    console.error(
-      `${phoneConfig.transcriptionProvider} transcription failed:`,
-      transcriptionError
-    );
-    // Fallback to Twilio transcription if available
-    transcription = { text: transcriptionText || null };
-  }
-
-  return transcription?.text || transcriptionText;
 }

@@ -51,7 +51,7 @@ export default async function DashboardLayout({ children }) {
   const callFlowConfiguration = await getOrgCallFlowConfig(orgId);
   const organization = await getUserOrganization(userId, orgId);
 
-  console.log("LAYOUT_PAGE_OBJECT", callFlowConfiguration)
+  // console.log("LAYOUT_PAGE_OBJECT", callFlowConfiguration)
 
 
   return (

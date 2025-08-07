@@ -57,14 +57,14 @@ export default function LeadsTable({
   sortDirection,
   onSort,
   onShowDialer,
-  onUpdateLead,  // New prop
-  onSaveLead, 
-  orgId   // New prop
+  onUpdateLead, // New prop
+  onSaveLead,
+  orgId, // New prop
 }) {
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const { refresh } = useRouter()
+  const { refresh } = useRouter();
 
   const onEditLead = () => {
     setEditDialogOpen(true);
@@ -74,10 +74,10 @@ export default function LeadsTable({
   };
 
   const handleEmailLead = async (leadId) => {
-    console.log("email sent to lead")
-  }
+    console.log("email sent to lead");
+  };
 
-const handleSaveLead = async (leadId, updatedData, orgId) => {
+  const handleSaveLead = async (leadId, updatedData, orgId) => {
     try {
       const response = await fetch(`/api/org/${orgId}/leads/${leadId}`, {
         method: "PATCH",
@@ -88,18 +88,18 @@ const handleSaveLead = async (leadId, updatedData, orgId) => {
       if (!response.ok) {
         throw new Error("Failed to update lead");
       }
-      
+
       const updatedLead = await response.json();
-      
+
       // Use the prop function to update state instead of refresh()
       onUpdateLead(leadId, updatedLead);
-      
+
       // Close the edit dialog
       setEditDialogOpen(false);
-      
+
       // Show success toast
       toast.success("Lead updated successfully");
-      
+
       return updatedLead;
     } catch (error) {
       console.error("Error updating lead:", error);
@@ -158,6 +158,7 @@ const handleSaveLead = async (leadId, updatedData, orgId) => {
               </TableHead>
               <TableHead>Phone</TableHead>
               <TableHead className="hidden md:table-cell">Company</TableHead>
+              <TableHead className="hidden md:table-cell">Campaign</TableHead>
               <TableHead className="hidden md:table-cell">Website</TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
@@ -183,8 +184,10 @@ const handleSaveLead = async (leadId, updatedData, orgId) => {
               <React.Fragment key={lead.id}>
                 <TableRow
                   className={cn(
-                    "cursor-pointer hover:bg-primary/50 even:bg-muted/40",
-                    selectedLead?.id === lead.id && "bg-primary/25"
+                    "cursor-pointer hover:bg-primary/50",
+                    selectedLead?.id === lead.id
+                      ? "bg-primary/25"
+                      : "even:bg-muted/40"
                   )}
                 >
                   <TableCell
@@ -209,6 +212,9 @@ const handleSaveLead = async (leadId, updatedData, orgId) => {
                     onClick={() => onSelectLead(lead)}
                   >
                     {lead.company || "-"}
+                  </TableCell>
+                  <TableCell onClick={() => onSelectLead(lead)}>
+                    {lead.campaign?.name || "N/A"}
                   </TableCell>
                   <TableCell
                     className="hidden md:table-cell max-w-[150px] truncate"
@@ -335,13 +341,13 @@ const handleSaveLead = async (leadId, updatedData, orgId) => {
           orgId={orgId}
         />
 
-          {/*  Email Dialog */}
+        {/*  Email Dialog */}
         <EmailDialog
           lead={selectedLead}
           open={showEmailDialog}
           onOpenChange={setShowEmailDialog}
           onEmailSent={(template, email) => {
-           toast.success(`Sent ${template.name} to ${email}`)
+            toast.success(`Sent ${template.name} to ${email}`);
             console.log(`Sent ${template.name} to ${email}`);
           }}
         />

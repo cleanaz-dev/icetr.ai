@@ -52,6 +52,7 @@
     "country-flag-icons": "^1.5.19",
     "csv-parser": "^3.2.0",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "framer-motion": "^12.15.0",
     "init": "^0.1.2",
     "input-otp": "^1.4.2",
@@ -72,6 +73,7 @@
     "stripe": "^18.4.0",
     "tailwind-merge": "^3.3.0",
     "twilio": "^5.7.0",
+    "ws": "^8.18.3",
     "zod": "^3.25.32"
   },
   "devDependencies": {

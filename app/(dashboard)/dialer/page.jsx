@@ -3,15 +3,15 @@ import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import {
   getCallScriptDetails,
-  getLeadsForUser,
-  getOrganization,
 } from "@/lib/services/prismaQueries";
 import { getOrgId } from "@/lib/db/org";
+import { getLeadsForUser } from "@/lib/db/user";
 
 export default async function page() {
   const { userId } = await auth();
+  const orgId = await getOrgId(userId);
   const leads = await getLeadsForUser(userId);
-  const callScriptData = await getCallScriptDetails(userId);
+  const callScriptData = await getCallScriptDetails(userId,orgId);
   const campaignId = leads[0]?.campaignId;
 
   if (!leads || leads.length === 0) {

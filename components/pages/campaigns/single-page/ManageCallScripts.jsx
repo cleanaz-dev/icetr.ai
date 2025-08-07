@@ -86,7 +86,7 @@ export const ManageCallScripts = ({ campaign, onScriptsUpdate }) => {
                 rates.
               </p>
               <ManageCallScriptsDialog
-                scripts={[]}
+                scripts={campaign.scripts || []}
                 campaignId={campaign.id}
                 orgId={campaign.organizationId}
                 onScriptsUpdate={onScriptsUpdate}

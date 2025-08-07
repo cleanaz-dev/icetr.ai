@@ -47,3 +47,10 @@ next-env.d.ts
 /lib/generated/prisma
 
 **/__tests__/
+
+# do include test folder/files
+
+/test
+
+/lib/db/seeds/*.js
+

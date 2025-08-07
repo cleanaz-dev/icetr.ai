@@ -69,7 +69,7 @@ export const Pricing = () => {
                   {plan.name}
                 </h3>
                 <div className="mb-4">
-                  <span className="text-4xl md:text-5xl font-light text-sky-400">
+                  <span className="text-6xl md:text-5xl font-light text-sky-400">
                     {getDisplayPrice(plan)}
                   </span>
                   <span className="text-sky-400/80 text-lg">
