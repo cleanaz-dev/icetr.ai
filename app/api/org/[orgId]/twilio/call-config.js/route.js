@@ -39,23 +39,3 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-export async function PUT(request, { params }) {
-  const { orgId } = await params;
-  const flowConfig = await request.json();
-  
-  try {
-    const savedConfig = await prisma.callFlowConfiguration.upsert({
-      where: { orgId },
-      create: {
-        orgId,
-        ...flowConfig
-      },
-      update: flowConfig
-    });
-    
-    return NextResponse.json({ success: true, config: savedConfig });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
