@@ -1,6 +1,6 @@
 // queue-position.js
 import { NextResponse } from "next/server";
-import { getQueuePosition } from "@/lib/services/integrations/redis";
+import { getQueuePosition} from "@/lib/services/integrations/redis";
 
 export async function GET(req, { params }) {
   const { orgId } = await params;

@@ -1,6 +1,6 @@
 // training-queue.js
 import { NextResponse } from "next/server";
-import { enqueueTraining, getQueuePosition } from "@/lib/services/integrations/redis";
+import { enqueueTraining } from "@/lib/services/integrations/redis";
 
 export async function POST(req, { params }) {
   const { orgId } = await params;
