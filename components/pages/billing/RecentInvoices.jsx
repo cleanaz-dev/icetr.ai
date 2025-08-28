@@ -8,9 +8,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
-import { AlertCircle } from "lucide-react";
+import { Download, ExternalLink, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const getStatusVariant = (status) => {
   const normalizedStatus = status?.toLowerCase();
@@ -33,70 +40,81 @@ export default function RecentInvoices({ invoices, setActiveTab }) {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-52">
-        <div className="space-y-4">
-          {invoices?.slice(0, 3).map((invoice) => (
-            <div key={invoice.id} className="p-2 rounded-xl odd:bg-muted/50">
-              {/* Top row: Invoice number and badge */}
-              <div className="flex items-center justify-between ">
-                <span className="text-sm font-medium">
-                  Invoice #{invoice.number || invoice.id?.slice(-8)}
-                </span>
-                <Badge variant={getStatusVariant(invoice.status)}>
-                  {invoice.status?.toUpperCase()}
-                </Badge>
-              </div>
-
-              {/* Second row: Price and buttons */}
-              <div className="flex items-center justify-between ">
-                <span className="text-base font-semibold">
-                  ${((invoice.amountDue || 0) / 100).toFixed(2)}{" "}
-                  {invoice.currency && (
-                    <span className="uppercase">{invoice.currency}</span>
-                  )}
-                </span>
-              </div>
-
-              {/* Bottom row: Date and currency */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground/50 font-bold ">
-                <span>{invoice.createdAt?.toLocaleDateString()}</span>
-                <div className="flex gap-2">
-                  {invoice.pdfUrl ? (
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      PDF
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-muted-foreground cursor-not-allowed opacity-50"
-                      disabled
-                    >
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      PDF
-                    </Button>
-                  )}
-                  {invoice.hostedUrl ? (
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-muted-foreground cursor-not-allowed opacity-50"
-                      disabled
-                    >
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Invoice</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices?.slice(0, 5).map((invoice) => (
+                <TableRow key={invoice.id} className="odd:bg-muted/50">
+                  <TableCell className="font-medium">
+                    #{invoice.number || invoice.id?.slice(-8)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {invoice.createdAt?.toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-semibold">
+                    ${((invoice.amountDue || 0) / 100).toFixed(2)}{" "}
+                    {invoice.currency && (
+                      <span className="text-xs uppercase text-muted-foreground">
+                        {invoice.currency}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(invoice.status)}>
+                      {invoice.status?.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-1 justify-end">
+                      {invoice.pdfUrl ? (
+                        <Button variant="outline" size="sm" className="h-7 px-2">
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-muted-foreground cursor-not-allowed opacity-50"
+                          disabled
+                        >
+                          <AlertCircle className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {invoice.hostedUrl ? (
+                        <Button variant="outline" size="sm" className="h-7 px-2">
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-muted-foreground cursor-not-allowed opacity-50"
+                          disabled
+                        >
+                          <AlertCircle className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {invoices?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No invoices found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </ScrollArea>
 
         <div className="mt-4">

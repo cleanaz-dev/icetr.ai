@@ -7,7 +7,7 @@ export default function PageHeader({ title, description, icon, children }) {
 
 
   return (
-   <div className="mb-8">
+   <div className="mb-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-xl md:text-3xl font-bold text-foreground">

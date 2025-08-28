@@ -114,8 +114,9 @@ export async function POST(request, { params }) {
     await prisma.notification.create({
       data: {
         user: { connect: { id: user.id } },
-        type: "Training",
-        message: "Please complete 5-10 Training Calls",
+        type: "Welcome",
+        message: "Wecome to Icetrai! Please check your email for further instructions.",
+        title: "Welcome to Icetrai!",
       },
     });
 

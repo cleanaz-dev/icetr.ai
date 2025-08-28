@@ -5,6 +5,8 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ChartColumn } from "lucide-react";
 
 export default function LeadDistributionChart({ leadCounts }) {
   const totalLeads =
@@ -14,27 +16,28 @@ export default function LeadDistributionChart({ leadCounts }) {
   const statusData = [
     { key: "newCount", name: "New", color: "bg-blue-500" },
     { key: "contactedCount", name: "Contacted", color: "bg-purple-500" },
-    { key: "qualifiedCount", name: "Qualified", color: "bg-green-500" },
+    // { key: "qualifiedCount", name: "Qualified", color: "bg-green-500" },
     { key: "wonCount", name: "Won", color: "bg-teal-500" },
     { key: "lostCount", name: "Lost", color: "bg-rose-500" },
   ];
 
-  const MAX_BAR_HEIGHT = 120;
-  const CONTAINER_HEIGHT = 220;
+  const MAX_BAR_HEIGHT = 100;
+  const CONTAINER_HEIGHT = 180;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Lead Distribution
-          <span className="text-lg font-bold text-blue-600">
-            Total: {totalLeads}
-          </span>
+          <div className="flex gap-2 items-center"> <ChartColumn className="size-4 text-primary" /> Lead Distribution</div>
+
         </CardTitle>
         <CardDescription>Status breakdown of all leads</CardDescription>
       </CardHeader>
+      <Separator />
       <CardContent>
+
         <div className="py-4">
+          
           <div
             className="flex items-end justify-between gap-4"
             style={{ height: `${CONTAINER_HEIGHT}px` }}
@@ -63,7 +66,7 @@ export default function LeadDistributionChart({ leadCounts }) {
                   >
                     {count > 0 && (
                       <div
-                        className={`w-12 rounded-t-md relative group ${status.color} transition-all duration-300 hover:opacity-80`}
+                        className={`w-8 rounded-t-md relative group ${status.color} transition-all duration-300 hover:opacity-80`}
                         style={{
                           height: `${barHeight}px`,
                         }}
@@ -76,7 +79,7 @@ export default function LeadDistributionChart({ leadCounts }) {
                     <div className="text-xs font-medium text-muted-foreground mb-1">
                       {status.name}
                     </div>
-                    <div className="text-sm font-bold text-gray-900 mb-2">
+                    <div className="text-sm font-bold text-muted-foreground mb-2">
                       {count}
                     </div>
                     {/* Color legend */}
@@ -95,7 +98,6 @@ export default function LeadDistributionChart({ leadCounts }) {
         {/* Summary stats */}
         <div className="mt-6 pt-4 border-t border-muted">
           <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <span>Distribution Summary</span>
             <div className="flex gap-4">
               {statusData.map((status) => {
                 const count = leadCounts[status.key] || 0;

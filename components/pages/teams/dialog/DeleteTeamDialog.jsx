@@ -57,7 +57,7 @@ export default function DeleteTeamDialog({ onDelete, team, orgId }) {
           be unassigned!
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <DialogClose>
+          <DialogClose asChild>
             <Button type="button" variant="outline" >
               Cancel
             </Button>

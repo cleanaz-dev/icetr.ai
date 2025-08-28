@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { RoleType, TeamRole } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { getOnboardingData } from "@/lib/services/integrations/redis";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
@@ -21,6 +22,7 @@ export async function POST(req) {
       teamName,
       invites = [],
       tierSettingsId,
+      callFlowConfigurationId,
       customerId,
     } = data;
 
@@ -39,8 +41,8 @@ export async function POST(req) {
 
     // 🔁 Wrap everything in a transaction
     const result = await prisma.$transaction(async (tx) => {
+      
       // 1. Create User
-
       const user = await tx.user.create({
         data: {
           firstname,
@@ -56,14 +58,18 @@ export async function POST(req) {
       const team = await tx.team.create({
         data: {
           name: teamName,
+          manager: { connect: { id: user.id } },
           members: {
             create: {
               user: { connect: { id: user.id } },
-              teamRole: TeamRole.LEAD
+              teamRole: TeamRole.MANAGER,
+
             },
           },
         },
       });
+
+
       // 2. Create organization
       const organization = await tx.organization.create({
         data: {
@@ -73,6 +79,7 @@ export async function POST(req) {
           owner: { connect: { id: user.id } },
           customer: { connect: { id: customerId } },
           tierSettings: { connect: { id: tierSettingsId } },
+          callFlowConfiguration: { connect: { id: callFlowConfigurationId } },
           orgIntegrations: {
             create: {
               calendly: {
@@ -136,4 +143,19 @@ export async function PATCH(req) {
   });
 
   return NextResponse.json({ ok: true });
+}
+
+export async function GET(req) {
+  const { searchParams } = new URL(req.url); 
+  const sessionId = searchParams.get("sessionId"); 
+
+  console.log("sessionId:", sessionId);
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+  }
+
+  const result = await getOnboardingData(sessionId);
+  if (!result) return NextResponse.json(null, { status: 404 });
+  console.log("result:", result);
+  return NextResponse.json(result)
 }

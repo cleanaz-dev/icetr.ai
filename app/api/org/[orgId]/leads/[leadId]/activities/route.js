@@ -44,6 +44,7 @@ export async function GET(request, { params }) {
           select: {
             firstname: true,
             lastname: true,
+            fullname: true,
             email: true,
           },
         },

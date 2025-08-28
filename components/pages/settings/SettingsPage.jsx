@@ -14,7 +14,7 @@ export default function SettingsPage({ settings }) {
   const { generateApiKey, newKey } = useCoreContext();
   const { orgId } = useTeamContext();
 
-console.log("settings", settings);
+
   return (
     <div className=" max-w-7xl px-4 py-6">
       <PageHeader

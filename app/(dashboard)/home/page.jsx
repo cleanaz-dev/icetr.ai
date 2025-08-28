@@ -1,35 +1,47 @@
-import AgentDashboard from "@/components/pages/dashboard/AgentDashboard";
 import Dashboard from "@/components/pages/dashboard/Dashboard";
-import { DashboardProvider } from "@/context/DashboardProvider";
-import { getAllOrgLeadsAndStatus } from "@/lib/db/leads";
-import { getOrgDashboardStats, getOrgId } from "@/lib/db/org";
+import AgentPortal from "@/components/pages/portal/AgentPortal";
+
+import { getAgentDashboardData, getTeamAndMembersAnnouncements } from "@/lib/db/admin";
+import { getOrgId } from "@/lib/db/org";
 import { getUserPersmissions } from "@/lib/db/user";
-import {
-  getAllRecentActivity,
-  getOrgAgentDashboardStats,
-} from "@/lib/services/prismaQueries";
+import { validateOrgAccess } from "@/lib/db/validations";
 import { auth } from "@clerk/nextjs/server";
-import { CloudHail } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 
-export default async function page() {
-  const { userId } = await auth();
-  const orgId = await getOrgId(userId);
-  const { role } = await getUserPersmissions(userId);
-  const agentData = await getOrgAgentDashboardStats(userId, orgId);
+export default async function Page() {
+  const { userId: clerkId } = await auth();
 
+  if (!clerkId) redirect("/sign-in");
+  const orgId = await getOrgId(clerkId);
+  if (!orgId) redirect("/");
 
+  try {
+    await validateOrgAccess(clerkId, orgId);
+  } catch {
+    notFound();
+  }
 
-  if (role === "Admin" || role === "SuperAdmin" || role === "Manager") {
-    // ← Fixed the comparison
+  const { role } = await getUserPersmissions(clerkId);
+
+  // Define admin roles upfront for cleaner conditionals
+  const isAdmin = ["Admin", "SuperAdmin", "Manager"].includes(role);
+
+  if (isAdmin) {
     return (
       <div>
         <Dashboard />
       </div>
     );
   } else {
+    // Only fetch agent data when user is actually an agent
+    const [agentData, announcements] = await Promise.all([
+      getAgentDashboardData(clerkId, orgId),
+      getTeamAndMembersAnnouncements(clerkId, orgId)
+    ]);
+    
     return (
       <div>
-        <AgentDashboard data={agentData} />
+        <AgentPortal agentData={agentData} announcements={announcements} />
       </div>
     );
   }

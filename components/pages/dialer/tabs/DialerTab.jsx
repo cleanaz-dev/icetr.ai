@@ -21,145 +21,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LEAD_STATUSES, FROM_NUMBERS } from "@/lib/constants/frontend";
 import Dialpad from "@/components/pages/dialer/tabs/DialPad";
 import { useUser } from "@clerk/nextjs";
 import CallDisplay from "../CallDisplay";
 import { BiDialpad } from "react-icons/bi";
+import CallTranscription from "../CallTranscription";
 
 export default function DialerTab({
   selectedLead,
-  calledLeadIds,
-  status,
-  call,
-  onCall,
-  onHangup,
-  currentSession,
+  orgId,
+  phoneNumbers,
 }) {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [fromNumber, setFromNumber] = useState(FROM_NUMBERS[0].value);
+  const [leadPhoneNumber, setLeadPhoneNumber] = useState("");
   const [showDialpad, setShowDialpad] = useState(true);
   const { user } = useUser();
 
-  const clearNumber = () => {
-    setPhoneNumber("");
-  };
-
   useEffect(() => {
     if (selectedLead?.phoneNumber) {
-      setPhoneNumber(selectedLead.phoneNumber);
+      setLeadPhoneNumber(selectedLead.phoneNumber);
     } else {
-      setPhoneNumber("");
+      setLeadPhoneNumber("");
     }
   }, [selectedLead]);
 
   return (
     <>
-      {/* Selected Lead Info */}
-      {selectedLead && (
-        <div className="bg-card p-2 rounded-md">
-          <div className="flex justify-between">
-            <div className="text-lg font-semibold">
-              {selectedLead.name || "Unknown"}
-            </div>
-            <Badge variant={LEAD_STATUSES[selectedLead.status]?.variant}>
-              {LEAD_STATUSES[selectedLead.status]?.label}
-            </Badge>
-          </div>
-          <div className="space-y-2">
-            {selectedLead.company && (
-              <div>
-                <div className="text-sm text-muted-foreground">Company</div>
-                <div className="flex gap-2 text-sm ">
-                  {selectedLead.company}
-                  <span className="flex items-center gap-0.5 text-accent text-xs">
-                    <MapPin className="size-3 -mt-0.5" />
-                    {selectedLead.region}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Phone Number Input */}
-      <div className="space-y-3">
-        <Label>Phone Number</Label>
-        <div className="flex gap-2">
-          <Input
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="+1 (555) 123-4567"
-            className="font-mono"
-            disabled
-          />
-          {phoneNumber && (
-            <Button variant="ghost" size="icon" onClick={clearNumber}>
-              <X className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* From Number Selection */}
-      <div className="space-y-2">
-        <Label>From Number</Label>
-        <Select value={fromNumber} onValueChange={setFromNumber}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FROM_NUMBERS.map((number) => (
-              <SelectItem key={number.value} value={number.value}>
-                <div className="flex items-center gap-2">
-                  <span className="">{number.country}</span>
-                  {number.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Call Controls */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          onClick={() =>
-            onCall(
-              phoneNumber,
-              selectedLead,
-              fromNumber,
-              currentSession.id,
-              user.id
-            )
-          }
-          disabled={!phoneNumber || call}
-          className="w-full"
-        >
-          {call ? (
-            <div className="flex items-center">
-              <PhoneCall className="w-4 h-4 mr-2" />
-              Calling...
-            </div>
-          ) : (
-            <div className="flex items-center">
-              <Phone className="w-4 h-4 mr-2" />
-              Call
-            </div>
-          )}
-        </Button>
-        <Button
-          onClick={onHangup}
-          disabled={!call}
-          variant="destructive"
-          className="w-full"
-        >
-          <PhoneOff className="w-4 h-4 mr-2" />
-          Hang Up
-        </Button>
-      </div>
+      <CallDisplay
+        selectedLead={selectedLead}
+        orgPhoneNumbers={phoneNumbers}
+        setLeadPhoneNumber={setLeadPhoneNumber}
+        leadPhoneNumber={leadPhoneNumber}
+        user={user}
+      />
 
       {/* Dialpad Toggle */}
       <Button
@@ -169,7 +62,7 @@ export default function DialerTab({
       >
         {showDialpad ? (
           <div className="flex gap-2 items-center">
-            <MdCallToAction className="w-4 h-4 mr-2" /> Show Call Display
+            <MdCallToAction className="w-4 h-4 mr-2" /> Show Transcript
           </div>
         ) : (
           <div className="flex gap-2 items-center">
@@ -181,12 +74,12 @@ export default function DialerTab({
       {/* Dialpad */}
       {showDialpad && (
         <Dialpad
-          onDigitPress={(digit) => setPhoneNumber((prev) => prev + digit)}
-          onBackspace={() => setPhoneNumber((prev) => prev.slice(0, -1))}
-          disabled={!phoneNumber}
+          onDigitPress={(digit) => setLeadPhoneNumber((prev) => prev + digit)}
+          onBackspace={() => setLeadPhoneNumber((prev) => prev.slice(0, -1))}
+          disabled={!leadPhoneNumber}
         />
       )}
-      {!showDialpad && <CallDisplay />}
+      {!showDialpad && <CallTranscription />}
     </>
   );
 }

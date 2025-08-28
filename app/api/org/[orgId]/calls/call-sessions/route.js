@@ -15,9 +15,6 @@ export async function POST(request, { params }) {
   }
 
   try {
-    const { campaignId } = await request.json();
-    console.log("campId", campaignId);
-
     await validateOrgAccess(clerkId, orgId);
 
     const today = startOfDay(new Date());
@@ -35,6 +32,7 @@ export async function POST(request, { params }) {
         },
       },
     });
+    console.log("session exists:", session);
 
     // If no active session today, create new one
     if (!session) {
@@ -45,13 +43,14 @@ export async function POST(request, { params }) {
               clerkId: clerkId,
             },
           },
-          campaign: { connect: { id: campaignId } },
+          organization: { connect: { id: orgId } },
           totalCalls: 0,
           successfulCalls: 0,
           totalDuration: 0,
         },
       });
     }
+    
 
     return NextResponse.json(session);
   } catch (error) {

@@ -1,10 +1,7 @@
 "use client";
 
-import { useCoreContext } from "@/context/CoreProvider";
 import React from "react";
-import StatusBar from "../status-bar/StatusBar";
 import TrainingPage from "./TrainingPage";
-import { useEffect } from "react";
 
 export default function TrainingClientPage({
   trainingData,
@@ -13,22 +10,11 @@ export default function TrainingClientPage({
   blandAiSettings,
   trainingAvgAndCount,
 }) {
-  const {
-    initializeTwilioDevice,
-    twilioDevice: device,
-    twilioError: error,
-    twilioStatus: status,
-  } = useCoreContext();
-
-  useEffect(() => {
-    if (orgId) {
-      initializeTwilioDevice(orgId);
-    }
-  }, [orgId]);
-
+  console.log("blandAiSettings:", blandAiSettings);
+  // All device/status props become **local to TrainingPage**.
+  // We’ll inject Bland’s connection info instead.
   return (
     <div className="flex flex-col h-screen">
-      {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto relative">
         <TrainingPage
           trainingData={trainingData}
@@ -36,20 +22,11 @@ export default function TrainingClientPage({
           orgId={orgId}
           blandAiSettings={blandAiSettings}
           trainingAvgAndCount={trainingAvgAndCount}
-          device={device}
-          status={status}
-          error={error}
+          // NEW: pass Bland SDK config
+          blandConfig={blandAiSettings}
         />
       </div>
-      {/* Fixed bottom bar */}
-      <div className="w-full">
-        <StatusBar
-          trainingAvgAndCount={trainingAvgAndCount}
-          device={device}
-          status={status}
-          error={error}
-        />
-      </div>
+      {/* StatusBar is now inside TrainingPage (or removed if redundant) */}
     </div>
   );
 }

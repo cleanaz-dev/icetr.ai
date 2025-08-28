@@ -51,24 +51,6 @@ export default function FollowUpTab({ onLeadSelect, orgId }) {
     }
   };
 
-  const markAsCompleted = async (followUpId) => {
-    setUpdating(true);
-    try {
-      const response = await fetch(`/api/org/${orgId}/followups/${followUpId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: true }),
-      });
-
-      if (response.ok) {
-        setFollowUps((prev) => prev.filter((f) => f.id !== followUpId));
-      }
-    } catch (error) {
-      console.error("Error marking follow-up as completed:", error);
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   const handleCallLead = (lead) => {
     onLeadSelect(lead);

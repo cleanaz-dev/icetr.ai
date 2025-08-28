@@ -1,7 +1,7 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboard } from "@/context/DashboardProvider";
-import { ArrowDown, ArrowUp, Target, TrendingUp, Users, Calendar } from "lucide-react";
+import { ArrowDown, ArrowUp, Target, TrendingUp, Users, Calendar, PhoneCall } from "lucide-react";
 
 export default function DashboardStatsCard() {
   const { dashboardStats } = useDashboard();
@@ -16,24 +16,24 @@ export default function DashboardStatsCard() {
       trend: dashboardStats?.leadChange && dashboardStats.leadChange >= 0 ? "up" : "down",
     },
     {
-      title: "Conversion Rate",
+      title: "Total Calls",
       value: dashboardStats?.conversionRate ? `${dashboardStats.conversionRate}%` : "0%",
       change: "+3.2%", // You'll need to calculate this from your data
-      icon: TrendingUp,
+      icon: PhoneCall,
       trend: "up", // You'll need to determine this from your data
     },
     {
-      title: "Members",
+      title: "Bookings",
       value: dashboardStats?.totalMembers.toString() || "0",
       change: dashboardStats?.memberChange ? `+${dashboardStats.memberChange}` : "+0",
-      icon: Users,
+      icon: Calendar,
       trend: dashboardStats?.memberChange && dashboardStats.memberChange >= 0 ? "up" : "down",
     },
     {
-      title: "Avg. Time to Convert",
+      title: "Conversion Rate",
       value: dashboardStats?.avgConversionTime ? `${dashboardStats.avgConversionTime} days` : "0 days",
       change: "-0.5", // You'll need to calculate this from your data
-      icon: Calendar,
+      icon: TrendingUp,
       trend: "down", // You'll need to determine this from your data
     },
   ];
@@ -42,9 +42,9 @@ export default function DashboardStatsCard() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {formattedStats.map((stat, index) => (
         <Card key={index}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
+            <stat.icon className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>

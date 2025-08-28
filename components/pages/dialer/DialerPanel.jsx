@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import DialerTab from "./tabs/DialerTab";
 import CallHistoryTab from "./tabs/CallHistoryTab";
 import CallScriptTab from "./tabs/CallScriptTab";
-import DocumentsTab from "./DocumentsTab";
+import DocumentsTab from "./tabs/DocumentsTab";
 import { BiDialpad } from "react-icons/bi";
 import { CgTranscript } from "react-icons/cg";
 import { FaReadme, FaRegCalendarAlt } from "react-icons/fa";
@@ -25,18 +25,9 @@ export default function DialerPanel({
   showDialer,
   onHideDialer,
   selectedLead,
-  calledLeadIds,
-  sessionCalls,
-  currentSession,
-  status,
-  call,
-  onCall,
-  onHangup,
-  onRedial,
-  formatDuration,
-  callScriptData,
   campaignId,
   setLead,
+  phoneNumbers,
 }) {
   const { orgId } = useTeamContext();
   const [activeTab, setActiveTab] = useState("dialpad");
@@ -92,20 +83,14 @@ export default function DialerPanel({
         >
           <DialerTab
             selectedLead={selectedLead}
-            calledLeadIds={calledLeadIds}
-            status={status}
-            call={call}
-            currentSession={currentSession}
-            onCall={onCall}
-            onHangup={onHangup}
             orgId={orgId}
+            phoneNumbers={phoneNumbers}
           />
         </TabsContent>
 
         <TabsContent value="scripts" className="flex-1 p-4 overflow-y-auto">
           <CallScriptTab
             selectedLead={selectedLead}
-            callScriptData={callScriptData}
             orgId={orgId}
           />
         </TabsContent>

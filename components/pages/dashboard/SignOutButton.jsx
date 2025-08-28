@@ -47,7 +47,9 @@ export default function SignOutButton({
       <button
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="flex items-center gap-2 p-2 text-muted-foreground hover:text-primary-foreground rounded-lg transition-colors w-full cursor-pointer group relative overflow-hidden"
+        className={`flex items-center gap-2 p-2 text-muted-foreground hover:text-primary-foreground rounded-lg transition-colors w-full cursor-pointer group relative overflow-hidden ${
+          sidebarCollapsed ? 'justify-center' : ''
+        }`}
       >
         {/* Background fill effect */}
         <div
@@ -55,8 +57,6 @@ export default function SignOutButton({
             isHovering ? "scale-x-100" : "scale-x-0"
           }`}
         />
-
-        {/* Progress bar at bottom */}
 
         <LogOut className="w-4 h-4 relative z-10" />
         {!sidebarCollapsed && (
@@ -95,14 +95,16 @@ export default function SignOutButton({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0  flex items-center justify-center z-90"
+            className="fixed inset-0 flex items-center justify-center z-90"
             onClick={handleCancel}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-background border rounded-lg px-6 py-5 max-w-sm mx-4 shadow-lg"
+              className={`bg-background border rounded-lg px-6 py-5 max-w-sm mx-4 shadow-lg ${
+                sidebarCollapsed ? 'ml-52' : ''
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -132,8 +134,8 @@ export default function SignOutButton({
         )}
       </AnimatePresence>
       {showDialog && (
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-xs z-40 pointer-events-none" />
-        )}
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-xs z-40 pointer-events-none" />
+      )}
     </>
   );
 }

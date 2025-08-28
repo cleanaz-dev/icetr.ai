@@ -24,7 +24,7 @@ export default function CampaignsPage() {
   const [newStatus, setNewStatus] = useState(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
-  console.log("campaigns", campaigns);
+  // console.log("campaigns", campaigns);
 
   // Update campaign status
   const handleUpdateCampaign = (campaign, newStatus) => {
@@ -55,7 +55,7 @@ export default function CampaignsPage() {
       <PageHeader
         title="Campaigns"
         description="Create, manage and view campaign stats"
-        icon="Trophy"
+        icon="Megaphone"
       />
 
       {/* Stats Cards */}

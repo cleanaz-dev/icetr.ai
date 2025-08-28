@@ -1,5 +1,6 @@
 
 
+import { AICapabilities } from "@/components/sections/AICapabilities";
 import { Contact } from "@/components/sections/Contact";
 import { Features } from "@/components/sections/Features";
 import { Footer } from "@/components/sections/Footer";
@@ -19,6 +20,7 @@ export default function page() {
       <Features />
       <Stats />
       <HowItWorks />
+      <AICapabilities />
       <Testimonials />
       <Pricing />
       <Contact />

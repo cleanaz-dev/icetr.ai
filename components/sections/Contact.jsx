@@ -236,7 +236,7 @@ export const Contact = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-8">
+          <div className="flex-col space-y-8">
             <div className="bg-slate-800/30 backdrop-blur-sm border border-sky-400/20 rounded-xl p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-sky-400/20 rounded-lg flex items-center justify-center">

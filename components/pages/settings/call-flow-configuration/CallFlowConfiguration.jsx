@@ -123,12 +123,12 @@ export default function CallFlowConfiguration() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
+            {/* <div className="flex items-center space-x-3">
               <Button className="">
                 <Play size={16} className="inline mr-2" />
                 Deploy Flow
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

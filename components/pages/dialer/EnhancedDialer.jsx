@@ -1,52 +1,32 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import { Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
 import LeadsTable from "./LeadsTable";
 import DialerPanel from "./DialerPanel";
 import PostCallDialog from "./PostCallDialog";
-import { useTwilioDevice } from "@/lib/hooks/useTwilioDevice";
 import { useCallManagement, CALL_STATUS } from "@/lib/hooks/useCallManagement";
 import { useLeadManagement } from "@/lib/hooks/useLeadManagement";
-import CallSession from "./CallSession";
 import UnifiedStatusBar from "./UnifiedStatusBar";
 import { useCoreContext } from "@/context/CoreProvider";
 import PageHeader from "@/components/ui/layout/PageHeader";
 import { useTeamContext } from "@/context/TeamProvider";
+import LeadResearcher from "../leads/LeadResearcher";
+import { useCall } from "@/context/CallProvider";
 
 export default function EnhancedDialer({ data, callScriptData, campaignId }) {
-  // Custom hooks for state management
+  const { phoneNumbers } = useCoreContext();
   const { orgId } = useTeamContext();
   const {
-    initializeTwilioDevice,
-    twilioDevice: device,
-    twilioError: error,
-    twilioStatus: status,
-  } = useCoreContext();
-  useEffect(() => {
-    if (orgId) {
-      initializeTwilioDevice(orgId);
-    }
-  }, [orgId]);
-
-  const {
-    call,
-    callStartTime,
+    currentSession,
     callDuration,
-    sessionCalls,
+    callSid,
     callStatus,
-    currentCallData,
-    isCallActive,
-    handleCall,
-    handleCallEnd,
-    handleHangup,
-    redialNumber,
-  } = useCallManagement(device);
+  } = useCall();
+
   const {
     leads,
     filteredLeads,
@@ -71,38 +51,15 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   const [postCallDialogOpen, setPostCallDialogOpen] = useState(false);
   const [callOutcome, setCallOutcome] = useState("");
   const [callNotes, setCallNotes] = useState("");
-  const [currentSession, setCurrentSession] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [followUpTime, setFollowUpTime] = useState("");
-  const [callData, setCallData] = useState(null);
+  const [showResearcher, setShowResearcher] = useState(false);
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
-
-  // Initialize session on component mount
-  useEffect(() => {
-    const initializeSession = async () => {
-      try {
-        const response = await fetch(`/api/org/${orgId}/calls/call-sessions/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: callScriptData?.id, // Make sure you have this in your data prop
-            campaignId: data[0]?.campaignId, // Make sure you have this in your data prop
-          }),
-        });
-        const sessionData = await response.json();
-        setCurrentSession(sessionData);
-      } catch (error) {
-        console.error("Failed to initialize session:", error);
-      }
-    };
-
-    initializeSession();
-  }, [callScriptData.id, data]);
 
   useEffect(() => {
     const callEndedStates = [
@@ -116,13 +73,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
     }
   }, [callStatus]);
 
-  useEffect(() => {
-    if (currentCallData) {
-      setCallData(currentCallData);
-    }
-  }, [currentCallData]);
-
-  const saveCallActivity = async (leadId, callData, outcome, notes) => {
+  const saveCallActivity = async (leadId, currentCallData, outcome, notes) => {
     try {
       const response = await fetch(
         `/api/org/${orgId}/leads/${leadId}/activities`,
@@ -135,13 +86,13 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
             type: "call",
             outcome: outcome,
             notes: notes,
-            duration: callData?.duration || 0,
+            duration: currentCallData?.duration || 0,
             timestamp: new Date().toISOString(),
-            callStartTime: callData?.startTime || new Date(),
+            callStartTime: currentCallData?.startTime || new Date(),
             callEndTime: new Date(),
             sessionId: currentSession.id,
             followUpTime: followUpTime,
-            leadActivityId: callData.leadActivityId,
+            leadActivityId: currentCallData.leadActivityId,
           }),
         }
       );
@@ -161,7 +112,12 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
   const handleSaveCall = async () => {
     setIsSaving(true);
     try {
-      await saveCallActivity(selectedLead.id, callData, callOutcome, callNotes);
+      await saveCallActivity(
+        selectedLead.id,
+        currentCallData,
+        callOutcome,
+        callNotes
+      );
 
       setPostCallDialogOpen(false);
       setCallOutcome("");
@@ -176,6 +132,7 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
       setIsSaving(false);
     }
   };
+
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-3rem)] lg:h-screen overflow-y-auto md:overflow-hidden">
       {/* Main content area */}
@@ -195,13 +152,15 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
               icon="Phone"
             >
               <div className="flex items-center gap-4">
-                <Badge variant={status === "Ready" ? "default" : "secondary"}>
-                  {status}
-                  {status === "Connected" &&
+                <Badge
+                  variant={
+                    callStatus === CALL_STATUS.ACTIVE ? "default" : "secondary"
+                  }
+                >
+                  {callStatus}
+                  {callStatus === CALL_STATUS.ACTIVE &&
                     ` (${formatDuration(callDuration)})`}
                 </Badge>
-
-                {error && <Badge variant="destructive">{error}</Badge>}
 
                 <Button
                   variant="outline"
@@ -215,12 +174,13 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
             </PageHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="flex-1 min-h-full z-20 shrink-0">
             <LeadsTable
-              leads={filteredLeads}
               orgId={orgId}
+              showResearcher={showResearcher}
+              setShowResearcher={setShowResearcher}
               selectedLead={selectedLead}
-              calledLeadIds={calledLeadIds}
+            
               onSelectLead={selectLead}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
@@ -237,48 +197,38 @@ export default function EnhancedDialer({ data, callScriptData, campaignId }) {
                 }
               }}
               onShowDialer={() => setShowDialer(true)}
-              onUpdateLead={updateLead} // Pass the update function
+              onUpdateLead={updateLead}
               onSaveLead={saveLead}
             />
           </div>
           {/* Bottom Status Bar */}
-          <div className="sticky bottom-0 left-0 right-0 z-30 bg-background ">
-            <UnifiedStatusBar
-              mode="main"
-              session={currentSession}
-              data={data}
-              callScriptData={callScriptData}
+          <div className="sticky bottom-0 left-0 right-0 z-20 bg-background ">
+            <LeadResearcher
+              showResearcher={showResearcher}
+              setShowResearcher={setShowResearcher}
+              lead={selectedLead}
             />
+            <UnifiedStatusBar mode="main" session={currentSession} />
           </div>
         </div>
 
-        {/* Right Side - Dialer */}
         <DialerPanel
-          orgId={orgId}
           showDialer={showDialer}
           onHideDialer={() => setShowDialer(false)}
           selectedLead={selectedLead}
           setLead={selectLead}
-          calledLeadIds={calledLeadIds}
-          sessionCalls={sessionCalls}
-          currentSession={currentSession}
-          status={status}
-          call={call}
-          callStatus={callStatus}
-          onCall={handleCall}
-          onHangup={handleHangup}
-          onRedial={redialNumber}
           formatDuration={formatDuration}
-          callScriptData={callScriptData}
           campaignId={campaignId}
-          isCallActive={isCallActive}
+          phoneNumbers={phoneNumbers}
         />
       </div>
+
       <PostCallDialog
         orgId={orgId}
         open={postCallDialogOpen}
+        callSid={callSid}
         onOpenChange={setPostCallDialogOpen}
-        currentCallData={callData}
+        // currentCallData={currentCallData}
         callOutcome={callOutcome}
         onCallOutcomeChange={setCallOutcome}
         callNotes={callNotes}

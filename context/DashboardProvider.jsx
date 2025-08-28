@@ -6,6 +6,7 @@ const DashboardContext = createContext({
   activities: [],
   leadCounts: {},
   dashboardStats: {},
+  adminDashboardStats: {},
 });
 
 export function DashboardProvider({ initialData = {}, children }) {
@@ -13,6 +14,7 @@ export function DashboardProvider({ initialData = {}, children }) {
     activities = [],
     leadCounts = {},
     dashboardStats = {},
+    adminDashboardStats = {},
   } = initialData;
 
   const value = useMemo(
@@ -20,8 +22,9 @@ export function DashboardProvider({ initialData = {}, children }) {
       activities,
       leadCounts,
       dashboardStats,
+      adminDashboardStats,
     }),
-    [activities, leadCounts, dashboardStats]
+    [activities, leadCounts, dashboardStats, adminDashboardStats]
   );
 
   return (

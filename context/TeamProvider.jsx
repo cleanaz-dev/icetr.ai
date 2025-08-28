@@ -42,7 +42,9 @@ export const TeamProvider = ({ children, initialData = {} }) => {
 
   const [teams, setTeams] = useState(initialTeams);
   const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
-  const [orgCampaigns, setOrgCampaigns] = useState(initialData?.orgCampaigns ?? [])
+  const [orgCampaigns, setOrgCampaigns] = useState(
+    initialData?.orgCampaigns ?? []
+  );
   const unassignCampaign = async (teamId, campaignId, orgId) => {
     try {
       const result = await fetch(
@@ -226,12 +228,10 @@ export const TeamProvider = ({ children, initialData = {} }) => {
         team: newTeam,
         members: newTeamMembers = [],
       } = await response.json();
-    
 
       if (!response.ok) {
         throw new Error(message || "Failed to create team");
       }
-     
 
       setTeams((prevTeams) => [...prevTeams, newTeam]);
       setTeamMembers((prev) => [...prev, ...newTeamMembers]);
@@ -293,8 +293,8 @@ export const TeamProvider = ({ children, initialData = {} }) => {
     return { assignedMember, message };
   };
 
-const getTeamRole = (member) =>
-  member?.teamMemberships?.[0]?.teamRole?.toLowerCase() || null;
+  const getTeamRole = (member) =>
+    member?.teamMemberships?.[0]?.teamRole?.toLowerCase() || null;
 
   // inside TeamProvider
   const removeMember = async (orgId, teamId, memberId) => {

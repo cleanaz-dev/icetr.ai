@@ -28,12 +28,14 @@ const CoreContext = createContext({
   },
   tierSettings: null,
   saveScript: () => {},
+  phoneNumbers: [],
 });
 
 export function CoreProvider({ initialData = {}, children }) {
   const {
     callFlowConfiguration: initialCallFlowConfiguration = null,
     organization: initialOrganization = null,
+    phoneNumbers = [],
   } = initialData;
 
   const [callFlowConfiguration, setCallFlowConfiguration] = useState(
@@ -302,7 +304,7 @@ export function CoreProvider({ initialData = {}, children }) {
       setCallFlowConfiguration,
       savePhoneConfiguration,
       tierSettings,
-
+      phoneNumbers,
       twilioDevice,
       twilioStatus,
       twilioError,
@@ -322,6 +324,7 @@ export function CoreProvider({ initialData = {}, children }) {
       newKey,
       tier,
       saveScript,
+      phoneNumbers,
     ]
   );
 

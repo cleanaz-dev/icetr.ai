@@ -11,10 +11,14 @@ import {
   Mail,
   MoreVertical,
   Eye,
+  Microscope,
+  Loader2,
+  Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -42,40 +46,39 @@ import LeadActivities from "./LeadActivities";
 import EditLeadDialog from "./EditLeadDialog";
 import EmailDialog from "./EmailDialog";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import useSWR, { mutate } from "swr";
+import { useUser } from "@clerk/nextjs";
+import { Atom } from "lucide-react";
+import AICallModal from "./AiCallModal";
 
 export default function LeadsTable({
-  leads,
   selectedLead,
-  calledLeadIds,
   onSelectLead,
   searchTerm,
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
-  sortField,
-  sortDirection,
   onSort,
   onShowDialer,
-  onUpdateLead, // New prop
-  onSaveLead,
-  orgId, // New prop
+  onUpdateLead,
+  orgId,
+  showResearcher,
+  setShowResearcher,
 }) {
+  const { user } = useUser();
+  // swr fetcher
+  const fetcher = async (url) => fetch(url).then((res) => res.json());
+  const cacheKey =
+    orgId && user?.id ? `/api/org/${orgId}/leads/user/${user.id}` : null;
+  const { data: leads, error, isLoading } = useSWR(cacheKey, fetcher);
+  const liveLead =
+    leads?.find((l) => l.id === selectedLead?.id) ?? selectedLead;
+
   const [expandedLeadId, setExpandedLeadId] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const { refresh } = useRouter();
-
-  const onEditLead = () => {
-    setEditDialogOpen(true);
-  };
-  const onEmailLead = () => {
-    setShowEmailDialog(true);
-  };
-
-  const handleEmailLead = async (leadId) => {
-    console.log("email sent to lead");
-  };
+  const [showAiCallModal, setShowAiCallModal] = useState(false);
+  const [selectedLeadIds, setSelectedLeadIds] = useState(new Set());
 
   const handleSaveLead = async (leadId, updatedData, orgId) => {
     try {
@@ -85,22 +88,22 @@ export default function LeadsTable({
         body: JSON.stringify(updatedData),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update lead");
-      }
-
+      if (!response.ok) throw new Error("Failed to update lead");
       const updatedLead = await response.json();
 
-      // Use the prop function to update state instead of refresh()
-      onUpdateLead(leadId, updatedLead);
+      // 1. Optimistic update: patch the list in the cache
+      mutate(
+        cacheKey,
+        (prevLeads) =>
+          prevLeads?.map((l) => (l.id === leadId ? updatedLead : l)) ?? [],
+        false // do NOT re-fetch yet
+      );
 
-      // Close the edit dialog
+      // 2. Background revalidation to guarantee the server copy is correct
+      mutate(cacheKey);
+
       setEditDialogOpen(false);
-
-      // Show success toast
       toast.success("Lead updated successfully");
-
-      return updatedLead;
     } catch (error) {
       console.error("Error updating lead:", error);
       toast.error("Failed to update lead");
@@ -111,6 +114,71 @@ export default function LeadsTable({
   const toggleActivityExpansion = (leadId) => {
     setExpandedLeadId(expandedLeadId === leadId ? null : leadId);
   };
+
+  const onEmailLead = () => {
+    setShowEmailDialog(true);
+  };
+
+  const handleEmailLead = async (leadId) => {
+    console.log("email sent to lead");
+  };
+
+  const onEditLead = () => {
+    setEditDialogOpen(true);
+  };
+
+  const onViewLead = (lead) => {
+    onSelectLead(lead);
+  };
+
+  // Checkbox handlers
+  const handleSelectLead = (leadId, checked) => {
+    const newSelectedLeadIds = new Set(selectedLeadIds);
+    if (checked) {
+      newSelectedLeadIds.add(leadId);
+    } else {
+      newSelectedLeadIds.delete(leadId);
+    }
+    setSelectedLeadIds(newSelectedLeadIds);
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedLeadIds(new Set(leads?.map((lead) => lead.id) || []));
+    } else {
+      setSelectedLeadIds(new Set());
+    }
+  };
+
+  const getSelectedLeads = () => {
+    return leads?.filter((lead) => selectedLeadIds.has(lead.id)) || [];
+  };
+
+  const handleBatchAICall = () => {
+    const selectedLeads = getSelectedLeads();
+    if (selectedLeads.length === 0) {
+      toast.error("Please select at least one lead");
+      return;
+    }
+    setShowAiCallModal(true);
+  };
+
+  const isAllSelected =
+    leads && selectedLeadIds.size === leads.length && leads.length > 0;
+  const isIndeterminate =
+    selectedLeadIds.size > 0 && selectedLeadIds.size < (leads?.length || 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="text-muted-foreground animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div>Error fetching leads: {error.message}</div>;
+  }
 
   return (
     <>
@@ -140,14 +208,48 @@ export default function LeadsTable({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Batch AI Call Button */}
+         <div className="flex  space-x-6 ">
+            <Button
+              onClick={handleBatchAICall}
+              disabled={selectedLeadIds.size === 0}
+             
+            >
+              <Users className="w-4 h-4" />
+              Batch AI Call
+              <Badge variant="secondary" >
+                {selectedLeadIds.size}
+              </Badge>
+            </Button>
+
+            {/* Selection Summary */}
+            {selectedLeadIds.size > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setSelectedLeadIds(new Set())}
+              >
+                Clear selection
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <Table>
-          <TableHeader className="bg-background ">
+          <TableHeader className="bg-background">
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all leads"
+                  className="data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground"
+                  {...(isIndeterminate && { "data-state": "indeterminate" })}
+                />
+              </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-muted"
                 onClick={() => onSort("name")}
@@ -168,28 +270,33 @@ export default function LeadsTable({
                   Status <ArrowUpDown className="w-3 h-3" />
                 </div>
               </TableHead>
-              {/* <TableHead
-                className="hidden lg:table-cell cursor-pointer hover:bg-muted"
-                onClick={() => onSort("createdAt")}
-              >
-                <div className="flex items-center gap-1">
-                  Created <ArrowUpDown className="w-3 h-3" />
-                </div>
-              </TableHead> */}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
+            {leads?.map((lead) => (
               <React.Fragment key={lead.id}>
                 <TableRow
                   className={cn(
                     "cursor-pointer hover:bg-primary/50",
                     selectedLead?.id === lead.id
                       ? "bg-primary/25"
+                      : selectedLeadIds.has(lead.id)
+                      ? "bg-blue-50/50"
                       : "even:bg-muted/40"
                   )}
+                  onClick={() => onSelectLead(lead)}
                 >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedLeadIds.has(lead.id)}
+                      onCheckedChange={(checked) =>
+                        handleSelectLead(lead.id, checked)
+                      }
+                      aria-label={`Select ${lead.name || "lead"}`}
+                      className="ml-1"
+                    />
+                  </TableCell>
                   <TableCell
                     className="font-medium"
                     onClick={() => onSelectLead(lead)}
@@ -231,12 +338,6 @@ export default function LeadsTable({
                       {LEAD_STATUSES[lead.status]?.label || lead.status}
                     </Badge>
                   </TableCell>
-                  {/* <TableCell
-                    className="hidden lg:table-cell text-sm text-muted-foreground"
-                    onClick={() => onSelectLead(lead)}
-                  >
-                    {new Date(lead.createdAt).toLocaleDateString()}
-                  </TableCell> */}
                   <TableCell>
                     <div className="flex gap-1">
                       <Button
@@ -287,11 +388,22 @@ export default function LeadsTable({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              onEmailLead(lead);
+                              onSelectLead(lead); // set selected lead with full lead object
+                              setShowResearcher(true); // open researcher panel
                             }}
                           >
-                            <Mail className="w-4 h-4 mr-2" />
-                            Email Lead
+                            <Microscope className="w-4 h-4 mr-2" />
+                            Research Lead
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectLead(lead);
+                              setShowAiCallModal(true);
+                            }}
+                          >
+                            <Atom className="w-4 h-4 mr-2" />
+                            AI Call Lead
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -319,10 +431,10 @@ export default function LeadsTable({
                 )}
               </React.Fragment>
             ))}
-            {leads.length === 0 && (
+            {leads?.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No leads found
@@ -336,14 +448,34 @@ export default function LeadsTable({
         <EditLeadDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
-          lead={selectedLead}
+          lead={liveLead}
           onSave={handleSaveLead}
           orgId={orgId}
         />
 
+        {/* AI Call Modal - Updated to handle both single lead and batch */}
+        <AICallModal
+          leads={
+            showAiCallModal
+              ? selectedLeadIds.size > 0
+                ? getSelectedLeads()
+                : [liveLead]
+              : []
+          }
+          isOpen={showAiCallModal}
+          onClose={() => {
+            setShowAiCallModal(false);
+            // Clear selection after batch call
+            if (selectedLeadIds.size > 0) {
+              setSelectedLeadIds(new Set());
+            }
+            mutate(cacheKey)
+          }}
+        />
+
         {/*  Email Dialog */}
         <EmailDialog
-          lead={selectedLead}
+          lead={liveLead}
           open={showEmailDialog}
           onOpenChange={setShowEmailDialog}
           onEmailSent={(template, email) => {

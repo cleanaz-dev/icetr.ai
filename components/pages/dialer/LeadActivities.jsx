@@ -21,32 +21,23 @@ import {
   Mail,
   Calendar,
   Clock,
+  Plus,
+  Minus
 } from "lucide-react";
 import { UserRound } from "lucide-react";
 import { useTeamContext } from "@/context/TeamProvider";
+import useSWR, { mutate } from "swr";
 
 export default function LeadActivities({ leadId }) {
   const { orgId } = useTeamContext();
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const response = await fetch(
-          `/api/org/${orgId}/leads/${leadId}/activities`
-        );
-        const data = await response.json();
-        setActivities(data);
-      } catch (err) {
-        console.error("Failed to fetch activities:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+ 
+  const fetcher = async (url) => fetch(url).then((res) => res.json());
+  const cacheKey = orgId? `/api/org/${orgId}/leads/${leadId}/activities` : null;
+  const { data: activities, error, isLoading } = useSWR(cacheKey, fetcher);
+ 
 
-    fetchActivities();
-  }, [leadId]);
+
 
   const getActivityIcon = (type) => {
     switch (type) {
@@ -62,27 +53,12 @@ export default function LeadActivities({ leadId }) {
         return <Mail className="w-4 h-4" />;
       case "MEETING":
         return <Calendar className="w-4 h-4" />;
+      case "ASSIGNMENT":
+        return <Plus className="w-4 h-4" />;
+      case "UNASSIGNMENT":
+        return <Minus className="w-4 h-4" />;
       default:
         return <MessageSquare className="w-4 h-4" />;
-    }
-  };
-
-  const getActivityBadgeVariant = (type) => {
-    switch (type) {
-      case "CONTACT_ATTEMPTS":
-        return "outline";
-      case "CONTACTED":
-        return "default";
-      case "CALL":
-        return "default";
-      case "NOTE":
-        return "outline";
-      case "EMAIL":
-        return "outline";
-      case "MEETING":
-        return "outline";
-      default:
-        return "outline";
     }
   };
 
@@ -192,7 +168,7 @@ export default function LeadActivities({ leadId }) {
         <div className="bg-muted/30 p-4">
           <h4 className="font-semibold mb-4 text-sm">Lead Activities</h4>
           <div className="max-h-96 overflow-y-auto">
-            {loading ? (
+            {isLoading ? (
               <p className="text-muted-foreground text-sm">Loading...</p>
             ) : activities.length > 0 ? (
               <Timeline>
@@ -219,8 +195,8 @@ export default function LeadActivities({ leadId }) {
                     <TimelineContent>
                       <div></div>
                       {activity.createdUser && (
-                        <div className="flex gap-1 items-center text-xs text-muted-foreground decoration-primary underline">
-                          <UserRound className="size-3 text-primary" />
+                        <div className="flex gap-1 items-center text-xs text-muted-foreground decoration-primary underline px-1 py-0.5">
+                        Created By: {" "}
                           {activity.createdUser.firstname}{" "}
                           {activity.createdUser.lastname}
                         </div>

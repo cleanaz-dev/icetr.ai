@@ -33,6 +33,7 @@ export async function GET(request, { params }) {
         createdUser: {
           select: {
             firstname: true,
+            fullname: true,
             lastname: true,
             email: true,
           }

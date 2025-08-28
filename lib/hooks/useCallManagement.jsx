@@ -3,7 +3,7 @@
 import { useTeamContext } from "@/context/TeamProvider";
 import { useState, useEffect, useCallback } from "react";
 
-// Call status constants
+// Status constants (unchanged)
 export const CALL_STATUS = {
   IDLE: "idle",
   CONNECTING: "connecting",
@@ -18,326 +18,155 @@ export const CALL_STATUS = {
   NO_ANSWER: "no_answer",
 };
 
-export function useCallManagement(device) {
+// ------------------------------------------------------------------
+// MAIN HOOK
+// ------------------------------------------------------------------
+export function useCallManagement() {
   const { orgId } = useTeamContext();
-  const [call, setCall] = useState(null);
+
+  /* ---- state ---- */
+  const [callSid, setCallSid] = useState(null);
   const [callStatus, setCallStatus] = useState(CALL_STATUS.IDLE);
   const [callStartTime, setCallStartTime] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
-  const [sessionCalls, setSessionCalls] = useState([]);
   const [currentCallData, setCurrentCallData] = useState(null);
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [callSid, setCallSid] = useState(null);
+  const [sessionCalls, setSessionCalls] = useState([]);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isOnHold, setIsOnHold] = useState(false);
   const [error, setError] = useState(null);
 
-  // Timer for call duration
+  /* ---- duration timer ---- */
   useEffect(() => {
     let interval = null;
-    if (isCallActive && callStartTime) {
+    if (callStatus === CALL_STATUS.ACTIVE && callStartTime) {
       interval = setInterval(() => {
         setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
       }, 1000);
-    } else {
-      clearInterval(interval);
     }
-    return () => clearInterval(interval);
-  }, [isCallActive, callStartTime]);
+    return () => interval && clearInterval(interval);
+  }, [callStatus, callStartTime]);
 
-  // Setup device event listeners
+  /* ---- poll status (lightweight) ---- */
   useEffect(() => {
-    if (!device) return;
+    if (!callSid) return;
 
-    const handleIncomingCall = (incomingCall) => {
-      console.log("Incoming call received");
-      setCall(incomingCall);
-      setCallStatus(CALL_STATUS.RINGING);
-      setupCallEventListeners(incomingCall);
-    };
-
-    device.on("incoming", handleIncomingCall);
-
-    return () => {
-      device.removeListener("incoming", handleIncomingCall);
-    };
-  }, [device]);
-
-  const setupCallEventListeners = (activeCall) => {
-    activeCall.on("accept", () => {
-      console.log("Call accepted");
-      setIsCallActive(true);
-      setCallStatus(CALL_STATUS.ACTIVE);
-      setCallStartTime(Date.now());
-      setError(null);
-    });
-
-    activeCall.on("disconnect", () => {
-      console.log("Call disconnected");
-      setCallStatus(CALL_STATUS.ENDING);
-      handleCallEnd();
-    });
-
-    activeCall.on("cancel", () => {
-      console.log("Call cancelled");
-      setCallStatus(CALL_STATUS.CANCELLED);
-      handleCallEnd();
-    });
-
-    activeCall.on("reject", () => {
-      console.log("Call rejected");
-      setCallStatus(CALL_STATUS.ENDED);
-      handleCallEnd();
-    });
-
-    activeCall.on("error", (error) => {
-      console.error("Call error:", error);
-      setCallStatus(CALL_STATUS.FAILED);
-      setError(error.message || "Call failed");
-      handleCallEnd();
-    });
-
-    // Additional Twilio-specific events
-    activeCall.on("ringing", () => {
-      console.log("Call ringing");
-      setCallStatus(CALL_STATUS.RINGING);
-    });
-
-    activeCall.on("mute", (isMuted) => {
-      console.log("Call muted:", isMuted);
-      // You can add mute state management here if needed
-    });
-  };
-
-  const handleCall = useCallback(
-    async (phoneNumber, leadData, fromNumber, currentSession, userId) => {
-      if (!device || !phoneNumber) {
-        console.error("Device not ready or no phone number provided");
-        setError("Device not ready or no phone number provided");
-        setCallStatus(CALL_STATUS.FAILED);
-        return;
-      }
-
+    const poll = async () => {
       try {
-        setCallStatus(CALL_STATUS.CONNECTING);
-        setError(null);
+        const res = await fetch(`/api/org/${orgId}/calls/${callSid}/status`);
+        const { status, duration } = await res.json();
+        if (status === "in-progress") setCallStatus(CALL_STATUS.ACTIVE);
+        else if (status === "completed") setCallStatus(CALL_STATUS.ENDED);
+        else if (status === "failed") setCallStatus(CALL_STATUS.FAILED);
+        else if (status === "busy") setCallStatus(CALL_STATUS.BUSY);
+        else if (status === "no-answer") setCallStatus(CALL_STATUS.NO_ANSWER);
+        else if (status === "queued" || status === "ringing")
+          setCallStatus(CALL_STATUS.RINGING);
 
-        const outgoingCall = await device.connect({
-          params: {
-            To: phoneNumber,
-            fromNumber: fromNumber,
-            leadId: leadData?.id,
-            callSessionId: currentSession,
-            userId: userId,
-            orgId: orgId,
-          },
+        if (duration) setCallDuration(duration);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    poll(); // immediate
+    const iv = setInterval(poll, 1000);
+    return () => clearInterval(iv);
+  }, [callSid, orgId]);
+
+  /* ---- actions ---- */
+  const handleCall = useCallback(
+    async (phoneNumber, leadData, fromNumber) => {
+      setError(null);
+      setCallStatus(CALL_STATUS.CONNECTING);
+      try {
+        const res = await fetch(`/api/org/${orgId}/calls/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: phoneNumber, from: fromNumber }),
         });
+        if (!res.ok) throw new Error("Failed to start");
 
-        setCall(outgoingCall);
-
-        const newCallData = {
+        const { callSid: sid } = await res.json();
+        setCallSid(sid);
+        setCallStartTime(Date.now());
+        setCurrentCallData({
           phoneNumber,
           leadData,
           startTime: new Date(),
           type: "outbound",
-        };
-        setCurrentCallData(newCallData);
-
-        setupCallEventListeners(outgoingCall);
-
-        console.log("Outgoing call initiated");
-      } catch (error) {
-        console.error("Failed to make call:", error);
-        setError(error.message || "Failed to make call");
+        });
+      } catch (e) {
+        setError(e.message || "Could not start call");
         setCallStatus(CALL_STATUS.FAILED);
       }
     },
-    [
-      device,
-      setError,
-      setCallStatus,
-      setCall,
-      setCurrentCallData,
-      setupCallEventListeners,
-    ]
-  );
-  const handlePracticeCall = useCallback(
-    async (
-      phoneNumber,
-      fromNumber = null,
-      currentSession = null,
-      userId = null
-    ) => {
-      if (!device || !phoneNumber) {
-        console.error("Device not ready or no phone number provided");
-        setError("Device not ready or no phone number provided");
-        setCallStatus(CALL_STATUS.FAILED);
-        return;
-      }
-
-      try {
-        setCallStatus(CALL_STATUS.CONNECTING);
-        setError(null);
-
-        // For practice calls, we're just waiting for the incoming call from Bland AI
-        // The actual call initiation happens via the training API route
-
-        const newCallData = {
-          phoneNumber,
-          startTime: new Date(),
-          type: "practice",
-        };
-        setCurrentCallData(newCallData);
-
-        console.log(
-          "Practice call setup complete, waiting for Bland AI to call"
-        );
-      } catch (error) {
-        console.error("Failed to setup practice call:", error);
-        setError(error.message || "Failed to setup practice call");
-        setCallStatus(CALL_STATUS.FAILED);
-      }
-    },
-    [device, setError, setCallStatus, setCurrentCallData]
-  );
-  const handleAcceptCall = useCallback(() => {
-    if (call && callStatus === CALL_STATUS.RINGING) {
-      call.accept();
-    }
-  }, [call, callStatus]);
-
-  const handleRejectCall = useCallback(() => {
-    if (call && callStatus === CALL_STATUS.RINGING) {
-      call.reject();
-    }
-  }, [call, callStatus]);
-
-  const handleHangup = useCallback(() => {
-    if (call) {
-      setCallStatus(CALL_STATUS.ENDING);
-      call.disconnect();
-    }
-  }, [call]);
-
-  const handleCallEnd = useCallback(() => {
-    const endTime = Date.now();
-    const duration = callStartTime
-      ? Math.floor((endTime - callStartTime) / 1000)
-      : 0;
-
-    // Add call to session history
-    if (currentCallData) {
-      const callRecord = {
-        ...currentCallData,
-        endTime: new Date(endTime),
-        duration,
-        status: callStatus,
-        id: Date.now().toString(),
-      };
-
-      setSessionCalls((prev) => [...prev, callRecord]);
-    }
-
-    // Reset call state
-    setCall(null);
-    setIsCallActive(false);
-    setCallStartTime(null);
-    setCallDuration(0);
-    setCurrentCallData(null);
-
-    // Set final status
-    if (
-      callStatus !== CALL_STATUS.CANCELLED &&
-      callStatus !== CALL_STATUS.FAILED
-    ) {
-      setCallStatus(CALL_STATUS.ENDED);
-    }
-
-    // After a delay, reset to idle
-    setTimeout(() => {
-      setCallStatus(CALL_STATUS.IDLE);
-      setError(null);
-    }, 2000);
-
-    // Return call data for post-call dialog
-    return { duration, callData: currentCallData, status: callStatus };
-  }, [call, callStartTime, currentCallData, callStatus]);
-
-  const redialNumber = useCallback(
-    (phoneNumber, leadData) => {
-      handleCall(phoneNumber, leadData);
-    },
-    [handleCall]
+    [orgId]
   );
 
-  // Utility function to get human-readable status
-  const getStatusText = useCallback(() => {
-    switch (callStatus) {
-      case CALL_STATUS.IDLE:
-        return "Ready to call";
-      case CALL_STATUS.CONNECTING:
-        return "Connecting...";
-      case CALL_STATUS.RINGING:
-        return "Ringing...";
-      case CALL_STATUS.ACTIVE:
-        return "Call in progress";
-      case CALL_STATUS.ON_HOLD:
-        return "On hold";
-      case CALL_STATUS.ENDING:
-        return "Ending call...";
-      case CALL_STATUS.ENDED:
-        return "Call ended";
-      case CALL_STATUS.FAILED:
-        return "Call failed";
-      case CALL_STATUS.CANCELLED:
-        return "Call cancelled";
-      case CALL_STATUS.BUSY:
-        return "Line busy";
-      case CALL_STATUS.NO_ANSWER:
-        return "No answer";
-      default:
-        return "Unknown status";
-    }
-  }, [callStatus]);
+  const handleHangup = useCallback(async () => {
+    if (!callSid) return;
+    await fetch(`/api/org/${orgId}/calls/${callSid}/hangup`, {
+      method: "POST",
+    });
+    setCallStatus(CALL_STATUS.ENDED);
+  }, [callSid, orgId]);
 
-  // Check if call can be made
-  const canMakeCall = callStatus === CALL_STATUS.IDLE;
+  const handleMute = useCallback(async () => {
+    if (!callSid) return;
+    await fetch(`/api/org/${orgId}/calls/${callSid}/mute`, {
+      method: "POST",
+      body: JSON.stringify({ muted: !isMuted }),
+    });
+    setIsMuted((m) => !m);
+  }, [callSid, isMuted, orgId]);
 
-  // Check if call is in progress
+  const handleHold = useCallback(async () => {
+    if (!callSid) return;
+    await fetch(`/api/org/${orgId}/calls/${callSid}/hold`, {
+      method: "POST",
+      body: JSON.stringify({ hold: !isOnHold }),
+    });
+    setIsOnHold((h) => !h)
+     setCallStatus(isOnHold ? CALL_STATUS.ACTIVE : CALL_STATUS.ON_HOLD);
+  }, [callSid, isOnHold, orgId]);
+
+  /* ---- helpers ---- */
   const isInCall = [
     CALL_STATUS.CONNECTING,
     CALL_STATUS.RINGING,
     CALL_STATUS.ACTIVE,
+    CALL_STATUS.ON_HOLD,
   ].includes(callStatus);
 
+  const canMakeCall = callStatus === CALL_STATUS.IDLE || callStatus === CALL_STATUS.ENDED;
+
+  /* ---- return ---- */
   return {
-    // Call state
-    call,
+    call: null, // SDK call object removed
+    callSid,
     callStatus,
     callStartTime,
     callDuration,
     sessionCalls,
     currentCallData,
-    isCallActive,
+    isCallActive: callStatus === CALL_STATUS.ACTIVE,
+    isMuted,
+    isOnHold,
+    isInCall,
+    canMakeCall,
     error,
 
-    // Status utilities
-    getStatusText,
-    canMakeCall,
-    isInCall,
-
-    // Actions
+    // actions
     handleCall,
-    handleCallEnd,
     handleHangup,
-    handleAcceptCall,
-    handleRejectCall,
-    redialNumber,
-    handlePracticeCall,
+    handleMute,
+    handleHold,
+    redialNumber: handleCall, // same signature
 
-    // Manual status setters (for special cases)
-    setCallStatus,
-    setError,
-    setIsCallActive,
-    setCallDuration,
-    setCallStatus,
+    // legacy no-ops
+    handleCallEnd: () => {}, // no longer needed
+    handleAcceptCall: () => {},
+    handleRejectCall: () => {},
+    handlePracticeCall: () => {},
   };
 }

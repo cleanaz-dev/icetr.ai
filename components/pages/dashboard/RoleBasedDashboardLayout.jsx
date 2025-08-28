@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Logo } from "@/lib/hooks/useLogo";
 import { UserButton, useUser, useClerk } from "@clerk/nextjs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePermissionContext } from "@/context/PermissionProvider";
 import { getPermissionBasedNavigation } from "@/lib/config/navigation";
 import SignOutButton from "./SignOutButton";
+import VerticalBrandText from "./VerticalBrandText";
+import { Info } from "lucide-react";
 
 export default function RoleBasedDashboardLayout({
   children,
@@ -23,6 +25,7 @@ export default function RoleBasedDashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showNotificationsDialog, setShowNotificationsDialog] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -31,7 +34,6 @@ export default function RoleBasedDashboardLayout({
   const pathname = usePathname();
 
   const { role, permissions } = usePermissionContext();
-
 
   // Handle client-side mounting to prevent hydration issues
   useEffect(() => {
@@ -172,15 +174,41 @@ export default function RoleBasedDashboardLayout({
             );
           })}
         </nav>
+
+        {/* Add this new section for the vertical brand text */}
+        {/* <div className="flex-shrink-0 mt-6">
+          <VerticalBrandText isVisible={sidebarCollapsed} />
+        </div> */}
+
         {/* Spacer pushes the footer to the bottom */}
         <div className="flex-1" />
+         <div className="p-4 flex-shrink-0">
+          <Link
+            href="https://icetr-ai.gitbook.io/icetr.ai-docs/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`
+              flex items-center ${
+                sidebarCollapsed ? "justify-center px-2" : "space-x-3 px-3"
+              } py-2 rounded-lg text-sm font-medium transition-all duration-200
+              text-muted-foreground hover:text-foreground hover:bg-muted
+            `}
+            title={sidebarCollapsed ? "icetrai Docs" : undefined}
+          >
+            <Info className="h-4 w-4 flex-shrink-0" />
+            {!sidebarCollapsed && (
+              <span>icetrai Docs</span>
+            )}
+          </Link>
+        </div>
 
         {/* Sidebar Footer with User Button and Notifications */}
         <div className="flex flex-col gap-4 p-4 border-t border-muted ">
           {/* Notifications */}
           <NotificationsDialog
             sidebarCollapsed={sidebarCollapsed}
-            notifications={notifications}
+            open={showNotificationsDialog}
+            setOpen={setShowNotificationsDialog}
           />
 
           {/* User Button */}
@@ -260,7 +288,7 @@ export default function RoleBasedDashboardLayout({
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 overflow-auto">{children}</ScrollArea>
+          <ScrollArea className="flex-1 overflow-hidden">{children}</ScrollArea>
         </div>
       </div>
       {showDialog && (

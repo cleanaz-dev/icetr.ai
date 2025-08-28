@@ -8,23 +8,24 @@ import TeamReviewTab from "./TeamReviewTab";
 import { format } from "date-fns";
 import TeamCalls from "./TeamCalls";
 import { useTeamContext } from "@/context/TeamProvider";
+import TeamCampaignsTab from "./TeamCampaignsTab";
+import { TableSseAlgorithm } from "@aws-sdk/client-s3";
+import TeamMembersTab from "./TeamMembersTab";
 
-export default function SingleTeamPage({
-  teamId,
-  trainingData,
-}) {
+export default function SingleTeamPage({ teamId, trainingData }) {
   const {
     teamLeads: leads,
     getTeamByTeamId,
     getTeamMembersByTeamId,
     orgCampaigns,
     filterLeadsByTeamId,
-    filterCampaignsByTeamId
+    filterCampaignsByTeamId,
   } = useTeamContext();
-  const team = getTeamByTeamId(teamId)
-  const members = getTeamMembersByTeamId(teamId)
-  const teamCampaigns = filterCampaignsByTeamId(teamId)
+  const team = getTeamByTeamId(teamId);
+  const members = getTeamMembersByTeamId(teamId);
+  const teamCampaigns = filterCampaignsByTeamId(teamId);
   const [activeTab, setActiveTab] = useState("overview");
+  console.log("team", team);
 
   // Calculate team stats
   const teamStats = {
@@ -265,169 +266,19 @@ export default function SingleTeamPage({
         )}
 
         {activeTab === "members" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Team Members</h2>
-            
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* {team.manager && <MemberCard member={team.manager} isManager={true} />} */}
-              {members.map(({ user }) => (
-                <MemberCard key={user.id} member={user} />
-              ))}
-            </div>
-          </div>
+          <TeamMembersTab team={team} members={members} />
         )}
 
-        {activeTab === "leads" && <TeamLeadsTable leads={filterLeadsByTeamId(leads,teamId)} team={team} />}
+        {activeTab === "leads" && (
+          <TeamLeadsTable
+            leads={filterLeadsByTeamId(leads, teamId)}
+            team={team}
+          />
+        )}
 
         {activeTab === "campaigns" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Team Campaigns</h2>
-              {/* <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Campaign
-              </Button> */}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teamCampaigns.map((campaign) => (
-                <div
-                  key={campaign.id}
-                  className="bg-card rounded-lg border p-6 shadow-sm"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">{campaign.name}</h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        campaign.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {campaign.status}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Total Leads
-                      </span>
-                      <span className="text-sm font-medium">
-                        {campaign._count.leads || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Conversion Rate
-                      </span>
-                      <span className="text-sm font-medium">18.5%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Last Updated
-                      </span>
-                      <span className="text-sm font-medium">
-                        {format(new Date(campaign.updatedAt), "MMM d, yyyy")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex space-x-2">
-                    <Button>View Details</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TeamCampaignsTab team={team} campaigns={teamCampaigns} />
         )}
-
-        {/* {activeTab === "analytics" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Team Analytics</h2>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-card rounded-lg border p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">
-                  Performance Metrics
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Average Call Duration
-                    </span>
-                    <span className="text-sm font-medium">
-                      {Math.floor(teamStats.avgCallDuration / 60)}m{" "}
-                      {teamStats.avgCallDuration % 60}s
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Daily Call Volume
-                    </span>
-                    <span className="text-sm font-medium">47 calls</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Lead Response Time
-                    </span>
-                    <span className="text-sm font-medium">2.3 hours</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Follow-up Rate
-                    </span>
-                    <span className="text-sm font-medium">89%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card rounded-lg border p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Team Leaderboard</h3>
-                <div className="space-y-3">
-                  {members.slice(0, 3).map((member, index) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center space-x-3"
-                    >
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                          index === 0
-                            ? "bg-yellow-100 text-yellow-800"
-                            : index === 1
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-orange-100 text-orange-800"
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                      <img
-                        src={member.imageUrl}
-                        alt={member.firstname}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {member.firstname} {member.lastname}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {Math.floor(Math.random() * 20) + 10} calls this week
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {Math.floor(Math.random() * 30) + 70}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Success rate
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )} */}
 
         {activeTab === "reviews" && (
           <TeamReviewTab

@@ -16,11 +16,7 @@ export async function POST(request) {
     // return NextResponse.json({ message: "Assignment data received" }, { status: 200 });
 
     // Validate required fields
-    if (
-      !leadIds ||
-      !Array.isArray(leadIds) ||
-      leadIds.length === 0
-    ) {
+    if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
       return NextResponse.json(
         { error: "leadIds array is required" },
         { status: 400 }
@@ -57,20 +53,17 @@ export async function POST(request) {
       });
 
       // Create activity records for each lead
-      const activityPromises = leadIds.map((leadId) =>
-        prisma.leadActivity.create({
-          data: {
-            leadId: leadId,
-            type: "ASSIGNMENT",
-            content: `Lead assigned to ${
-              assignedUser.firstname || assignedUser.email
-            }`,
-            createdBy: assingerUser.id,
-          },
-        })
-      );
+      await prisma.leadActivity.create({
+        data: {
+          type: "ASSIGNMENT",
+          content: `Assigned ${leadIds.length} leads to ${
+            assignedUser.fullname || assignedUser.email
+          }`,
+          createdBy: assingerUser.id,
+        },
+      });
 
-      await Promise.all(activityPromises);
+      // await Promise.all(activityPromises);
 
       return NextResponse.json({
         message: `Successfully assigned ${updatedLeads.count} leads`,

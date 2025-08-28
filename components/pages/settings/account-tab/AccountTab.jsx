@@ -2,21 +2,9 @@
 
 import { useState } from "react";
 import {
-  User,
-  Settings,
   Globe,
   Clock,
-  Mail,
-  Shield,
-  AlertTriangle,
   Save,
-  Camera,
-  Activity,
-  Calendar,
-  Key,
-  Bell,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs-og";
 import {
@@ -34,24 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import {
   languageOptions,
@@ -218,7 +191,7 @@ export default function AccountTab({ settings }) {
           </CardContent>
 
           {/* Save Button */}
-          <CardFooter className="p-6">
+          <CardFooter className="p-6 border-t ">
             <Button
               onClick={handleSaveUserSettings}
               disabled={loading}

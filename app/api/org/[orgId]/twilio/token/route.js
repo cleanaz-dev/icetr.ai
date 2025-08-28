@@ -6,31 +6,24 @@ import { getTwillioIntegrationData } from "@/lib/db/integrations";
 
 export async function GET(req, { params }) {
   const { orgId } = await params;
-  console.log("orgId", orgId)
+  const url = new URL(req.url);
+  const userId = url.searchParams.get('userId');
+  console.log("token for userId:", userId);
+  
+  if (!userId) {
+    return NextResponse.json({ error: "userId required" }, { status: 400 });
+  }
 
   try {
-    const { accountSid, apiKey, apiSecret, appSid } =
-      await getTwillioIntegrationData(orgId);
-
-    // 5. Decrypt the auth token
+    const { accountSid, apiKey, apiSecret, appSid } = await getTwillioIntegrationData(orgId);
     const decryptedApiKey = safeDecryptField(apiKey, orgId, "apiKey");
     const decryptedSecret = safeDecryptField(apiSecret, orgId, "apiSecret");
-
-
-
-    if (!decryptedApiKey ||  !decryptedSecret) {
-      return NextResponse.json(
-        { error: "Invalid or corrupted API key" },
-        { status: 400 }
-      );
-    }
-
-    // return NextResponse.json({ message: "Workning on it!" }, { status: 200 });
-
+    
     const AccessToken = twilio.jwt.AccessToken;
     const VoiceGrant = AccessToken.VoiceGrant;
+    
     const accessToken = new AccessToken(accountSid, decryptedApiKey, decryptedSecret, {
-      identity: "user",
+      identity: userId, // Use the user's actual ID
     });
 
     const voiceGrant = new VoiceGrant({
@@ -44,9 +37,6 @@ export async function GET(req, { params }) {
     return NextResponse.json({ token }, { status: 200 });
   } catch (error) {
     console.error("Error generating token:", error);
-    return NextResponse.json(
-      { error: "Failed to generate token" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate token" }, { status: 500 });
   }
 }

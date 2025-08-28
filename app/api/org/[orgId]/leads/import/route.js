@@ -50,6 +50,7 @@ export async function POST(request, { params }) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const name = formData.get("name");
     const campaignId = formData.get("campaignId");
     const source = formData.get("source");
     const industry = formData.get("industry");

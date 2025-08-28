@@ -1,106 +1,114 @@
 "use client";
+import { useState } from "react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { Circle } from "lucide-react";
-import { LayoutDashboard } from "lucide-react";
+import { Send } from "lucide-react";
 import LeadDistributionChart from "./LeadDistributionChart";
 import DashboardStatsCard from "./DashboardStatsCard";
 import { useDashboard } from "@/context/DashboardProvider";
 import PageHeader from "@/components/ui/layout/PageHeader";
+import CreateBroadcastDialog from "./CreateBroadcastDialog";
+import { UserRoundPlus } from "lucide-react";
+import DashboardTeamPerfomance from "./admin-page/DashboardTeamPerfomance";
+import DashboardRecentActivities from "./admin-page/DashboardRecentActivities";
+import MonthlyTarget from "./admin-page/MonthlyTarget";
+import TeamBroadCasts from "./admin-page/TeamBroadCasts";
+import { useEffect } from "react";
+import { useTeamContext } from "@/context/TeamProvider";
+import useSWR, { mutate } from "swr";
+import InviteUserDialog from "./admin-page/InviteUserDiaglog";
+import { UserRoundCog } from "lucide-react";
 
 export default function Dashboard() {
-  const { activities, leadCounts } = useDashboard();
+  const { activities, leadCounts, adminDashboardStats } = useDashboard();
+  const { orgId } = useTeamContext();
+  const [showDialog, setShowDialog] = useState(false);
+  const [teams, setTeams] = useState(adminDashboardStats?.teams || []);
+  const [selectedTeam, setSelectedTeam] = useState("");
 
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const { data: broadcasts } = useSWR(
+    orgId ? `/api/org/${orgId}/broadcasts` : null,
+    fetcher
+  );
+
+  const handleSend = async (payload) => {
+    try {
+      await fetch(`/api/org/${orgId}/broadcasts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      mutate(`/api/org/${orgId}/broadcasts`); // Re-fetch the broadcasts
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+    }
+  };
+  //  console.log("teams", teams);
+  // console.log("broadcasts", broadcasts);
   return (
-    <div className="space-y-6 px-4 py-6">
+    <div className="px-4 py-6">
       {/* Header */}
-      <PageHeader
-        title="Dashboard"
-        description="Track and manage your leads and team performance"
-        icon="LayoutDashboard"
-      />
-
-      {/* Stats Cards */}
-      <DashboardStatsCard />
-      {/* Main Content - Restructured Layout */}
-      <div className="grid gap-6">
-        {/* Pipeline and Recent Activities Side by Side */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <LeadDistributionChart leadCounts={leadCounts} />
-          {/* Recent Activities */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
-              <CardDescription>Latest lead interactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {activities.map((item, i) => {
-                  return (
-                    <div key={i} className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={item.createdUser.imageUrl} />
-                        <AvatarFallback>UN</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          <span className="text-primary">
-                            {item.createdUser.firstname}
-                          </span>{" "}
-                          <span>{item.type}</span>
-                        </p>
-                        <p>{item.content}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">
-                            {item.time}
-                          </p>
-                          <Badge className="text-xs" variant="ghost">
-                            {new Date(item.createdAt).toLocaleDateString()}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex justify-between">
+        <PageHeader
+          title="Dashboard"
+          description="Track and manage your leads and team performance"
+          icon="LayoutDashboard"
+        />
+        <div className="flex gap-2 ">
+          <Button onClick={() => setShowDialog(true)}>
+            <Send /> Send Broadcast
+          </Button>
+          <InviteUserDialog
+            teams={teams}
+            orgId={orgId}
+            trigger={
+              <Button size="icon">
+                <UserRoundPlus className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
-
-        {/* Monthly Goal - Full Width Below */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Goal</CardTitle>
-            <CardDescription>50 conversions target</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm">Current Progress</span>
-                <span className="text-sm font-medium">32/50 (64%)</span>
-              </div>
-              <Progress value={64} />
-              <div className="flex justify-between text-sm">
-                <span className="flex items-center">
-                  <Circle className="h-2 w-2 mr-2 text-green-500 fill-green-500" />
-                  On track
-                </span>
-                <span>8 days remaining</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <DashboardStatsCard />
+        {/* Main Content - Restructured Layout */}
+        <div className="grid gap-6">
+          {/* Team Performance (2 spans) and Side Components (1 span) */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Team Performance - Takes 2 columns */}
+            <div className="md:col-span-2 space-y-6">
+              <DashboardTeamPerfomance
+                teams={teams}
+                onSelectTeam={setSelectedTeam}
+                setShowDialog={setShowDialog}
+              />
+              <TeamBroadCasts
+                broadcasts={broadcasts}
+                setShowDialog={setShowDialog}
+              />
+            </div>
+            {/* Right sidebar - Takes 1 column */}
+            <div className="space-y-6">
+              <LeadDistributionChart leadCounts={leadCounts} />
+              <DashboardRecentActivities activities={activities} />
+              {/* <MonthlyTarget /> */}
+            </div>
+          </div>
+        </div>
+      </div>
+      <CreateBroadcastDialog
+        isOpen={showDialog}
+        onClose={() => {
+          setShowDialog(false);
+          setSelectedTeam(null); // single source of truth
+        }}
+        onSend={handleSend}
+        teams={teams}
+        selectedTeam={selectedTeam}
+        setSelectedTeam={setSelectedTeam}
+      />
     </div>
   );
 }

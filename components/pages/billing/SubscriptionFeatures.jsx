@@ -58,7 +58,7 @@ export default function SubscriptionFeatures({ tier }) {
       {/* Enabled Features */}
       <div>
         <h3 className="font-semibold text-lg mb-3">Included Features</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {enabledFeatures.map((feature) => {
             const IconComponent = feature.icon;
             return (
@@ -83,12 +83,12 @@ export default function SubscriptionFeatures({ tier }) {
           <h3 className="font-semibold text-lg mb-3 text-muted-foreground">
             Upgrade to Unlock
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {disabledFeatures.map((feature) => {
               const IconComponent = feature.icon;
               return (
                 <div key={feature.configName} className="flex items-start space-x-3 p-3 border rounded-lg opacity-60">
-                  <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  {/* <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" /> */}
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <IconComponent className="h-4 w-4 text-muted-foreground flex-shrink-0" />

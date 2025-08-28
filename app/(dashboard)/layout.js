@@ -1,9 +1,7 @@
 // app/(dashboard)/layout.js
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import {
-  getUserNotifications,
-} from "@/lib/services/prismaQueries";
+import { getUserNotifications } from "@/lib/services/prismaQueries";
 import RoleBasedDashboardLayout from "@/components/pages/dashboard/RoleBasedDashboardLayout";
 import { getUserProfile, getUserPersmissions } from "@/lib/db/user";
 import {
@@ -21,12 +19,16 @@ import {
   getAllOrgLeads,
   getOrgDashboardStats,
   getOrgId,
+  getOrgPhoneNumbers,
   getOrgRecentActivity,
   getUserOrganization,
 } from "@/lib/db/org";
 import Providers from "./providers";
 import UserOnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 import { getOrgCallFlowConfig } from "@/lib/db/call-flow";
+import { getAdminDashboardData } from "@/lib/db/admin";
+import AiAssistant from "@/components/ai/AiAssistant";
+import { TwilioDeviceProvider } from "@/context/TwilioDeviceProvider";
 
 export default async function DashboardLayout({ children }) {
   const { userId } = await auth();
@@ -50,9 +52,10 @@ export default async function DashboardLayout({ children }) {
   const teamLeads = await getAssignedTeamsLeads(orgId);
   const callFlowConfiguration = await getOrgCallFlowConfig(orgId);
   const organization = await getUserOrganization(userId, orgId);
+  const adminDashboardStats = await getAdminDashboardData(userId, orgId);
+  const phoneNumbers = await getOrgPhoneNumbers(orgId);
 
-  // console.log("LAYOUT_PAGE_OBJECT", callFlowConfiguration)
-
+  // console.log("LAYOUT_PAGE_OBJECT", adminDashboardStats)
 
   return (
     <Providers
@@ -65,17 +68,23 @@ export default async function DashboardLayout({ children }) {
         orgCampaigns,
         teamLeads,
       }}
-      dashboardValues={{ activities, leadCounts, dashboardStats }}
+      dashboardValues={{
+        activities,
+        leadCounts,
+        dashboardStats,
+        adminDashboardStats,
+      }}
       leadsValues={{ leads }}
-      coreValues={{ callFlowConfiguration, organization }}
+      coreValues={{ callFlowConfiguration, organization, phoneNumbers }}
     >
       <RoleBasedDashboardLayout
         imageUrl={imageUrl}
         userId={userId}
         notifications={notifications}
       >
-        <UserOnboardingOverlay  />
-        {children}
+        <UserOnboardingOverlay />
+        <TwilioDeviceProvider>{children}</TwilioDeviceProvider>
+        <AiAssistant imageUrl={imageUrl} />
       </RoleBasedDashboardLayout>
     </Providers>
   );

@@ -13,7 +13,7 @@ export default async function page() {
   const adminSettings = await getAdminOrgSettings(userId, orgId);
   const settings = await getUserSettings(userId, orgId);
   const { role } = await getUserPersmissions(userId)
-  console.log("adminSettings", adminSettings)
+  // console.log("adminSettings", adminSettings)
 
   if (role ===  "Admin" || role === "SuperAdmin") {
     return (

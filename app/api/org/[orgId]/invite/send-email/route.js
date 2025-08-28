@@ -56,7 +56,7 @@ export async function POST(request, { params }) {
 
     // Step 3: Proceed with creating a new invite
     const uuid = randomUUID();
-    await sendInviteEmail(email, uuid);
+    await sendInviteEmail(email, uuid, orgId);
 
     // Store the invitee data in Redis JSON
     await redis.json.set(`invitee:${orgId}:${uuid}`, ".", {

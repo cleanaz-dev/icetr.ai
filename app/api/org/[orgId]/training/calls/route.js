@@ -1,3 +1,5 @@
+
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { scenarioPrompts } from "@/lib/constants/training";
@@ -44,7 +46,7 @@ export async function POST(request, { params }) {
 
     console.log("decryptedKey:", decryptedKey);
 
-    return NextResponse.json({ mesasge: "Working on it!" }, { status: 200 });
+    // return NextResponse.json({ mesasge: "Working on it!" }, { status: 200 });
 
     // Define scenario-specific prompts for Bland AI
 
@@ -60,7 +62,7 @@ export async function POST(request, { params }) {
       },
       body: JSON.stringify({
         phone_number: phoneNumber,
-        from: blandAiSettings.phoneNumber[0],
+        from: blandAiSettings.phoneNumbers[0],
         task: scenario.prompt,
         voice: scenario.voiceId,
         background_track: "office",
@@ -92,7 +94,7 @@ export async function POST(request, { params }) {
           scenarioId: scenario.id,
           userId: userId,
           orgId: orgId,
-          campaignTrainingId: trainingId,
+          campaignTrainingId: scenario.trainingId,
           timestamp: new Date().toISOString(),
         },
         webhook: blandAiSettings.webhook,

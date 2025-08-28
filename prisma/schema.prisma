@@ -35,9 +35,39 @@ model Organization {
   callFlowConfiguration CallFlowConfiguration?
   tierSettings          TierSettings?
   call                  Call[]                 @relation("CallOrganization")
+  researchConfig        ResearchConfig[]
+  phoneNumbers          PhoneNumber[]
+  callSessions          CallSession[]
+  aiAgentSettings       AIAgent?
 }
 
-// New tier-based organization settings
+model AIAgent {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  orgId        String?       @unique @db.ObjectId
+  organization Organization? @relation(fields: [orgId], references: [id])
+
+  agentIstructions Json?
+  webhookUrl       String?
+
+  resource          Json? // Full resource object
+  service           Json? // Full service object  
+  location          Json? // Full location object
+  recurringSchedule Json? // Full recurring schedule object
+  scheduleBlocks    Json? // Full schedule blocks object
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PhoneNumber {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  phoneNumber  String
+  countryCode  String?
+  orgId        String?       @db.ObjectId
+  organization Organization? @relation(fields: [orgId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
 
 model Customer {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
@@ -46,6 +76,8 @@ model Customer {
   stripeCusId  String        @unique
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  user         User?
+  userId       String?       @unique @db.ObjectId
 
   subscription Subscription?
   invoices     Invoice[]
@@ -75,22 +107,26 @@ model User {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   callSessions      CallSession[]
-  Call              Call[]
-  Training          Training[]
-  Notification      Notification[]
+  call              Call[]
+  trainings         Training[]
+  notifications     Notification[]
   reviews           CallReview[]
   orgOwner          Organization?      @relation("OrgOwner")
   managedTeams      Team[]             @relation("TeamManager")
   teamMemberships   TeamMember[]
   auditLogs         AuditLog[]
-  TrainingSession   TrainingSession[]
+  trainingSessions  TrainingSession[]
+  bookings          Booking[]
+  broadcast         Broadcast[]
+  customerId        String?            @unique @db.ObjectId
+  customer          Customer?          @relation(fields: [customerId], references: [id])
 }
 
 model TierSettings {
   id           String           @id @default(auto()) @map("_id") @db.ObjectId
   organization Organization?    @relation(fields: [orgId], references: [id])
   orgId        String?          @unique @db.ObjectId
-  tier         SubscriptionTier @default(BASIC)
+  tier         SubscriptionTier @default(STARTER)
   limits       Json // All limits in one place
   features     Json // All feature flags in one place
   createdAt    DateTime         @default(now())
@@ -120,11 +156,14 @@ model Subscription {
   quantity  Int?   @default(1)
 
   // Tier tracking
-  tier              SubscriptionTier    @default(BASIC)
-  addOns            SubscriptionAddOn[]
+  tier               SubscriptionTier   @default(STARTER)
+  subcriptionAddOn   SubscriptionAddOn? @relation(fields: [subcriptionAddOnId], references: [id])
+  subcriptionAddOnId String?            @unique @db.ObjectId
+
+  // Status tracking
   status            SubscriptionStatus
   currentPeriodEnd  DateTime
-  cancelAtPeriodEnd Boolean             @default(false)
+  cancelAtPeriodEnd Boolean            @default(false)
 
   trialStart DateTime?
   trialEnd   DateTime?
@@ -153,15 +192,27 @@ enum SubscriptionStatus {
   INCOMPLETE_EXPIRED
 }
 
-model SubscriptionAddOn {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
-  subscriptionId String       @db.ObjectId
+model AddOn {
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  subscriptionAddOn   SubscriptionAddOn? @relation(fields: [subscriptionAddOnId], references: [id])
+  subscriptionAddOnId String?            @db.ObjectId
+  title               String
+  units               Int
+  unitsConsumed       Int                @default(0)
+  type                AddOnType
+  amount              Float
+  priceId             String             @unique
+  currency            String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
 
-  type     AddOnType
-  priceId  String
-  quantity Int                @default(1)
-  status   SubscriptionStatus
+model SubscriptionAddOn {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  subscription   Subscription?
+  subscriptionId String?       @unique @db.ObjectId
+
+  addOns AddOn[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -174,6 +225,7 @@ enum AddOnType {
   EXTRA_USERS
   EXTRA_TRANSCRIPTION_MINUTES
   PREMIUM_SUPPORT
+  AI_CREDITS
 }
 
 enum BillingCycle {
@@ -414,6 +466,8 @@ model Team {
   members      TeamMember[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  broadcasts   Broadcast[]  @relation(fields: [broadcastId], references: [id])
+  broadcastId  String[]     @db.ObjectId
 }
 
 model TeamMember {
@@ -470,6 +524,8 @@ model Campaign {
   callSessions       CallSession[]
   training           CampaignTraining[]
   scripts            Json?
+  bookings           Booking[]
+  researchConfig     ResearchConfig?
 
   @@index([orgId])
   @@index([teamId])
@@ -517,6 +573,53 @@ model TrainingScenario {
   updatedAt DateTime @updatedAt
 }
 
+model Research {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId    String   @unique @db.ObjectId
+  research  Json?
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ResearchConfig {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  orgId          String           @db.ObjectId
+  campaignId     String           @unique @db.ObjectId
+  services       String[]
+  techStackFocus TechStackFocus[]
+  isPremium      Boolean          @default(false)
+  socials        SocialPlatform[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization? @relation(fields: [orgId], references: [id])
+  campaign     Campaign?     @relation(fields: [campaignId], references: [id])
+}
+
+enum TechStackFocus {
+  CRM
+  LIVE_CHAT
+  ANALYTICS
+  ECOMMERCE
+  EMAIL_MARKETING
+  AUTOMATION
+  PAYMENT_PROCESSING
+  CUSTOMER_SUPPORT
+  LEAD_GENERATION
+  SOCIAL_MEDIA_TOOLS
+}
+
+enum SocialPlatform {
+  LINKEDIN
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  TWITTER
+  YOUTUBE
+  PINTEREST
+}
+
 model Lead {
   id             String         @id @default(auto()) @map("_id") @db.ObjectId
   campaignId     String?        @db.ObjectId
@@ -538,10 +641,12 @@ model Lead {
   followUps      FollowUp[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  Call           Call[]
+  call           Call[]
   Prospect       Prospect[]
   organization   Organization?  @relation(fields: [orgId], references: [id])
   orgId          String?        @db.ObjectId
+  bookings       Booking[]
+  research       Research?
 }
 
 model LeadActivity {
@@ -564,6 +669,32 @@ model LeadActivity {
   callSessionId String?      @db.ObjectId
   call          Call?        @relation(fields: [callId], references: [id])
   callId        String?      @db.ObjectId
+}
+
+model Booking {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  leadId         String        @db.ObjectId
+  lead           Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  campaignId     String?       @db.ObjectId
+  campaign       Campaign?     @relation(fields: [campaignId], references: [id])
+  bookedBy       String?       @db.ObjectId
+  bookedByAi     Boolean?      @default(false)
+  user           User?         @relation(fields: [bookedBy], references: [id])
+  hapioBookingId String?       @unique
+  bookingData    Json // Meeting details, calendar info, etc.
+  status         BookingStatus @default(SCHEDULED) // SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED
+  scheduledAt    DateTime // When the meeting is scheduled for
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  zoomUrl        String?
+}
+
+enum BookingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
 }
 
 model Call {
@@ -602,7 +733,7 @@ model Call {
   // Relations
   activities LeadActivity[] // All activities related to this call
   followUps  FollowUp[] // Follow-ups created from this call
-  CallReview CallReview[]
+  callReview CallReview[]
 
   @@index([orgId])
 }
@@ -614,6 +745,9 @@ model CallSession {
   campaignId String?   @db.ObjectId // Optional: session might span campaigns
   campaign   Campaign? @relation(fields: [campaignId], references: [id])
 
+  orgId        String?       @db.ObjectId
+  organization Organization? @relation(fields: [orgId], references: [id])
+
   // Quick stats (could be computed, but storing for performance)
   totalCalls      Int @default(0)
   successfulCalls Int @default(0)
@@ -624,8 +758,8 @@ model CallSession {
 
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
-  Call       Call[]
-  CallReview CallReview[]
+  call       Call[]
+  callReview CallReview[]
 }
 
 model FollowUp {
@@ -656,17 +790,44 @@ model WaitList {
 }
 
 model Notification {
-  id         String             @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String             @db.ObjectId
-  user       User               @relation(fields: [userId], references: [id])
-  title      String?
-  type       String // "follow_up_due", "follow_up_overdue", etc.
-  status     NotificationStatus @default(pending) // "pending", "read", "dismissed"
-  message    String? // Optional custom message
-  followUpId String?            @db.ObjectId // Link to the follow-up
-  followUp   FollowUp?          @relation(fields: [followUpId], references: [id])
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String             @db.ObjectId
+  user          User               @relation(fields: [userId], references: [id])
+  title         String?
+  type          String // "follow_up_due", "follow_up_overdue", etc.
+  status        NotificationStatus @default(pending) // "pending", "read", "dismissed"
+  message       String? // Optional custom message
+  followUpId    String?            @db.ObjectId // Link to the follow-up
+  followUp      FollowUp?          @relation(fields: [followUpId], references: [id])
+  broadcastId   String?            @db.ObjectId // Just add this
+  broadcast     Broadcast?         @relation(fields: [broadcastId], references: [id])
+  broadcastType BroadcastType?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model Broadcast {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  message       String?
+  archive       Boolean        @default(false)
+  type          BroadcastType
+  views         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  teams         Team[]         @relation(fields: [teamId], references: [id])
+  teamId        String[]       @db.ObjectId
+  createdBy     String?        @db.ObjectId
+  createdUser   User?          @relation(fields: [createdBy], references: [id])
+  notifications Notification[]
+}
+
+enum BroadcastType {
+  GENERAL
+  ANNOUNCEMENT
+  TRAINING
+  SYSTEM
+  ALERT
 }
 
 model Prospect {
@@ -797,7 +958,7 @@ model CallReview {
   approved   Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  Training   Training? @relation(fields: [trainingId], references: [id])
+  training   Training? @relation(fields: [trainingId], references: [id])
   trainingId String?   @db.ObjectId
 }
 
@@ -851,6 +1012,7 @@ enum LeadStatus {
   Proposal
   Lost
   Won
+  MEETING_SCHEDULED
 }
 
 enum RoleType {
@@ -879,9 +1041,10 @@ enum AssignmentStrategy {
 }
 
 model CallFlowConfiguration {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  organization Organization? @relation(fields: [orgId], references: [id])
-  orgId        String        @unique @db.ObjectId
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  organization Organization?     @relation(fields: [orgId], references: [id])
+  orgId        String?           @unique @db.ObjectId
+  tier         SubscriptionTier? @default(STARTER)
 
   // === RECORDING SETTINGS ===
   recordingEnabled        Boolean @default(true)
@@ -893,13 +1056,17 @@ model CallFlowConfiguration {
   transcribeInbound  Boolean @default(true)
   transcribeOutbound Boolean @default(true)
 
+  // === AI SETTINGS ===
+  aiCallGrading  Boolean @default(true)
+  aiLeadResearch Boolean @default(true)
+
   // === INBOUND CALL FLOW SETTINGS ===
   inboundFlow      String  @default("voicemail") // "voicemail" | "forward" | "ivr" | "custom"
   voicemailMessage String? @default("")
   forwardToNumber  String?
 
   // === FLOW ENGINE SETTINGS ===
-  flowSteps Json @default("[{\"id\": \"call-start\", \"enabled\": true, \"order\": 1}, {\"id\": \"call-active\", \"enabled\": true, \"order\": 2}, {\"id\": \"call-complete\", \"enabled\": true, \"order\": 3}, {\"id\": \"recording-check\", \"enabled\": true, \"order\": 4}, {\"id\": \"lead-update\", \"enabled\": true, \"order\": 5}]")
+  flowSteps Json?
 
   // === CONDITIONAL LOGIC ===
   enableFlowLogging Boolean @default(true)
@@ -916,6 +1083,15 @@ model CallFlowConfiguration {
 
   @@map("call_flow_configurations")
 }
+
+model TierTemplate {
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  tier   SubscriptionTier @unique @default(STARTER) // "STARTER", "GROWTH", "PRO"
+  config Json // Stores the default CallFlowConfiguration fields
+
+  @@map("tier_templates")
+}
+
 model FlowExecution {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   orgId         String   @db.ObjectId
@@ -934,7 +1110,7 @@ model FlowExecution {
 }
 
 enum SubscriptionTier {
-  BASIC
+  STARTER
   PRO
   ENTERPRISE
   GROWTH

@@ -5,6 +5,9 @@ import OrganizationPlan from "./OrganizationPlan";
 import ApiKeys from "./ApiKeys";
 import { TabsContent } from "@/components/ui/tabs-og";
 import PhoneConfiguration from "./PhoneConfiguration";
+import ResearchOptions from "./ResearchOptions";
+import AIAgentSettings from "./ai-agent-settings/AIAgentSettings";
+
 
 export default function OrgTab({ organization, generateApiKey, newKey }) {
   // only UI toggles
@@ -46,6 +49,17 @@ export default function OrgTab({ organization, generateApiKey, newKey }) {
           onRevokeKey={revokeKey}
           isExpanded={expandedSections.apiKeys}
           setIsExpanded={(v) => toggleSection("apiKeys")}
+        />
+
+        <ResearchOptions 
+          campaigns={organization.campaigns?? []}
+          researchConfig={null}
+          researches={[]}
+
+        />
+
+        <AIAgentSettings
+
         />
       </div>
     </TabsContent>
